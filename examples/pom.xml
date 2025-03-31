@@ -52,7 +52,7 @@
       </dependency>
       <dependency>
         <groupId>dev.bpm-crafters.process-engine-adapters</groupId>
-        <artifactId>process-engine-example-camunda-platform-c7-java-common-fixture</artifactId>
+        <artifactId>process-engine-example-java-c7-common-fixture</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>

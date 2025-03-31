@@ -7,7 +7,7 @@
     <version>2025.03.01-SNAPSHOT</version>
   </parent>
 
-  <artifactId>process-engine-adapters-camunda-platform-c7-bom</artifactId>
+  <artifactId>process-engine-adapter-camunda-platform-c7-bom</artifactId>
   <name>BOM: ${project.artifactId}</name>
   <description>Bill of Materials for Process Engine Camunda 7 Adapters.</description>
   <packaging>pom</packaging>
