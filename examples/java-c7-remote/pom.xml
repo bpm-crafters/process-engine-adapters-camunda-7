@@ -3,19 +3,19 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>dev.bpm-crafters.process-engine-adapters</groupId>
-    <artifactId>process-engine-adapter-camunda-platform-c7-examples</artifactId>
+    <groupId>dev.bpm-crafters.process-engine-examples</groupId>
+    <artifactId>process-engine-api-example-root-c7</artifactId>
     <version>2025.03.01-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
-  <artifactId>process-engine-example-java-c7-remote</artifactId>
+  <artifactId>process-engine-api-example-java-c7-remote</artifactId>
   <name>Example: Java C7 Remote</name>
 
   <dependencies>
     <dependency>
-      <groupId>dev.bpm-crafters.process-engine-adapters</groupId>
-      <artifactId>process-engine-example-java-c7-common-fixture</artifactId>
+      <groupId>dev.bpm-crafters.process-engine-examples</groupId>
+      <artifactId>process-engine-api-example-java-c7-common-fixture</artifactId>
     </dependency>
 
     <dependency>

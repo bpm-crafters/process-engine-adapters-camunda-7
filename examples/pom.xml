@@ -9,7 +9,9 @@
     <relativePath>../pom.xml</relativePath>
   </parent>
 
-  <artifactId>process-engine-adapter-camunda-platform-c7-examples</artifactId>
+  <groupId>dev.bpm-crafters.process-engine-examples</groupId>
+  <artifactId>process-engine-api-example-root-c7</artifactId>
+
   <packaging>pom</packaging>
   <name>Example: Camunda 7 Example Parent</name>
 
@@ -22,7 +24,7 @@
 
   <modules>
     <module>java-common-fixture</module>
-    <module>java-c7</module>
+    <module>java-c7-embedded</module>
     <module>java-c7-remote</module>
   </modules>
 
@@ -51,8 +53,8 @@
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>dev.bpm-crafters.process-engine-adapters</groupId>
-        <artifactId>process-engine-example-java-c7-common-fixture</artifactId>
+        <groupId>dev.bpm-crafters.process-engine-examples</groupId>
+        <artifactId>process-engine-api-example-java-c7-common-fixture</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
