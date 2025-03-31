@@ -42,17 +42,17 @@
       </dependency>
       <dependency>
         <groupId>dev.bpm-crafters.process-engine-adapters</groupId>
-        <artifactId>process-engine-api-adapter-camunda-platform-c7-embedded-spring-boot-starter</artifactId>
+        <artifactId>process-engine-adapters-camunda-platform-c7-embedded-spring-boot-starter</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>dev.bpm-crafters.process-engine-adapters</groupId>
-        <artifactId>process-engine-api-adapter-camunda-platform-c7-remote-spring-boot-starter</artifactId>
+        <artifactId>process-engine-adapters-camunda-platform-c7-remote-spring-boot-starter</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>dev.bpm-crafters.process-engine-adapters</groupId>
-        <artifactId>process-engine-api-examples-java-common-fixture</artifactId>
+        <artifactId>process-engine-examples-java-common-fixture</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>

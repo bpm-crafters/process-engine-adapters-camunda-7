@@ -9,7 +9,7 @@
     <relativePath>../pom.xml</relativePath>
   </parent>
 
-  <artifactId>process-engine-api-examples-java-common-fixture</artifactId>
+  <artifactId>process-engine-examples-java-common-fixture</artifactId>
   <name>Example: Java Common Fixture</name>
 
   <dependencies>

@@ -10,7 +10,7 @@
     <relativePath>../../pom.xml</relativePath>
   </parent>
 
-	<artifactId>process-engine-api-adapter-testing</artifactId>
+	<artifactId>process-engine-adapters-testing</artifactId>
   <name>Test: Camunda 7 Adapter Test Fixtures</name>
 
   <dependencyManagement>

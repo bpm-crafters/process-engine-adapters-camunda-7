@@ -9,7 +9,7 @@
     <relativePath>../../pom.xml</relativePath>
   </parent>
 
-  <artifactId>process-engine-api-adapter-camunda-platform-c7-embedded-core</artifactId>
+  <artifactId>process-engine-adapters-camunda-platform-c7-embedded-core</artifactId>
   <name>Adapter: C7 Embedded Core</name>
 
   <properties>
@@ -74,7 +74,7 @@
     <!-- Testing -->
     <dependency>
       <groupId>dev.bpm-crafters.process-engine-adapters</groupId>
-      <artifactId>process-engine-api-adapter-testing</artifactId>
+      <artifactId>process-engine-adapters-testing</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
