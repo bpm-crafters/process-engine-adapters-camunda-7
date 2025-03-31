@@ -4,12 +4,12 @@
 
   <parent>
     <groupId>dev.bpm-crafters.process-engine-adapters</groupId>
-    <artifactId>process-engine-adapters-camunda-7-examples</artifactId>
+    <artifactId>process-engine-adapter-camunda-platform-c7-examples</artifactId>
     <version>2025.03.01-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
-  <artifactId>process-engine-examples-java-c7</artifactId>
+  <artifactId>process-engine-example-java-c7</artifactId>
   <name>Example: Java C7 Embedded</name>
 
   <dependencyManagement>
@@ -27,12 +27,12 @@
   <dependencies>
     <dependency>
       <groupId>dev.bpm-crafters.process-engine-adapters</groupId>
-      <artifactId>process-engine-examples-java-common-fixture</artifactId>
+      <artifactId>process-engine-example-camunda-platform-c7-java-common-fixture</artifactId>
     </dependency>
 
     <dependency>
       <groupId>dev.bpm-crafters.process-engine-adapters</groupId>
-      <artifactId>process-engine-adapters-camunda-platform-c7-embedded-spring-boot-starter</artifactId>
+      <artifactId>process-engine-adapter-camunda-platform-c7-embedded-spring-boot-starter</artifactId>
     </dependency>
 
     <dependency>

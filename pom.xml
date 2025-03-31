@@ -10,7 +10,7 @@
   </parent>
 
   <groupId>dev.bpm-crafters.process-engine-adapters</groupId>
-  <artifactId>process-engine-adapters-camunda-7-root</artifactId>
+  <artifactId>process-engine-adapter-camunda-platform-c7-root</artifactId>
   <version>2025.03.01-SNAPSHOT</version>
   <name>POM: Camunda 7 Adapter Project root</name>
   <description>Process Engine Adapters Camunda 7</description>
@@ -32,10 +32,10 @@
 
   <modules>
     <module>engine-adapter/adapter-testing</module>
-    <module>engine-adapter/camunda-platform-7-embedded-core</module>
-    <module>engine-adapter/camunda-platform-7-embedded-spring-boot-starter</module>
-    <module>engine-adapter/camunda-platform-7-remote-core</module>
-    <module>engine-adapter/camunda-platform-7-remote-spring-boot-starter</module>
+    <module>engine-adapter/c7-embedded-core</module>
+    <module>engine-adapter/c7-embedded-spring-boot-starter</module>
+    <module>engine-adapter/c7-remote-core</module>
+    <module>engine-adapter/c7-remote-spring-boot-starter</module>
     <module>bom</module>
     <!-- more modules see profiles -->
   </modules>

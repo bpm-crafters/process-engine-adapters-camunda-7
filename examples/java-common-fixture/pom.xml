@@ -4,13 +4,13 @@
 
   <parent>
     <groupId>dev.bpm-crafters.process-engine-adapters</groupId>
-    <artifactId>process-engine-adapters-camunda-7-examples</artifactId>
+    <artifactId>process-engine-adapter-camunda-platform-c7-examples</artifactId>
     <version>2025.03.01-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
-  <artifactId>process-engine-examples-java-common-fixture</artifactId>
-  <name>Example: Java Common Fixture</name>
+  <artifactId>process-engine-example-camunda-platform-c7-java-common-fixture</artifactId>
+  <name>Example: Java C7 Common Fixture</name>
 
   <dependencies>
     <dependency>

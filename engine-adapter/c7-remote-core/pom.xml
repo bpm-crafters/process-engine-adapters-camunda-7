@@ -4,23 +4,16 @@
 
   <parent>
     <groupId>dev.bpm-crafters.process-engine-adapters</groupId>
-    <artifactId>process-engine-adapters-camunda-7-root</artifactId>
+    <artifactId>process-engine-adapter-camunda-platform-c7-root</artifactId>
     <version>2025.03.01-SNAPSHOT</version>
     <relativePath>../../pom.xml</relativePath>
   </parent>
 
-  <artifactId>process-engine-adapters-camunda-platform-c7-embedded-spring-boot-starter</artifactId>
-  <name>Adapter: C7 Embedded Spring-Boot Starter</name>
+  <artifactId>process-engine-adapter-camunda-platform-c7-remote-core</artifactId>
+  <name>Adapter: C7 Remote Core</name>
 
   <dependencyManagement>
     <dependencies>
-      <dependency>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-dependencies</artifactId>
-        <version>${spring-boot.version}</version>
-        <scope>import</scope>
-        <type>pom</type>
-      </dependency>
       <!-- https://mvnrepository.com/artifact/org.camunda.bpm/camunda-bom -->
       <dependency>
         <groupId>org.camunda.bpm</groupId>
@@ -34,32 +27,32 @@
 
   <dependencies>
     <dependency>
-      <groupId>dev.bpm-crafters.process-engine-adapters</groupId>
-      <artifactId>process-engine-adapters-camunda-platform-c7-embedded-core</artifactId>
-      <version>${project.version}</version>
+      <groupId>dev.bpm-crafters.process-engine-api</groupId>
+      <artifactId>process-engine-api</artifactId>
+      <version>${process-engine-api.version}</version>
     </dependency>
     <dependency>
-      <groupId>io.toolisticon.spring</groupId>
-      <artifactId>spring-boot-conditions</artifactId>
+      <groupId>dev.bpm-crafters.process-engine-api</groupId>
+      <artifactId>process-engine-api-impl</artifactId>
+      <version>${process-engine-api.version}</version>
     </dependency>
+
+    <!-- Use subscription-based delivery using official client -->
     <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-validation</artifactId>
+      <groupId>org.camunda.bpm</groupId>
+      <artifactId>camunda-external-task-client</artifactId>
+      <optional>true</optional>
     </dependency>
+    <!-- Use embedded-like integration if the appropriate client is in place -->
     <dependency>
       <groupId>org.camunda.bpm</groupId>
       <artifactId>camunda-engine</artifactId>
       <scope>provided</scope>
     </dependency>
-    <dependency>
-      <groupId>org.camunda.bpm.springboot</groupId>
-      <artifactId>camunda-bpm-spring-boot-starter</artifactId>
-      <scope>provided</scope>
-    </dependency>
-
+    <!-- Testing -->
     <dependency>
       <groupId>dev.bpm-crafters.process-engine-adapters</groupId>
-      <artifactId>process-engine-adapters-testing</artifactId>
+      <artifactId>process-engine-adapter-camunda-platform-c7-testing</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
@@ -69,13 +62,9 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-web</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.h2database</groupId>
-      <artifactId>h2</artifactId>
+      <groupId>org.camunda.community.mockito</groupId>
+      <artifactId>camunda-platform-7-mockito</artifactId>
+      <version>7.22.0</version>
       <scope>test</scope>
     </dependency>
 
