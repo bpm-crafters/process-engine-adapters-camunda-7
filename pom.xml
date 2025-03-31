@@ -1,0 +1,258 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>dev.bpm-crafters.maven.parent</groupId>
+    <artifactId>maven-parent</artifactId>
+    <version>2025.01.1</version>
+    <relativePath/>
+  </parent>
+
+  <groupId>dev.bpm-crafters.process-engine-adapters</groupId>
+  <artifactId>process-engine-adapters-camunda-7-root</artifactId>
+  <version>0.5.1-SNAPSHOT</version>
+  <name>POM: Camunda 7 Adapter Project root</name>
+  <description>Process Engine Adapters Camunda 7</description>
+  <url>https://github.com/bpm-crafters/process-engine-adapters-camunda-7/</url>
+  <packaging>pom</packaging>
+
+  <properties>
+    <!-- COMMON GLOBAL -->
+    <spring-boot.version>3.4.3</spring-boot.version>
+    <process-engine-api.version>0.9.0-SNAPSHOT</process-engine-api.version>
+    <!-- TEST -->
+    <mockito.version>5.4.0</mockito.version>
+    <assertj.version>3.27.3</assertj.version>
+    <junit5.version>5.11.3</junit5.version>
+    <jgiven.version>2.0.1</jgiven.version>
+    <awaitility.version>4.3.0</awaitility.version>
+    <mockk.version>1.13.17</mockk.version>
+  </properties>
+
+  <modules>
+    <module>engine-adapter/adapter-testing</module>
+    <module>engine-adapter/camunda-platform-7-embedded-core</module>
+    <module>engine-adapter/camunda-platform-7-embedded-spring-boot-starter</module>
+    <module>engine-adapter/camunda-platform-7-remote-core</module>
+    <module>engine-adapter/camunda-platform-7-remote-spring-boot-starter</module>
+    <module>bom</module>
+    <!-- more modules see profiles -->
+  </modules>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>io.toolisticon.spring</groupId>
+        <artifactId>spring-boot-support-bom</artifactId>
+        <version>1.0.0</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.assertj</groupId>
+        <artifactId>assertj-core</artifactId>
+        <version>${assertj.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.mockito.kotlin</groupId>
+        <artifactId>mockito-kotlin</artifactId>
+        <version>${mockito.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.mockk</groupId>
+        <artifactId>mockk-jvm</artifactId>
+        <version>${mockk.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.tngtech.archunit</groupId>
+        <artifactId>archunit-junit5</artifactId>
+        <version>${archunit.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-api</artifactId>
+        <version>2.0.17</version>
+      </dependency>
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-simple</artifactId>
+        <version>2.0.17</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.jetbrains.kotlin</groupId>
+      <artifactId>kotlin-stdlib</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.jetbrains.kotlin</groupId>
+      <artifactId>kotlin-reflect</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.github.oshai</groupId>
+      <artifactId>kotlin-logging-jvm</artifactId>
+      <version>${kotlin-logging.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+    </dependency>
+
+    <!-- TEST -->
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-params</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.jetbrains.kotlin</groupId>
+      <artifactId>kotlin-test-junit5</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.assertj</groupId>
+      <artifactId>assertj-core</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito.kotlin</groupId>
+      <artifactId>mockito-kotlin</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+  </dependencies>
+
+  <build>
+    <defaultGoal>clean jacoco:prepare-agent package</defaultGoal>
+    <plugins>
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <!-- kotlin compiler -->
+        <artifactId>kotlin-maven-plugin</artifactId>
+        <groupId>org.jetbrains.kotlin</groupId>
+        <configuration>
+          <jvmTarget>17</jvmTarget>
+          <compilerPlugins>
+            <plugin>spring</plugin>
+            <plugin>no-arg</plugin>
+            <plugin>all-open</plugin>
+          </compilerPlugins>
+          <pluginOptions>
+            <option>all-open:annotation=io.toolisticon.testing.jgiven.JGivenKotlinStage</option>
+          </pluginOptions>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </build>
+
+  <profiles>
+    <profile>
+      <id>examples</id>
+      <activation>
+        <property>
+          <name>!skipExamples</name>
+        </property>
+      </activation>
+      <modules>
+        <module>examples</module>
+      </modules>
+    </profile>
+  </profiles>
+
+  <licenses>
+    <license>
+      <name>The Apache Software License, Version 2.0</name>
+      <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+    </license>
+  </licenses>
+
+  <scm>
+    <connection>scm:git:git@github.com:bpm-crafters/process-engine-adapters-camunda-7.git</connection>
+    <url>scm:git:git@github.com:bpm-crafters/process-engine-adapters-camunda-7.git</url>
+    <developerConnection>scm:git:git@github.com:bpm-crafters/process-engine-adapters-camunda-7.git</developerConnection>
+    <tag>HEAD</tag>
+  </scm>
+
+  <distributionManagement>
+    <snapshotRepository>
+      <id>ossrh</id>
+      <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
+    </snapshotRepository>
+    <repository>
+      <id>ossrh</id>
+      <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+    </repository>
+  </distributionManagement>
+
+  <developers>
+    <developer>
+      <id>jangalinski</id>
+      <name>Jan Galinski</name>
+      <roles>
+        <role>Developer</role>
+      </roles>
+      <organization>Holisticon AG</organization>
+      <organizationUrl>https://holisticon.de</organizationUrl>
+    </developer>
+    <developer>
+      <id>zambrovski</id>
+      <name>Simon Zambrovski</name>
+      <roles>
+        <role>Developer</role>
+      </roles>
+      <organization>Holisticon AG</organization>
+      <organizationUrl>https://holisticon.de</organizationUrl>
+    </developer>
+    <developer>
+      <id>__</id>
+      <name>Stephan Pelikan</name>
+      <roles>
+        <role>Developer</role>
+      </roles>
+      <organization>Phactum Solutions</organization>
+      <organizationUrl>https://phactum.at</organizationUrl>
+    </developer>
+    <developer>
+      <id>__</id>
+      <name>Peter Queteschiener</name>
+      <roles>
+        <role>Developer</role>
+      </roles>
+      <organization>Phactum Solutions</organization>
+      <organizationUrl>https://phactum.at</organizationUrl>
+    </developer>
+    <developer>
+      <id>__</id>
+      <name>Dominik Horn</name>
+      <roles>
+        <role>Developer</role>
+      </roles>
+      <organization>Miragon</organization>
+      <organizationUrl>https://miragon.com</organizationUrl>
+    </developer>
+    <developer>
+      <id>__</id>
+      <name>Thomas Heinrichs</name>
+      <roles>
+        <role>Developer</role>
+      </roles>
+      <organization>Miragon</organization>
+      <organizationUrl>https://miragon.com</organizationUrl>
+    </developer>
+  </developers>
+</project>
