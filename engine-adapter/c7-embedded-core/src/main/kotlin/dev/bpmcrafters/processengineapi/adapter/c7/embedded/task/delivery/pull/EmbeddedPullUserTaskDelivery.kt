@@ -47,9 +47,9 @@ class EmbeddedPullUserTaskDelivery(
             .firstOrNull { subscription -> subscription.matches(task) }
             ?.let { activeSubscription ->
               executorService.submit {  // in another thread
-                subscriptionRepository.activateSubscriptionForTask(task.id, activeSubscription)
-                val variables = taskService.getVariables(task.id).filterBySubscription(activeSubscription)
                 try {
+                  subscriptionRepository.activateSubscriptionForTask(task.id, activeSubscription)
+                  val variables = taskService.getVariables(task.id).filterBySubscription(activeSubscription)
                   logger.debug { "PROCESS-ENGINE-C7-EMBEDDED-037: delivering user task ${task.id}." }
                   val processDefinitionKey = cachingProcessDefinitionKeyResolver.getProcessDefinitionKey(task.processDefinitionId)
                   activeSubscription.action.accept(task.toTaskInformation(taskService.getIdentityLinksForTask(task.id), processDefinitionKey), variables)

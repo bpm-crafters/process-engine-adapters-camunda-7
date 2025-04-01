@@ -49,9 +49,9 @@ class EmbeddedPullServiceTaskDelivery(
             .firstOrNull { subscription -> subscription.matches(lockedTask) }
             ?.let { activeSubscription ->
               executorService.submit {  // in another thread
-                subscriptionRepository.activateSubscriptionForTask(lockedTask.id, activeSubscription)
-                val variables = lockedTask.variables.filterBySubscription(activeSubscription)
                 try {
+                  subscriptionRepository.activateSubscriptionForTask(lockedTask.id, activeSubscription)
+                  val variables = lockedTask.variables.filterBySubscription(activeSubscription)
                   logger.debug { "PROCESS-ENGINE-C7-EMBEDDED-031: delivering service task ${lockedTask.id}." }
                   activeSubscription.action.accept(lockedTask.toTaskInformation(), variables)
                   logger.debug { "PROCESS-ENGINE-C7-EMBEDDED-032: successfully delivered service task ${lockedTask.id}." }

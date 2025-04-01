@@ -47,9 +47,9 @@ class RemotePullUserTaskDelivery(
             .firstOrNull { subscription -> subscription.matches(task) }
             ?.let { activeSubscription ->
               executorService.submit {  // in another thread
-                subscriptionRepository.activateSubscriptionForTask(task.id, activeSubscription)
-                val variables = taskService.getVariables(task.id).filterBySubscription(activeSubscription)
                 try {
+                  subscriptionRepository.activateSubscriptionForTask(task.id, activeSubscription)
+                  val variables = taskService.getVariables(task.id).filterBySubscription(activeSubscription)
                   logger.debug { "PROCESS-ENGINE-C7-REMOTE-037: delivering user task ${task.id}." }
                   activeSubscription.action.accept(task.toTaskInformation(), variables)
                 } catch (e: Exception) {
