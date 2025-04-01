@@ -42,11 +42,9 @@ class SubscribingClientServiceTaskDelivery(
             .lockDuration(lockDurationInSeconds * 1000)
             .handler { externalTask, externalTaskService ->
               if (subscription.matches(externalTask)) {
-                subscriptionRepository.activateSubscriptionForTask(externalTask.id, subscription)
-
-                val variables = externalTask.allVariables.filterBySubscription(subscription)
-
                 try {
+                  subscriptionRepository.activateSubscriptionForTask(externalTask.id, subscription)
+                  val variables = externalTask.allVariables.filterBySubscription(subscription)
                   logger.debug { "PROCESS-ENGINE-C7-REMOTE-031: delivering service task ${externalTask.id}." }
                   subscription.action.accept(externalTask.toTaskInformation(), variables)
                   logger.debug { "PROCESS-ENGINE-C7-REMOTE-032: successfully delivered service task ${externalTask.id}." }
