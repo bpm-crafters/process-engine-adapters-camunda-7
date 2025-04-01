@@ -1,4 +1,6 @@
-## Camunda Platform 7 running as remote engine
+---
+title: Camunda Platform 7 as remote engine
+---
 
 If you start with a Camunda Platform 7, operated remotely, the following configuration is applicable for you.
 

@@ -1,4 +1,6 @@
-## Camunda Platform 7 running as embedded engine
+---
+title: Camunda Platform 7 as embedded engine
+---
 
 If you start with a Camunda Platform 7, operated in an embedded engine mode, by for example using the Camunda Spring Boot Starter,
 the following configuration is applicable for you.
