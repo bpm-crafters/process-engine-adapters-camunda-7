@@ -10,6 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.annotation.DirtiesContext
 import org.springframework.test.context.ActiveProfiles
+import org.springframework.test.context.DynamicPropertyRegistry
+import org.springframework.test.context.DynamicPropertySource
 import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 
@@ -28,10 +30,19 @@ abstract class AbstractC7RemoteApiITestBase : JGivenSpringBaseIntegrationTest() 
 
     const val USER_TASK = "user-perform-task"
     const val EXTERNAL_TASK = "execute-action-external"
-  }
 
-  @Container
-  val camundaContainer = Camunda7RunTestContainer("run-7.22.0")
+    @JvmStatic
+    @Container
+    val camundaContainer = Camunda7RunTestContainer("run-7.22.0")
+
+    @JvmStatic
+    @DynamicPropertySource
+    fun configure(registry: DynamicPropertyRegistry) {
+      registry.add("camunda.bpm.client.base-url") { "http://localhost:${camundaContainer.firstMappedPort}/engine-rest/" }
+      registry.add("feign.client.config.default.url") { "http://localhost:${camundaContainer.firstMappedPort}/engine-rest/" }
+    }
+
+  }
 
   @Autowired
   lateinit var repositoryService: RepositoryService
