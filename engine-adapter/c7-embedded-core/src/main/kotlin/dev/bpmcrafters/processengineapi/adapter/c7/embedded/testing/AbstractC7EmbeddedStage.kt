@@ -13,15 +13,15 @@ import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.completion.Line
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.delivery.pull.EmbeddedPullServiceTaskDelivery
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.delivery.pull.EmbeddedPullUserTaskDelivery
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.subscription.C7TaskSubscriptionApiImpl
-import dev.bpmcrafters.processengineapi.impl.task.InMemSubscriptionRepository
-import dev.bpmcrafters.processengineapi.task.support.UserTaskSupport
 import dev.bpmcrafters.processengineapi.correlation.CorrelationApi
 import dev.bpmcrafters.processengineapi.correlation.SignalApi
 import dev.bpmcrafters.processengineapi.deploy.DeployBundleCommand
 import dev.bpmcrafters.processengineapi.deploy.DeploymentApi
 import dev.bpmcrafters.processengineapi.deploy.NamedResource.Companion.fromClasspath
+import dev.bpmcrafters.processengineapi.impl.task.InMemSubscriptionRepository
 import dev.bpmcrafters.processengineapi.process.StartProcessApi
 import dev.bpmcrafters.processengineapi.task.*
+import dev.bpmcrafters.processengineapi.task.support.UserTaskSupport
 import org.assertj.core.api.Assertions
 import org.assertj.core.util.Lists
 import org.awaitility.Awaitility
@@ -152,10 +152,16 @@ abstract class AbstractC7EmbeddedStage<SUBTYPE : AbstractC7EmbeddedStage<SUBTYPE
 
   /**
    * Called after Process Engine and API are initialized.
+   * This method is intended to be overwritten by the implementers of the stage in order to put stage initialization code in.
    */
   open fun initialize() {
   }
 
+  /**
+   * Asserts that a process instance is started.
+   * @param processInstanceId instance id.
+   * @return stage instance.
+   */
   @As("process instance is stared $")
   open fun process_is_started(processInstanceId: String) {
     this.processInstanceId = processInstanceId
@@ -165,7 +171,8 @@ abstract class AbstractC7EmbeddedStage<SUBTYPE : AbstractC7EmbeddedStage<SUBTYPE
   @As("external task of type \$topicName exists")
   open fun external_task_exists(@Quoted topicName: String, activityId: String?): SUBTYPE {
     taskSubscriptionApi.subscribeForTask(
-      SubscribeForTaskCmd(restrictions,
+      SubscribeForTaskCmd(
+        restrictions,
         TaskType.EXTERNAL,
         topicName,
         null,
@@ -197,9 +204,10 @@ abstract class AbstractC7EmbeddedStage<SUBTYPE : AbstractC7EmbeddedStage<SUBTYPE
     Objects.requireNonNull(
       topicToExternalTaskId[topicName], "No active external service task found, consider to assert using external_task_exists"
     )
-    serviceTaskCompletionApi.completeTask(CompleteTaskCmd(
-      topicToExternalTaskId.getValue(topicName)
-    ) { variables }).get()
+    serviceTaskCompletionApi.completeTask(
+      CompleteTaskCmd(
+        topicToExternalTaskId.getValue(topicName)
+      ) { variables }).get()
     return self()
   }
 
@@ -208,9 +216,10 @@ abstract class AbstractC7EmbeddedStage<SUBTYPE : AbstractC7EmbeddedStage<SUBTYPE
     Objects.requireNonNull(
       topicToExternalTaskId[topicName], "No active external service task found, consider to assert using external_task_exists"
     )
-    serviceTaskCompletionApi.completeTaskByError(CompleteTaskByErrorCmd(
-      topicToExternalTaskId.getValue(topicName), errorMessage
-    ) { variables }).get()
+    serviceTaskCompletionApi.completeTaskByError(
+      CompleteTaskByErrorCmd(
+        topicToExternalTaskId.getValue(topicName), errorMessage
+      ) { variables }).get()
     return self()
   }
 
@@ -273,8 +282,23 @@ abstract class AbstractC7EmbeddedStage<SUBTYPE : AbstractC7EmbeddedStage<SUBTYPE
     return self()
   }
 
+  /**
+   * Checks if the process has passed a series of activities.
+   * @param elementIds activities to pass.
+   * @return stage.
+   */
   open fun process_has_passed(vararg elementIds: String): SUBTYPE {
     hasPassed(activityIds = elementIds, inOrder = false, hasPassed = true)
+    return self()
+  }
+
+  /**
+   * Checks if the process has NOT passed any of activities.
+   * @param elementIds activities not to pass.
+   * @return stage.
+   */
+  open fun process_has_not_passed(vararg elementIds: String): SUBTYPE {
+    hasPassed(activityIds = elementIds, inOrder = false, hasPassed = false)
     return self()
   }
 
@@ -298,12 +322,13 @@ abstract class AbstractC7EmbeddedStage<SUBTYPE : AbstractC7EmbeddedStage<SUBTYPE
     }
     val message = "Expecting %s " +
       (if (hasPassed)
-        ("to have passed activities %s at least once"
-          + (if (inOrder) " and in order" else "") + ", ")
+        ("to have passed activities %s at least once" + (if (inOrder) " and in order" else "") + ", ")
       else
-        "NOT to have passed activities %s, ") +
+        "NOT to have passed activities %s, "
+        ) +
       "but actually we found that it passed %s. (Please make sure you have set the history " +
       "service of the engine to at least 'activity' or a higher level before making use of this assertion!)"
+
     val assertion = Assertions.assertThat(finished)
       .overridingErrorMessage(
         message,
@@ -327,7 +352,9 @@ abstract class AbstractC7EmbeddedStage<SUBTYPE : AbstractC7EmbeddedStage<SUBTYPE
           remainingFinished = remainingFinished.subList(remainingFinished.indexOf(activityId) + 1, remainingFinished.size)
         }
       }
-    } else assertion.doesNotContain(*activityIds)
+    } else {
+      assertion.doesNotContain(*activityIds)
+    }
   }
 
   open fun process_is_stopped(): SUBTYPE {

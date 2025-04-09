@@ -4,6 +4,7 @@ import dev.bpmcrafters.processengineapi.Empty
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import dev.bpmcrafters.processengineapi.task.CompleteTaskByErrorCmd
 import dev.bpmcrafters.processengineapi.task.CompleteTaskCmd
+import dev.bpmcrafters.processengineapi.task.TaskInformation
 import dev.bpmcrafters.processengineapi.task.UserTaskCompletionApi
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.camunda.bpm.engine.TaskService
@@ -27,7 +28,7 @@ class C7RemoteServiceUserTaskCompletionApiImpl(
       cmd.get()
     )
     subscriptionRepository.deactivateSubscriptionForTask(cmd.taskId)?.apply {
-      termination.accept(cmd.taskId)
+      termination.accept(TaskInformation(cmd.taskId, emptyMap()).withReason(TaskInformation.COMPLETE))
       logger.debug { "PROCESS-ENGINE-C7-REMOTE-012: successfully completed user task ${cmd.taskId}." }
     }
     return CompletableFuture.completedFuture(Empty)
@@ -40,7 +41,7 @@ class C7RemoteServiceUserTaskCompletionApiImpl(
       cmd.errorCode
     )
     subscriptionRepository.deactivateSubscriptionForTask(cmd.taskId)?.apply {
-      termination.accept(cmd.taskId)
+      termination.accept(TaskInformation(cmd.taskId, emptyMap()).withReason(TaskInformation.COMPLETE))
       logger.debug { "PROCESS-ENGINE-C7-REMOTE-014: successfully thrown error on user task ${cmd.taskId}." }
     }
     return CompletableFuture.completedFuture(Empty)

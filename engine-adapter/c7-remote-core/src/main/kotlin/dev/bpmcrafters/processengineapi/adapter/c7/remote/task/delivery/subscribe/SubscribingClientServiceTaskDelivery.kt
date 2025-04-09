@@ -6,6 +6,7 @@ import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.toTaskIn
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import dev.bpmcrafters.processengineapi.impl.task.TaskSubscriptionHandle
 import dev.bpmcrafters.processengineapi.impl.task.filterBySubscription
+import dev.bpmcrafters.processengineapi.task.TaskInformation
 import dev.bpmcrafters.processengineapi.task.TaskType
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.camunda.bpm.client.ExternalTaskClient
@@ -46,7 +47,7 @@ class SubscribingClientServiceTaskDelivery(
                   subscriptionRepository.activateSubscriptionForTask(externalTask.id, subscription)
                   val variables = externalTask.allVariables.filterBySubscription(subscription)
                   logger.debug { "PROCESS-ENGINE-C7-REMOTE-031: delivering service task ${externalTask.id}." }
-                  subscription.action.accept(externalTask.toTaskInformation(), variables)
+                  subscription.action.accept(externalTask.toTaskInformation().withReason(TaskInformation.CREATE), variables)
                   logger.debug { "PROCESS-ENGINE-C7-REMOTE-032: successfully delivered service task ${externalTask.id}." }
                 } catch (e: Exception) {
                   val jobRetries: Int = externalTask.retries ?: retries
@@ -85,17 +86,19 @@ class SubscribingClientServiceTaskDelivery(
    * Camunda client disallows duplicate subscriptions, allow to unsubscribe.
    */
   fun unsubscribe() {
-    camundaTaskListTopicSubscriptions.forEach { topicSubscription -> topicSubscription.close() }
+    camundaTaskListTopicSubscriptions.forEach { topicSubscription ->
+        topicSubscription.close()
+    }
   }
 
   /*
    * Additional restrictions to check.
    * The activated job can be completed by the Subscription strategy and is correct type (topic).
    */
-  private fun TaskSubscriptionHandle.matches(externalTask: ExternalTask): Boolean {
-    return this.taskType == TaskType.EXTERNAL && (
-      this.taskDescriptionKey == null || this.taskDescriptionKey == externalTask.topicName
-      ) && this.restrictions.all {
+  private fun TaskSubscriptionHandle.matches(externalTask: ExternalTask): Boolean =
+    (this.taskDescriptionKey == null
+      || this.taskDescriptionKey == externalTask.topicName)
+      && this.restrictions.all {
       when (it.key) {
         CommonRestrictions.EXECUTION_ID -> it.value == externalTask.executionId
         CommonRestrictions.ACTIVITY_ID -> it.value == externalTask.activityId
@@ -109,13 +112,9 @@ class SubscribingClientServiceTaskDelivery(
       }
     }
 
-    // FIXME: analyze this! check restrictions, etc..
-  }
 
   private fun TopicSubscriptionBuilder.forSubscription(subscription: TaskSubscriptionHandle): TopicSubscriptionBuilder {
-
     // FIXME -> more limitations....
-
     return if (subscription.payloadDescription != null && subscription.payloadDescription!!.isNotEmpty()) {
       this.variables(*subscription.payloadDescription!!.toTypedArray())
     } else {

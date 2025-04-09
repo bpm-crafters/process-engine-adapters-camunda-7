@@ -2,10 +2,7 @@ package dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.completion
 
 import dev.bpmcrafters.processengineapi.Empty
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
-import dev.bpmcrafters.processengineapi.task.CompleteTaskByErrorCmd
-import dev.bpmcrafters.processengineapi.task.CompleteTaskCmd
-import dev.bpmcrafters.processengineapi.task.FailTaskCmd
-import dev.bpmcrafters.processengineapi.task.ServiceTaskCompletionApi
+import dev.bpmcrafters.processengineapi.task.*
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.camunda.bpm.engine.ExternalTaskService
 import java.util.concurrent.CompletableFuture
@@ -32,7 +29,7 @@ class C7ServiceTaskCompletionApiImpl(
       cmd.get()
     )
     subscriptionRepository.deactivateSubscriptionForTask(cmd.taskId)?.apply {
-      termination.accept(cmd.taskId)
+      termination.accept(TaskInformation(cmd.taskId, emptyMap()).withReason(TaskInformation.COMPLETE))
       logger.debug { "PROCESS-ENGINE-C7-EMBEDDED-007: successfully completed service task ${cmd.taskId}." }
     }
     return CompletableFuture.completedFuture(Empty)
@@ -48,7 +45,7 @@ class C7ServiceTaskCompletionApiImpl(
       cmd.get()
     )
     subscriptionRepository.deactivateSubscriptionForTask(cmd.taskId)?.apply {
-      termination.accept(cmd.taskId)
+      termination.accept(TaskInformation(cmd.taskId, emptyMap()).withReason(TaskInformation.COMPLETE))
       logger.debug { "PROCESS-ENGINE-C7-EMBEDDED-009: successfully thrown error in service task ${cmd.taskId}." }
     }
     return CompletableFuture.completedFuture(Empty)
@@ -66,7 +63,7 @@ class C7ServiceTaskCompletionApiImpl(
       retryTimeoutInSeconds
     )
     subscriptionRepository.deactivateSubscriptionForTask(cmd.taskId)?.apply {
-      termination.accept(cmd.taskId)
+      termination.accept(TaskInformation(cmd.taskId, emptyMap()).withReason(TaskInformation.COMPLETE))
       logger.debug { "PROCESS-ENGINE-C7-EMBEDDED-011: successfully failed service task ${cmd.taskId} handling." }
     }
     return CompletableFuture.completedFuture(Empty)

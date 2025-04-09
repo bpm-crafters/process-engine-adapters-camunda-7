@@ -4,8 +4,10 @@ import dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot.C7Embedde
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.boot.context.properties.NestedConfigurationProperty
 import org.springframework.core.Ordered
+import org.springframework.validation.annotation.Validated
 
 @ConfigurationProperties(prefix = DEFAULT_PREFIX)
+@Validated
 class C7EmbeddedAdapterProperties(
   /**
    * Flag, controlling if the C7 adapter is active.
@@ -90,20 +92,9 @@ class C7EmbeddedAdapterProperties(
    */
   enum class UserTaskDeliveryStrategy {
     /**
-     * Delivery by embedded Spring eventing.
-     */
-    EMBEDDED_EVENT,
-
-    /**
      * Delivery via scheduler.
      */
     EMBEDDED_SCHEDULED,
-
-    /**
-     * Delivery via event and scheduler.
-     */
-    EMBEDDED_EVENT_AND_SCHEDULED,
-
     /**
      * Custom delivery.
      */

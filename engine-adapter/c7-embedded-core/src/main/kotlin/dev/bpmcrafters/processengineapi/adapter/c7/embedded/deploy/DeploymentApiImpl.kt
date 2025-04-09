@@ -13,6 +13,9 @@ import java.util.concurrent.Future
 
 private val logger = KotlinLogging.logger {}
 
+/**
+ * Implementation for deployment API using repository service.
+ */
 class DeploymentApiImpl(
   private val repositoryService: RepositoryService
 ) : DeploymentApi {

@@ -5,6 +5,9 @@ import dev.bpmcrafters.processengineapi.MetaInfoAware
 import dev.bpmcrafters.processengineapi.impl.task.AbstractTaskSubscriptionApiImpl
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 
+/**
+ * C7 task subscription implementation.
+ */
 class C7TaskSubscriptionApiImpl(
   subscriptionRepository: SubscriptionRepository
 ) : AbstractTaskSubscriptionApiImpl(

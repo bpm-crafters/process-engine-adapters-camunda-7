@@ -12,6 +12,9 @@ import java.util.concurrent.Future
 
 private val logger = KotlinLogging.logger {}
 
+/**
+ * Implementation of a start proces sapi using runtime service.
+ */
 class StartProcessApiImpl(
   private val runtimeService: RuntimeService
 ) : StartProcessApi {

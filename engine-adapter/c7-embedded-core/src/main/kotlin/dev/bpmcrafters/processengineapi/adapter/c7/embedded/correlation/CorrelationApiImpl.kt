@@ -11,6 +11,9 @@ import java.util.concurrent.Future
 
 private val logger = KotlinLogging.logger {}
 
+/**
+ * Implementation of message correlation API using runtime service.
+ */
 class CorrelationApiImpl(
   private val runtimeService: RuntimeService,
 ) : CorrelationApi {

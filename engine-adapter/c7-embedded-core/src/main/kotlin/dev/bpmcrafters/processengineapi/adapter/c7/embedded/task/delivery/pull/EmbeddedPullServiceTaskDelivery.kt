@@ -6,6 +6,7 @@ import dev.bpmcrafters.processengineapi.impl.task.filterBySubscription
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.delivery.toTaskInformation
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import dev.bpmcrafters.processengineapi.impl.task.TaskSubscriptionHandle
+import dev.bpmcrafters.processengineapi.task.TaskInformation
 import dev.bpmcrafters.processengineapi.task.TaskType
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.camunda.bpm.engine.ExternalTaskService
@@ -38,7 +39,7 @@ class EmbeddedPullServiceTaskDelivery(
     val subscriptions = subscriptionRepository.getTaskSubscriptions().filter { s -> s.taskType == TaskType.EXTERNAL }
     if (subscriptions.isNotEmpty()) {
       logger.trace { "PROCESS-ENGINE-C7-EMBEDDED-030: pulling service tasks for subscriptions: $subscriptions" }
-      // TODO -> how many queries do we want? 1:1 subscriptions, or 1 query for all?
+      val deliveredTaskIds = subscriptionRepository.getDeliveredTaskIds(TaskType.EXTERNAL).toMutableList()
       externalTaskService
         .fetchAndLock(maxTasks, workerId)
         .forSubscriptions(subscriptions)
@@ -50,10 +51,16 @@ class EmbeddedPullServiceTaskDelivery(
             ?.let { activeSubscription ->
               executorService.submit {  // in another thread
                 try {
+                  if (deliveredTaskIds.contains(lockedTask.id) && subscriptionRepository.getActiveSubscriptionForTask(lockedTask.id) == activeSubscription) {
+                    // remove from already delivered
+                    deliveredTaskIds.remove(lockedTask.id)
+                  }
+                  // create task information and set up the reason
+                  val taskInformation = lockedTask.toTaskInformation().withReason(TaskInformation.CREATE)
                   subscriptionRepository.activateSubscriptionForTask(lockedTask.id, activeSubscription)
                   val variables = lockedTask.variables.filterBySubscription(activeSubscription)
                   logger.debug { "PROCESS-ENGINE-C7-EMBEDDED-031: delivering service task ${lockedTask.id}." }
-                  activeSubscription.action.accept(lockedTask.toTaskInformation(), variables)
+                  activeSubscription.action.accept(taskInformation, variables)
                   logger.debug { "PROCESS-ENGINE-C7-EMBEDDED-032: successfully delivered service task ${lockedTask.id}." }
                 } catch (e: Exception) {
                   val jobRetries: Int = lockedTask.retries ?: retries
@@ -65,6 +72,15 @@ class EmbeddedPullServiceTaskDelivery(
               }.get()
             }
         }
+      // now we removed all still existing task ids from the list of already delivered
+      // the remaining tasks doesn't exist in the engine, lets handle them
+      deliveredTaskIds.forEach { taskId ->
+        executorService.submit {
+          // deactivate active subscription and handle termination
+          subscriptionRepository.deactivateSubscriptionForTask(taskId)?.termination?.accept(TaskInformation(taskId, emptyMap()).withReason(TaskInformation.DELETE))
+        }
+      }
+
     } else {
       logger.trace { "PROCESS-ENGINE-C7-EMBEDDED-035: Pull external tasks disabled because of no active subscriptions" }
     }
@@ -76,7 +92,7 @@ class EmbeddedPullServiceTaskDelivery(
       .distinctBy { it.taskDescriptionKey  }
       .forEach { subscription ->
         this
-          .topic(subscription.taskDescriptionKey, lockDurationInSeconds * 1000)
+          .topic(subscription.taskDescriptionKey, lockDurationInSeconds * 1000) // convert to ms
           .enableCustomObjectDeserialization()
         // FIXME -> consider complex tenant filtering
       }
