@@ -7,6 +7,7 @@ import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.toTaskIn
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import dev.bpmcrafters.processengineapi.impl.task.TaskSubscriptionHandle
 import dev.bpmcrafters.processengineapi.impl.task.filterBySubscription
+import dev.bpmcrafters.processengineapi.task.TaskInformation
 import dev.bpmcrafters.processengineapi.task.TaskType
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.camunda.bpm.engine.RepositoryService
@@ -22,10 +23,10 @@ private val logger = KotlinLogging.logger {}
  * Uses internal Java API for pulling tasks.
  */
 class RemotePullUserTaskDelivery(
-    private val taskService: TaskService,
-    private val repositoryService: RepositoryService,
-    private val subscriptionRepository: SubscriptionRepository,
-    private val executorService: ExecutorService
+  private val taskService: TaskService,
+  private val repositoryService: RepositoryService,
+  private val subscriptionRepository: SubscriptionRepository,
+  private val executorService: ExecutorService
 ) : UserTaskDelivery, RefreshableDelivery {
 
   private val cachingProcessDefinitionKeyResolver = CachingProcessDefinitionKeyResolver(repositoryService)
@@ -35,7 +36,8 @@ class RemotePullUserTaskDelivery(
    */
   override fun refresh() {
     val subscriptions = subscriptionRepository.getTaskSubscriptions().filter { s -> s.taskType == TaskType.USER }
-    if(subscriptions.isNotEmpty()) {
+    if (subscriptions.isNotEmpty()) {
+      val deliveredTaskIds = subscriptionRepository.getDeliveredTaskIds(TaskType.USER).toMutableList()
       logger.trace { "PROCESS-ENGINE-C7-REMOTE-036: pulling user tasks for subscriptions: $subscriptions" }
       taskService
         .createTaskQuery()
@@ -48,16 +50,46 @@ class RemotePullUserTaskDelivery(
             ?.let { activeSubscription ->
               executorService.submit {  // in another thread
                 try {
+                  // create task information and set up the reason
+                  val taskInformation = task.toTaskInformation().withReason(
+                    if (deliveredTaskIds.contains(task.id) && subscriptionRepository.getActiveSubscriptionForTask(task.id) == activeSubscription) {
+                      // remove from already delivered
+                      deliveredTaskIds.remove(task.id)
+                      // task was already delivered to this subscription
+                      if (task.createTime != task.lastUpdated) {
+                        TaskInformation.UPDATE
+                        // FIXME -> detect assignment change
+                      } else {
+                        TaskInformation.CREATE
+                      }
+                    } else {
+                      // task is new for this subscription
+                      TaskInformation.CREATE
+                    }
+                  )
                   subscriptionRepository.activateSubscriptionForTask(task.id, activeSubscription)
                   val variables = taskService.getVariables(task.id).filterBySubscription(activeSubscription)
                   logger.debug { "PROCESS-ENGINE-C7-REMOTE-037: delivering user task ${task.id}." }
-                  activeSubscription.action.accept(task.toTaskInformation(), variables)
+                  activeSubscription.action.accept(taskInformation, variables)
                 } catch (e: Exception) {
                   logger.error { "PROCESS-ENGINE-C7-REMOTE-038: error delivering task ${task.id}: ${e.message}" }
                   subscriptionRepository.deactivateSubscriptionForTask(taskId = task.id)
                 }
               }.get()
             }
+        }
+        // now we removed all still existing task ids from the list of already delivered
+        // the remaining tasks doesn't exist in the engine, lets handle them
+        deliveredTaskIds.forEach { taskId ->
+          executorService.submit {
+            // deactivate active subscription and handle termination
+            subscriptionRepository.deactivateSubscriptionForTask(taskId)?.termination?.accept(
+              TaskInformation(
+                taskId = taskId,
+                meta = emptyMap()
+              ).withReason(TaskInformation.DELETE)
+            )
+          }
         }
     } else {
       logger.trace { "PROCESS-ENGINE-C7-REMOTE-039: pull user tasks disabled because of no active subscriptions" }

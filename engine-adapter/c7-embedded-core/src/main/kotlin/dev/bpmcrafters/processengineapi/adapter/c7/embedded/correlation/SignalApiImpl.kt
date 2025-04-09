@@ -14,6 +14,9 @@ import java.util.concurrent.Future
 
 private val logger = KotlinLogging.logger {}
 
+/**
+ * Implementation of Signal API using local runtime service.
+ */
 class SignalApiImpl(
   private val runtimeService: RuntimeService
 ) : SignalApi {
