@@ -7,6 +7,7 @@ import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.toTaskIn
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import dev.bpmcrafters.processengineapi.impl.task.TaskSubscriptionHandle
 import dev.bpmcrafters.processengineapi.impl.task.filterBySubscription
+import dev.bpmcrafters.processengineapi.task.TaskInformation
 import dev.bpmcrafters.processengineapi.task.TaskType
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.camunda.bpm.engine.ExternalTaskService
@@ -38,33 +39,59 @@ class RemotePullServiceTaskDelivery(
 
     val subscriptions = subscriptionRepository.getTaskSubscriptions().filter { s -> s.taskType == TaskType.EXTERNAL }
     if (subscriptions.isNotEmpty()) {
+      val deliveredTaskIds = subscriptionRepository.getDeliveredTaskIds(TaskType.EXTERNAL).toMutableList()
       logger.trace { "PROCESS-ENGINE-C7-REMOTE-030: pulling service tasks for subscriptions: $subscriptions" }
-      // TODO -> how many queries do we want? 1:1 subscriptions, or 1 query for all?
       externalTaskService
         .fetchAndLock(maxTasks, workerId)
         .forSubscriptions(subscriptions)
         .execute()
         .parallelStream()
-        .forEach { lockedTask ->
+        .map { lockedTask ->
           subscriptions
             .firstOrNull { subscription -> subscription.matches(lockedTask) }
             ?.let { activeSubscription ->
               executorService.submit {  // in another thread
                 try {
-                  subscriptionRepository.activateSubscriptionForTask(lockedTask.id, activeSubscription)
-                  val variables = lockedTask.variables.filterBySubscription(activeSubscription)
-                  logger.debug { "PROCESS-ENGINE-C7-REMOTE-031: delivering service task ${lockedTask.id}." }
-                  activeSubscription.action.accept(lockedTask.toTaskInformation(), variables)
-                  logger.debug { "PROCESS-ENGINE-C7-REMOTE-032: successfully delivered service task ${lockedTask.id}." }
+                  val taskInformation = if (deliveredTaskIds.contains(lockedTask.id) && subscriptionRepository.getActiveSubscriptionForTask(lockedTask.id) == activeSubscription) {
+                    null
+                  } else {
+                    // create task information and set up the reason
+                    lockedTask.toTaskInformation().withReason(TaskInformation.CREATE)
+                  }
+                  if (taskInformation != null) {
+                    subscriptionRepository.activateSubscriptionForTask(lockedTask.id, activeSubscription)
+                    val variables = lockedTask.variables.filterBySubscription(activeSubscription)
+                    logger.debug { "PROCESS-ENGINE-C7-REMOTE-031: delivering service task ${lockedTask.id}." }
+                    activeSubscription.action.accept(taskInformation, variables)
+                    logger.debug { "PROCESS-ENGINE-C7-REMOTE-032: successfully delivered service task ${lockedTask.id}." }
+                  } else {
+                    logger.trace { "PROCESS-ENGINE-C7-REMOTE-041: skipping task ${lockedTask.id} since it is unchanged." }
+                  }
+                  // remove from already delivered
+                  deliveredTaskIds.remove(lockedTask.id)
                 } catch (e: Exception) {
                   val jobRetries: Int = lockedTask.retries ?: retries
                   logger.error { "PROCESS-ENGINE-C7-REMOTE-033: failing delivering task ${lockedTask.id}: ${e.message}" }
                   externalTaskService.handleFailure(lockedTask.id, workerId, e.message, jobRetries - 1, retryTimeoutInSeconds * 1000)
                   logger.error { "PROCESS-ENGINE-C7-REMOTE-034: successfully failed delivering task ${lockedTask.id}: ${e.message}" }
                 }
-              }.get()
+              }
             }
+        }.forEach { taskExecutionFuture -> taskExecutionFuture.get() }
+      // now we removed all still existing task ids from the list of already delivered
+      // the remaining tasks doesn't exist in the engine, lets handle them
+      deliveredTaskIds.parallelStream().map { taskId ->
+        executorService.submit {
+          // deactivate active subscription and handle termination
+          subscriptionRepository.deactivateSubscriptionForTask(taskId)?.termination?.accept(
+            TaskInformation(
+              taskId = taskId,
+              meta = emptyMap()
+            ).withReason(TaskInformation.DELETE)
+          )
         }
+      }.forEach { taskTerminationFuture -> taskTerminationFuture.get() }
+
     } else {
       logger.trace { "PROCESS-ENGINE-C7-REMOTE-035: Pull external tasks disabled because of no active subscriptions" }
     }
@@ -75,16 +102,16 @@ class RemotePullServiceTaskDelivery(
       .mapNotNull { it.taskDescriptionKey }
       .distinct()
       .forEach { topic ->
-        this.topic(topic, lockDurationInSeconds * 1000) // lock
+        this.topic(topic, lockDurationInSeconds * 1000) // convert to ms
           .enableCustomObjectDeserialization()
           // FIXME -> consider complex tenant filtering
       }
     return this
   }
 
-  private fun TaskSubscriptionHandle.matches(task: LockedExternalTask): Boolean {
-    return this.taskType == TaskType.EXTERNAL
-      && (this.taskDescriptionKey == null || this.taskDescriptionKey == task.topicName)
+  private fun TaskSubscriptionHandle.matches(task: LockedExternalTask): Boolean =
+    (this.taskDescriptionKey == null
+      || this.taskDescriptionKey == task.topicName)
       && this.restrictions.all {
       when (it.key) {
         CommonRestrictions.EXECUTION_ID -> it.value == task.executionId
@@ -98,5 +125,5 @@ class RemotePullServiceTaskDelivery(
         else -> false
       }
     }
-  }
+
 }

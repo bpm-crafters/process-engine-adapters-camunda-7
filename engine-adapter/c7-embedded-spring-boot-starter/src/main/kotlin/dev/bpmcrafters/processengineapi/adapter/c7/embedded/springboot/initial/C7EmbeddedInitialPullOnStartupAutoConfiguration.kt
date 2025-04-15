@@ -1,9 +1,9 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot.initial
 
+import dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot.C7EmbeddedAdapterAutoConfiguration
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot.C7EmbeddedAdapterProperties
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot.C7EmbeddedAdapterServiceTaskInitialPullEnabledCondition
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot.C7EmbeddedAdapterUserTaskInitialPullEnabledCondition
-import dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot.event.C7EmbeddedEventDeliveryAutoConfiguration
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import io.github.oshai.kotlinlogging.KotlinLogging
 import jakarta.annotation.PostConstruct
@@ -26,7 +26,7 @@ private val logger = KotlinLogging.logger {}
  * and deliver tasks to the task handlers.
  */
 @Configuration
-@AutoConfigureAfter(C7EmbeddedEventDeliveryAutoConfiguration::class)
+@AutoConfigureAfter(C7EmbeddedAdapterAutoConfiguration::class)
 @EnableAsync
 class C7EmbeddedInitialPullOnStartupAutoConfiguration {
 

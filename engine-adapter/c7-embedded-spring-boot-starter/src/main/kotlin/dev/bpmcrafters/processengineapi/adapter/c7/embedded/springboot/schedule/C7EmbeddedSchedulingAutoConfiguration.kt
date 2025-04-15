@@ -1,12 +1,8 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot.schedule
 
-import dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot.C7EmbeddedAdapterEnabledCondition
-import dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot.C7EmbeddedAdapterProperties
+import dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot.*
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot.C7EmbeddedAdapterProperties.ExternalServiceTaskDeliveryStrategy.EMBEDDED_SCHEDULED
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot.C7EmbeddedAdapterProperties.UserTaskDeliveryStrategy
-import dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot.ConditionalOnServiceTaskDeliveryStrategy
-import dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot.ConditionalOnUserTaskDeliveryStrategy
-import dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot.event.C7EmbeddedEventDeliveryAutoConfiguration
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.delivery.pull.EmbeddedPullServiceTaskDelivery
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.delivery.pull.EmbeddedPullUserTaskDelivery
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
@@ -32,7 +28,7 @@ private val logger = KotlinLogging.logger {}
 @Configuration
 @EnableScheduling
 @EnableAsync
-@AutoConfigureAfter(C7EmbeddedEventDeliveryAutoConfiguration::class)
+@AutoConfigureAfter(C7EmbeddedAdapterAutoConfiguration::class)
 @Conditional(C7EmbeddedAdapterEnabledCondition::class)
 class C7EmbeddedSchedulingAutoConfiguration {
 
@@ -76,7 +72,7 @@ class C7EmbeddedSchedulingAutoConfiguration {
   @Bean("c7embedded-schedule-user-task-delivery")
   @Qualifier("c7embedded-schedule-user-task-delivery")
   @ConditionalOnUserTaskDeliveryStrategy(
-    strategies = [UserTaskDeliveryStrategy.EMBEDDED_SCHEDULED, UserTaskDeliveryStrategy.EMBEDDED_EVENT_AND_SCHEDULED]
+    strategies = [UserTaskDeliveryStrategy.EMBEDDED_SCHEDULED]
   )
   fun embeddedScheduledUserTaskDelivery(
       subscriptionRepository: SubscriptionRepository,

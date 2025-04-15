@@ -5,13 +5,13 @@
   <parent>
     <groupId>dev.bpm-crafters.maven.parent</groupId>
     <artifactId>maven-parent</artifactId>
-    <version>2025.04.1</version>
+    <version>2025.04.2</version>
     <relativePath/>
   </parent>
 
   <groupId>dev.bpm-crafters.process-engine-adapters</groupId>
   <artifactId>process-engine-adapter-camunda-platform-c7-root</artifactId>
-  <version>2025.04.1</version>
+  <version>2025.04.2</version>
   <name>POM: Camunda 7 Adapter Project root</name>
   <description>Process Engine Adapters Camunda 7</description>
   <url>https://github.com/bpm-crafters/process-engine-adapters-camunda-7/</url>
@@ -20,14 +20,14 @@
   <properties>
     <!-- COMMON GLOBAL -->
     <spring-boot.version>3.4.4</spring-boot.version>
-    <process-engine-api.version>1.0</process-engine-api.version>
+    <process-engine-api.version>1.1</process-engine-api.version>
     <!-- TEST -->
     <mockito.version>5.4.0</mockito.version>
     <assertj.version>3.27.3</assertj.version>
     <junit5.version>5.11.3</junit5.version>
     <jgiven.version>2.0.2</jgiven.version>
     <awaitility.version>4.3.0</awaitility.version>
-    <mockk.version>1.13.17</mockk.version>
+    <mockk.version>1.14.0</mockk.version>
   </properties>
 
   <modules>

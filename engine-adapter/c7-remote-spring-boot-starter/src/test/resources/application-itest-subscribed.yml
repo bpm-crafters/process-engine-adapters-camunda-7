@@ -18,19 +18,6 @@ dev:
             execute-initial-pull-on-startup: false
 
 
-feign:
-  client:
-    config:
-      default:
-        url: "http://localhost:38080/engine-rest/"
-        logger-level: BASIC
-
-camunda:
-  bpm:
-    client:
-      base-url: "http://localhost:38080/engine-rest/"
-
-
 logging:
   level:
     dev.bpmcrafters.processengineapi: INFO

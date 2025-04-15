@@ -86,7 +86,9 @@ class BaseGivenWhenStage : Stage<BaseGivenWhenStage>() {
 
 
   fun `a active external task subscription`(taskDescriptionKey: String) = step {
-    taskSubscription = subscribeTask(TaskType.EXTERNAL, taskDescriptionKey) { taskInformation, _ -> externalTaskId = taskInformation.taskId }
+    taskSubscription = subscribeTask(TaskType.EXTERNAL, taskDescriptionKey) { taskInformation, _ ->
+      externalTaskId = taskInformation.taskId
+    }
   }
 
   fun `complete the user task`() = step {
