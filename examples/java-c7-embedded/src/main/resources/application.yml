@@ -45,3 +45,4 @@ camunda:
 logging:
   level:
     dev.bpmcrafters.processengineapi: DEBUG
+    dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.delivery.pull.EmbeddedPullUserTaskDelivery: TRACE

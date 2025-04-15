@@ -46,35 +46,41 @@ class RemotePullServiceTaskDelivery(
         .forSubscriptions(subscriptions)
         .execute()
         .parallelStream()
-        .forEach { lockedTask ->
+        .map { lockedTask ->
           subscriptions
             .firstOrNull { subscription -> subscription.matches(lockedTask) }
             ?.let { activeSubscription ->
               executorService.submit {  // in another thread
                 try {
-                  if (deliveredTaskIds.contains(lockedTask.id) && subscriptionRepository.getActiveSubscriptionForTask(lockedTask.id) == activeSubscription) {
-                    // remove from already delivered
-                    deliveredTaskIds.remove(lockedTask.id)
+                  val taskInformation = if (deliveredTaskIds.contains(lockedTask.id) && subscriptionRepository.getActiveSubscriptionForTask(lockedTask.id) == activeSubscription) {
+                    null
+                  } else {
+                    // create task information and set up the reason
+                    lockedTask.toTaskInformation().withReason(TaskInformation.CREATE)
                   }
-                  // create task information and set up the reason
-                  val taskInformation = lockedTask.toTaskInformation().withReason(TaskInformation.CREATE)
-                  subscriptionRepository.activateSubscriptionForTask(lockedTask.id, activeSubscription)
-                  val variables = lockedTask.variables.filterBySubscription(activeSubscription)
-                  logger.debug { "PROCESS-ENGINE-C7-REMOTE-031: delivering service task ${lockedTask.id}." }
-                  activeSubscription.action.accept(taskInformation, variables)
-                  logger.debug { "PROCESS-ENGINE-C7-REMOTE-032: successfully delivered service task ${lockedTask.id}." }
+                  if (taskInformation != null) {
+                    subscriptionRepository.activateSubscriptionForTask(lockedTask.id, activeSubscription)
+                    val variables = lockedTask.variables.filterBySubscription(activeSubscription)
+                    logger.debug { "PROCESS-ENGINE-C7-REMOTE-031: delivering service task ${lockedTask.id}." }
+                    activeSubscription.action.accept(taskInformation, variables)
+                    logger.debug { "PROCESS-ENGINE-C7-REMOTE-032: successfully delivered service task ${lockedTask.id}." }
+                  } else {
+                    logger.trace { "PROCESS-ENGINE-C7-REMOTE-041: skipping task ${lockedTask.id} since it is unchanged." }
+                  }
+                  // remove from already delivered
+                  deliveredTaskIds.remove(lockedTask.id)
                 } catch (e: Exception) {
                   val jobRetries: Int = lockedTask.retries ?: retries
                   logger.error { "PROCESS-ENGINE-C7-REMOTE-033: failing delivering task ${lockedTask.id}: ${e.message}" }
                   externalTaskService.handleFailure(lockedTask.id, workerId, e.message, jobRetries - 1, retryTimeoutInSeconds * 1000)
                   logger.error { "PROCESS-ENGINE-C7-REMOTE-034: successfully failed delivering task ${lockedTask.id}: ${e.message}" }
                 }
-              }.get()
+              }
             }
-        }
+        }.forEach { taskExecutionFuture -> taskExecutionFuture.get() }
       // now we removed all still existing task ids from the list of already delivered
       // the remaining tasks doesn't exist in the engine, lets handle them
-      deliveredTaskIds.forEach { taskId ->
+      deliveredTaskIds.parallelStream().map { taskId ->
         executorService.submit {
           // deactivate active subscription and handle termination
           subscriptionRepository.deactivateSubscriptionForTask(taskId)?.termination?.accept(
@@ -84,7 +90,7 @@ class RemotePullServiceTaskDelivery(
             ).withReason(TaskInformation.DELETE)
           )
         }
-      }
+      }.forEach { taskTerminationFuture -> taskTerminationFuture.get() }
 
     } else {
       logger.trace { "PROCESS-ENGINE-C7-REMOTE-035: Pull external tasks disabled because of no active subscriptions" }
