@@ -34,7 +34,7 @@ fun LockedExternalTask.toTaskInformation(): TaskInformation =
       CommonRestrictions.PROCESS_INSTANCE_ID to this.processInstanceId,
       CommonRestrictions.TENANT_ID to this.tenantId,
       "topicName" to this.topicName,
-      "creationDate" to this.createTime.toDateString(), // FIXME -> to zoned iso 8601
+      "creationTime" to "" // creation time is not supported via REST
     )
   )
 
