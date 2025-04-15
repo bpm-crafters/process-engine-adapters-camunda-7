@@ -23,7 +23,7 @@ private val logger = KotlinLogging.logger {}
 @EnableScheduling
 @Configuration
 @ConditionalOnUserTaskDeliveryStrategy(
-  strategies = [ UserTaskDeliveryStrategy.EMBEDDED_SCHEDULED, UserTaskDeliveryStrategy.EMBEDDED_EVENT_AND_SCHEDULED ]
+  strategies = [ UserTaskDeliveryStrategy.EMBEDDED_SCHEDULED ]
 )
 @AutoConfigureAfter(C7EmbeddedSchedulingAutoConfiguration::class)
 class C7EmbeddedUserTaskPullStrategyAutoConfiguration(
