@@ -5,13 +5,13 @@
   <parent>
     <groupId>dev.bpm-crafters.maven.parent</groupId>
     <artifactId>maven-parent</artifactId>
-    <version>2025.04.2</version>
+    <version>2025.04.3</version>
     <relativePath/>
   </parent>
 
   <groupId>dev.bpm-crafters.process-engine-adapters</groupId>
   <artifactId>process-engine-adapter-camunda-platform-c7-root</artifactId>
-  <version>2025.04.2</version>
+  <version>2025.04.3</version>
   <name>POM: Camunda 7 Adapter Project root</name>
   <description>Process Engine Adapters Camunda 7</description>
   <url>https://github.com/bpm-crafters/process-engine-adapters-camunda-7/</url>
