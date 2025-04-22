@@ -37,12 +37,12 @@ If you want to start usage, please add the BOM to your Maven project and add cor
 
 ## Compatibility
 
-| API Version | Camunda 7 Version | Adapter-7 Version |
-|-------------|-------------------|-------------------|
-| 1.1         | 7.22              | 2025.04.4         |
-| 1.1         | 7.22              | 2025.04.3         |
-| 1.0         | 7.22              | 2025.04.2         |
-| 1.0         | 7.22              | 2025.04.1         |
+| Adapter-7 Version | Camunda 7 Version | API Version |
+|-------------------|-------------------|-------------|
+| 2025.04.4         | 7.22              | 1.1         |
+| 2025.04.3         | 7.22              | 1.1         |
+| 2025.04.2         | 7.22              | 1.0         |
+| 2025.04.1         | 7.22              | 1.0         |
 
 
 
