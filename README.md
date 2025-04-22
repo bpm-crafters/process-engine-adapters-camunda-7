@@ -35,4 +35,14 @@ If you want to start usage, please add the BOM to your Maven project and add cor
 </dependency>
 ```
 
+## Compatibility
+
+| API Version | Camunda 7 Version | Adapter-7 Version |
+|-------------|-------------------|-------------------|
+| 1.1         | 7.22              | 2025.04.4         |
+| 1.1         | 7.22              | 2025.04.3         |
+| 1.0         | 7.22              | 2025.04.2         |
+| 1.0         | 7.22              | 2025.04.1         |
+
+
 
