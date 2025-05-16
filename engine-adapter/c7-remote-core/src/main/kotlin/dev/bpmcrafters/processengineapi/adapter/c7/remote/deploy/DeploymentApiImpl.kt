@@ -8,6 +8,7 @@ import dev.bpmcrafters.processengineapi.deploy.DeploymentInformation
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.camunda.bpm.engine.RepositoryService
 import org.camunda.bpm.engine.repository.Deployment
+import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Future
 
@@ -25,11 +26,13 @@ class DeploymentApiImpl(
         .createDeployment()
         .apply {
           cmd.resources.forEach { resource -> this.addInputStream(resource.name, resource.resourceStream) }
-        }
-        .apply {
+
           if (cmd.tenantId != null) {
             this.tenantId(cmd.tenantId)
           }
+
+          enableDuplicateFiltering(true)
+          name(UUID.randomUUID().toString()) // name required for duplicate filtering
         }
         .deploy()
         .toDeploymentInformation()
