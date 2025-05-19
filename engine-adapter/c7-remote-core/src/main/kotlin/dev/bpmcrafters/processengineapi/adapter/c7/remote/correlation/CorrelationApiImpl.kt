@@ -6,25 +6,30 @@ import dev.bpmcrafters.processengineapi.MetaInfoAware
 import dev.bpmcrafters.processengineapi.correlation.CorrelateMessageCmd
 import dev.bpmcrafters.processengineapi.correlation.CorrelationApi
 import io.github.oshai.kotlinlogging.KotlinLogging
-import org.camunda.bpm.engine.RuntimeService
+import org.camunda.community.rest.client.api.MessageApiClient
+import org.camunda.community.rest.client.model.CorrelationMessageDto
+import org.camunda.community.rest.client.model.VariableValueDto
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Future
 
 private val logger = KotlinLogging.logger {}
 
 class CorrelationApiImpl(
-  private val runtimeService: RuntimeService
+  private val messageApiClient: MessageApiClient
 ) : CorrelationApi {
 
   override fun correlateMessage(cmd: CorrelateMessageCmd): Future<Empty> {
     return CompletableFuture.supplyAsync {
       val correlation = cmd.correlation.get()
       logger.debug { "PROCESS-ENGINE-C7-REMOTE-001: Correlating message ${cmd.messageName} using local variable ${correlation.correlationVariable} with value ${correlation.correlationKey}" }
-      runtimeService
-        .createMessageCorrelation(cmd.messageName)
-        .localVariableEquals(correlation.correlationVariable, correlation.correlationKey)
-        .setVariables(cmd.payloadSupplier.get())
-        .correlate()
+      messageApiClient.deliverMessage(
+        CorrelationMessageDto()
+          .messageName(cmd.messageName)
+          .localCorrelationKeys(mapOf(correlation.correlationVariable to VariableValueDto().value(correlation.correlationKey)))
+          .processVariables(cmd.payloadSupplier.get().mapValues { VariableValueDto().value(it.value) })
+          .all(true)
+          .resultEnabled(true)
+      )
       Empty
     }
   }

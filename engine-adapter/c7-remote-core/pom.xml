@@ -43,10 +43,10 @@
       <artifactId>camunda-external-task-client</artifactId>
       <optional>true</optional>
     </dependency>
-    <!-- Use embedded-like integration if the appropriate client is in place -->
     <dependency>
-      <groupId>org.camunda.bpm</groupId>
-      <artifactId>camunda-engine</artifactId>
+      <groupId>org.camunda.community.rest</groupId>
+      <artifactId>camunda-platform-7-rest-client-spring-boot-openapi</artifactId>
+      <version>7.23.0</version>
       <scope>provided</scope>
     </dependency>
     <!-- Testing -->
@@ -54,17 +54,6 @@
       <groupId>dev.bpm-crafters.process-engine-adapters</groupId>
       <artifactId>process-engine-adapter-camunda-platform-c7-testing</artifactId>
       <version>${project.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.camunda.bpm</groupId>
-      <artifactId>camunda-bpm-junit5</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.camunda.community.mockito</groupId>
-      <artifactId>camunda-platform-7-mockito</artifactId>
-      <version>7.23.2</version>
       <scope>test</scope>
     </dependency>
 
