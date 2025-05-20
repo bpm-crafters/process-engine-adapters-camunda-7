@@ -32,7 +32,7 @@ class DeploymentApiImpl(
           }
 
           enableDuplicateFiltering(true)
-          name(UUID.randomUUID().toString()) // name required for duplicate filtering
+          name("ProcessEngineApiRemote")
         }
         .deploy()
         .toDeploymentInformation()

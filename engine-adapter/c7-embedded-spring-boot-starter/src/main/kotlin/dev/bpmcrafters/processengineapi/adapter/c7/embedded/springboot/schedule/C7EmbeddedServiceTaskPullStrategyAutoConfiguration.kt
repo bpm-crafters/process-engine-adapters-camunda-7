@@ -35,7 +35,7 @@ class C7EmbeddedServiceTaskPullStrategyAutoConfiguration(
 
   override fun configureTasks(taskRegistrar: ScheduledTaskRegistrar) {
     taskRegistrar.setScheduler(c7taskScheduler)
-    taskRegistrar.addFixedRateTask(
+    taskRegistrar.addFixedDelayTask(
       {
         logger.trace { "PROCESS-ENGINE-C7-EMBEDDED-105: Delivering external tasks..." }
         embeddedPullServiceTaskDelivery.refresh()
