@@ -4,9 +4,9 @@ import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.C7RemoteAda
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.C7RemoteAdapterProperties
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.C7RemoteAdapterProperties.ExternalServiceTaskDeliveryStrategy.REMOTE_SUBSCRIBED
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.ConditionalOnServiceTaskDeliveryStrategy
-import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.completion.C7RemoteClientServiceTaskCompletionApiImpl
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.completion.OfficialClientServiceTaskCompletionApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.completion.FailureRetrySupplier
-import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.subscribe.SubscribingClientServiceTaskDelivery
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.subscribe.SubscribingServiceTaskDelivery
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import dev.bpmcrafters.processengineapi.task.ServiceTaskCompletionApi
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -30,7 +30,7 @@ private val logger = KotlinLogging.logger {}
 @ConditionalOnServiceTaskDeliveryStrategy(
   strategy = REMOTE_SUBSCRIBED
 )
-class C7RemoteClientServiceTaskAutoConfiguration {
+class OfficialClientServiceTaskAutoConfiguration {
 
   @PostConstruct
   fun report() {
@@ -48,7 +48,7 @@ class C7RemoteClientServiceTaskAutoConfiguration {
       subscriptionRepository: SubscriptionRepository,
       externalTaskClient: ExternalTaskClient,
       c7AdapterProperties: C7RemoteAdapterProperties
-  ) = SubscribingClientServiceTaskDelivery(
+  ) = SubscribingServiceTaskDelivery(
     subscriptionRepository = subscriptionRepository,
     lockDurationInSeconds = c7AdapterProperties.serviceTasks.lockTimeInSeconds,
     externalTaskClient = externalTaskClient,
@@ -64,7 +64,7 @@ class C7RemoteClientServiceTaskAutoConfiguration {
       @Qualifier("c7remote-failure-retry-supplier")
     failureRetrySupplier: FailureRetrySupplier
   ): ServiceTaskCompletionApi =
-    C7RemoteClientServiceTaskCompletionApiImpl(
+    OfficialClientServiceTaskCompletionApiImpl(
       externalTaskService = externalTaskService,
       subscriptionRepository = subscriptionRepository,
       failureRetrySupplier = failureRetrySupplier

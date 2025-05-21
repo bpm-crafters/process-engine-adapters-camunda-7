@@ -1,108 +1,125 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.remote.process
 
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import dev.bpmcrafters.processengineapi.CommonRestrictions
 import dev.bpmcrafters.processengineapi.process.StartProcessByDefinitionCmd
 import dev.bpmcrafters.processengineapi.process.StartProcessByMessageCmd
-import org.camunda.bpm.engine.RuntimeService
-import org.camunda.bpm.engine.runtime.MessageCorrelationBuilder
-import org.camunda.bpm.engine.runtime.ProcessInstance
-import org.camunda.community.mockito.process.ProcessInstanceFake
+import org.assertj.core.api.Assertions.assertThat
+import org.camunda.community.rest.client.api.MessageApiClient
+import org.camunda.community.rest.client.api.ProcessDefinitionApiClient
+import org.camunda.community.rest.client.model.*
+import org.camunda.community.rest.variables.SpinValueMapper
+import org.camunda.community.rest.variables.ValueMapper
+import org.camunda.community.rest.variables.ValueTypeResolverImpl
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.InjectMocks
 import org.mockito.Mock
 import org.mockito.Mockito.*
+import org.mockito.Spy
 import org.mockito.junit.jupiter.MockitoExtension
-import org.mockito.kotlin.anyOrNull
 import org.mockito.kotlin.whenever
+import org.springframework.http.ResponseEntity
 
 @ExtendWith(MockitoExtension::class)
 class StartProcessApiImplTest {
 
- @Mock
- private lateinit var runtimeService: RuntimeService
+  @Spy
+  private val valueMapper: ValueMapper = ValueMapper(
+    objectMapper = jacksonObjectMapper(),
+    valueTypeResolver = ValueTypeResolverImpl(),
+    customValueMapper = listOf(SpinValueMapper(ValueTypeResolverImpl()))
+  )
 
- @InjectMocks
- private lateinit var startProcessApi: StartProcessApiImpl
+  @Mock
+  private lateinit var processDefinitionApiClient: ProcessDefinitionApiClient
 
- @Test
- fun `should start process via definition without payload`() {
-  // given
-  val startProcessByDefinitionCmd = StartProcessByDefinitionCmd("definitionKey") { emptyMap() }
-  val processInstance: ProcessInstance = ProcessInstanceFake.builder().id("someId").build()
-  `when`(runtimeService.startProcessInstanceByKey(anyString(), anyMap())).thenReturn(processInstance)
+  @Mock
+  private lateinit var messageApiClient: MessageApiClient
 
-  // when
-  startProcessApi.startProcess(startProcessByDefinitionCmd).get()
+  @InjectMocks
+  private lateinit var startProcessApi: StartProcessApiImpl
 
-  // then
-  verify(runtimeService).startProcessInstanceByKey("definitionKey", emptyMap())
- }
+  @Test
+  fun `should start process via definition without payload`() {
+    // given
+    val startProcessByDefinitionCmd = StartProcessByDefinitionCmd("definitionKey") { emptyMap() }
+    val processInstance: ProcessInstanceWithVariablesDto = ProcessInstanceWithVariablesDto().apply {
+      this.id = "someId"
+    }
+    whenever(processDefinitionApiClient.startProcessInstanceByKey(anyString(), any())).thenReturn(ResponseEntity.ok(processInstance))
 
- @Test
- fun `should start process via definition with payload and business key`() {
-  // given
-  val processInstance: ProcessInstance = ProcessInstanceFake.builder().id("someId").build()
-  `when`(runtimeService.startProcessInstanceByKey(anyString(), anyOrNull(), anyMap())).thenReturn(processInstance)
-  val startProcessByDefinitionCmd = StartProcessByDefinitionCmd("definitionKey") {
-   mapOf(
-    "key" to "value",
-    CommonRestrictions.BUSINESS_KEY to "businessKey"
-   )
+    // when
+    startProcessApi.startProcess(startProcessByDefinitionCmd).get()
+
+    // then
+    verify(processDefinitionApiClient).startProcessInstanceByKey("definitionKey", StartProcessInstanceDto().variables(mapOf()))
   }
 
-  // when
-  startProcessApi.startProcess(startProcessByDefinitionCmd).get()
+  @Test
+  fun `should start process via definition with payload and business key`() {
+    // given
+    val processInstance: ProcessInstanceWithVariablesDto = ProcessInstanceWithVariablesDto().apply {
+      this.id = "someId"
+    }
+    whenever(processDefinitionApiClient.startProcessInstanceByKey(anyString(), any())).thenReturn(ResponseEntity.ok(processInstance))
 
-  // then
-  verify(runtimeService).startProcessInstanceByKey(
-   "definitionKey", "businessKey", mapOf(
-    "key" to "value",
-    CommonRestrictions.BUSINESS_KEY to "businessKey"
-   )
-  )
- }
+    val startProcessByDefinitionCmd = StartProcessByDefinitionCmd("definitionKey") {
+      mapOf(
+        "key" to "value",
+        CommonRestrictions.BUSINESS_KEY to "businessKey"
+      )
+    }
 
- @Test
- fun `should start process via message with business key`() {
-  // given
-  val payload = mapOf(CommonRestrictions.BUSINESS_KEY to "testBusinessKey", "key" to "value")
-  val startProcessByMessageCmd = StartProcessByMessageCmd("testMessage") { payload }
-  val correlationBuilder = messageCorrelationMock()
-  `when`(runtimeService.createMessageCorrelation(any())).thenReturn(correlationBuilder)
+    // when
+    startProcessApi.startProcess(startProcessByDefinitionCmd).get()
 
-  // When
-  startProcessApi.startProcess(startProcessByMessageCmd).get()
+    // then
+    verify(processDefinitionApiClient).startProcessInstanceByKey(
+      "definitionKey", StartProcessInstanceDto().apply {
+        this.businessKey = "businessKey"
+        this.variables = valueMapper.mapValues(
+          mapOf(
+            "key" to "value",
+            CommonRestrictions.BUSINESS_KEY to "businessKey"
+          )
+        )
+      }
+    )
+  }
 
-  // Then
-  verify(runtimeService).createMessageCorrelation("testMessage")
-  verify(correlationBuilder).processInstanceBusinessKey("testBusinessKey")
-  verify(correlationBuilder).setVariables(mapOf(CommonRestrictions.BUSINESS_KEY to "testBusinessKey", "key" to "value"))
- }
+  @Test
+  fun `should start process via message with business key`() {
+    // given
+    val payload = mapOf(CommonRestrictions.BUSINESS_KEY to "testBusinessKey", "key" to "value")
+    val startProcessByMessageCmd = StartProcessByMessageCmd("testMessage") { payload }
+    val message = MessageCorrelationResultWithVariableDto().processInstance(
+      ProcessInstanceDto()
+        .id("instance-id")
+        .businessKey("testBusinessKey")
+        .definitionKey("testDefinitionKey")
+        .definitionId("testDefinitionId")
+        .tenantId("tenantId")
+    )
 
- @Test
- fun `should start process via message with payload`() {
-  // given
-  val payload = mapOf("key" to "value")
-  val startProcessByMessageCmd = StartProcessByMessageCmd("testMessage") { payload }
-  val correlationBuilder = messageCorrelationMock()
-  `when`(runtimeService.createMessageCorrelation(any())).thenReturn(correlationBuilder)
+    whenever(messageApiClient.deliverMessage(any())).thenReturn(ResponseEntity.ok(listOf(message)))
 
-  // When
-  startProcessApi.startProcess(startProcessByMessageCmd).get()
+    // When
+    val info = startProcessApi.startProcess(startProcessByMessageCmd).get()
 
-  // Then
-  verify(runtimeService).createMessageCorrelation("testMessage")
-  verify(correlationBuilder).setVariables(mapOf("key" to "value"))
-  verify(correlationBuilder, times(0)).processInstanceBusinessKey(any())
- }
+    // Then
+    assertThat(info.instanceId).isEqualTo("instance-id")
+    assertThat(info.meta[CommonRestrictions.BUSINESS_KEY]).isEqualTo("testBusinessKey")
+    assertThat(info.meta[CommonRestrictions.PROCESS_DEFINITION_KEY]).isEqualTo("testDefinitionKey")
+    assertThat(info.meta[CommonRestrictions.PROCESS_DEFINITION_ID]).isEqualTo("testDefinitionId")
+    assertThat(info.meta[CommonRestrictions.TENANT_ID]).isEqualTo("tenantId")
+    verify(messageApiClient).deliverMessage(
+      CorrelationMessageDto()
+        .messageName("testMessage")
+        .businessKey("testBusinessKey")
+        .processVariables(valueMapper.mapValues(payload))
+        .resultEnabled(true)
+    )
+  }
 
- private fun messageCorrelationMock(): MessageCorrelationBuilder {
-  val builder: MessageCorrelationBuilder = mock()
-  lenient().whenever(builder.processInstanceBusinessKey(any())).thenReturn(builder)
-  whenever(builder.setVariables(anyMap())).thenReturn(builder)
-  whenever(builder.correlateStartMessage()).thenReturn(ProcessInstanceFake.builder().id("someId").build())
-
-  return builder
- }
 }

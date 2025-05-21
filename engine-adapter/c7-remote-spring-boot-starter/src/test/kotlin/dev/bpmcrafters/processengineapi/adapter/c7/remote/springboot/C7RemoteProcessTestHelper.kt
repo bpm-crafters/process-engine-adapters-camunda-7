@@ -4,7 +4,7 @@ import dev.bpmcrafters.processengineapi.adapter.c7.remote.process.toProcessInfor
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.ServiceTaskDelivery
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.UserTaskDelivery
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.RefreshableDelivery
-import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.subscribe.SubscribingClientServiceTaskDelivery
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.subscribe.SubscribingServiceTaskDelivery
 import dev.bpmcrafters.processengineapi.impl.task.InMemSubscriptionRepository
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import dev.bpmcrafters.processengineapi.process.ProcessInformation
@@ -13,7 +13,6 @@ import dev.bpmcrafters.processengineapi.task.ServiceTaskCompletionApi
 import dev.bpmcrafters.processengineapi.task.TaskSubscriptionApi
 import dev.bpmcrafters.processengineapi.task.UserTaskCompletionApi
 import dev.bpmcrafters.processengineapi.test.ProcessTestHelper
-import org.awaitility.Awaitility.await
 import org.camunda.bpm.engine.RuntimeService
 
 class C7RemoteProcessTestHelper(
@@ -39,7 +38,7 @@ class C7RemoteProcessTestHelper(
   }
 
   override fun triggerExternalTaskDeliveryManually() {
-    if (serviceTaskDelivery is SubscribingClientServiceTaskDelivery) {
+    if (serviceTaskDelivery is SubscribingServiceTaskDelivery) {
       serviceTaskDelivery.subscribe()
     } else if (serviceTaskDelivery is RefreshableDelivery) {
       serviceTaskDelivery.refresh()
@@ -55,7 +54,7 @@ class C7RemoteProcessTestHelper(
 
   override fun clearAllSubscriptions() {
     (subscriptionRepository as InMemSubscriptionRepository).deleteAllTaskSubscriptions()
-    if (serviceTaskDelivery is SubscribingClientServiceTaskDelivery) {
+    if (serviceTaskDelivery is SubscribingServiceTaskDelivery) {
 
       serviceTaskDelivery.unsubscribe()
     }

@@ -2,7 +2,7 @@ package dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.initial
 
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.C7RemoteAdapterProperties
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.initial.C7RemoteInitialPullServiceTasksDeliveryBinding.Companion.ORDER
-import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.RemotePullServiceTaskDelivery
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.PullServiceTaskDelivery
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.camunda.bpm.engine.ExternalTaskService
@@ -32,7 +32,7 @@ open class C7RemoteInitialPullServiceTasksDeliveryBinding(
   }
 
 
-  private val pullDelivery = RemotePullServiceTaskDelivery(
+  private val pullDelivery = PullServiceTaskDelivery(
     subscriptionRepository = subscriptionRepository,
     externalTaskService = externalTaskService,
     workerId = c7AdapterProperties.serviceTasks.workerId,

@@ -12,19 +12,6 @@
   <artifactId>process-engine-adapter-camunda-platform-c7-remote-core</artifactId>
   <name>Adapter: C7 Remote Core</name>
 
-  <dependencyManagement>
-    <dependencies>
-      <!-- https://mvnrepository.com/artifact/org.camunda.bpm/camunda-bom -->
-      <dependency>
-        <groupId>org.camunda.bpm</groupId>
-        <artifactId>camunda-bom</artifactId>
-        <version>7.23.0</version>
-        <scope>import</scope>
-        <type>pom</type>
-      </dependency>
-    </dependencies>
-  </dependencyManagement>
-
   <dependencies>
     <dependency>
       <groupId>dev.bpm-crafters.process-engine-api</groupId>
@@ -41,14 +28,34 @@
     <dependency>
       <groupId>org.camunda.bpm</groupId>
       <artifactId>camunda-external-task-client</artifactId>
+      <version>7.23.0</version>
       <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>org.camunda.community.rest</groupId>
       <artifactId>camunda-platform-7-rest-client-spring-boot-openapi</artifactId>
+      <version>${camunda-platform-7-rest-client.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.camunda.community.rest</groupId>
+      <artifactId>camunda-platform-7-rest-client-variables</artifactId>
+      <version>${camunda-platform-7-rest-client.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-web</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.camunda.bpm</groupId>
+      <artifactId>camunda-engine-plugin-spin</artifactId>
       <version>7.23.0</version>
       <scope>provided</scope>
     </dependency>
+
+
     <!-- Testing -->
     <dependency>
       <groupId>dev.bpm-crafters.process-engine-adapters</groupId>

@@ -7,7 +7,10 @@ import dev.bpmcrafters.processengineapi.task.CompleteTaskCmd
 import dev.bpmcrafters.processengineapi.task.TaskInformation
 import dev.bpmcrafters.processengineapi.task.UserTaskCompletionApi
 import io.github.oshai.kotlinlogging.KotlinLogging
-import org.camunda.bpm.engine.TaskService
+import org.camunda.community.rest.client.api.TaskApiClient
+import org.camunda.community.rest.client.model.CompleteTaskDto
+import org.camunda.community.rest.client.model.TaskBpmnErrorDto
+import org.camunda.community.rest.variables.ValueMapper
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Future
 
@@ -16,16 +19,19 @@ private val logger = KotlinLogging.logger {}
 /**
  * Strategy for completing user tasks using Camunda taskService Java API.
  */
-class C7RemoteServiceUserTaskCompletionApiImpl(
-  private val taskService: TaskService,
-  private val subscriptionRepository: SubscriptionRepository
+class UserTaskCompletionApiImpl(
+  private val taskApiClient: TaskApiClient,
+  private val subscriptionRepository: SubscriptionRepository,
+  private val valueMapper: ValueMapper
 ) : UserTaskCompletionApi {
 
   override fun completeTask(cmd: CompleteTaskCmd): Future<Empty> {
     logger.debug { "PROCESS-ENGINE-C7-REMOTE-011: completing user task ${cmd.taskId}." }
-    taskService.complete(
+    taskApiClient.complete(
       cmd.taskId,
-      cmd.get()
+      CompleteTaskDto().apply {
+        this.variables = valueMapper.mapValues(cmd.get())
+      }
     )
     subscriptionRepository.deactivateSubscriptionForTask(cmd.taskId)?.apply {
       termination.accept(TaskInformation(cmd.taskId, emptyMap()).withReason(TaskInformation.COMPLETE))
@@ -36,9 +42,13 @@ class C7RemoteServiceUserTaskCompletionApiImpl(
 
   override fun completeTaskByError(cmd: CompleteTaskByErrorCmd): Future<Empty> {
     logger.debug { "PROCESS-ENGINE-C7-REMOTE-013: throwing error on user task ${cmd.taskId}." }
-    taskService.handleBpmnError(
+    taskApiClient.handleBpmnError(
       cmd.taskId,
-      cmd.errorCode
+      TaskBpmnErrorDto().apply {
+        this.errorCode = cmd.errorCode
+        this.errorMessage = cmd.errorMessage
+        this.variables = valueMapper.mapValues(cmd.get())
+      }
     )
     subscriptionRepository.deactivateSubscriptionForTask(cmd.taskId)?.apply {
       termination.accept(TaskInformation(cmd.taskId, emptyMap()).withReason(TaskInformation.COMPLETE))

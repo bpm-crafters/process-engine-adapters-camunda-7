@@ -10,9 +10,12 @@ import dev.bpmcrafters.processengineapi.impl.task.filterBySubscription
 import dev.bpmcrafters.processengineapi.task.TaskInformation
 import dev.bpmcrafters.processengineapi.task.TaskType
 import io.github.oshai.kotlinlogging.KotlinLogging
-import org.camunda.bpm.engine.ExternalTaskService
-import org.camunda.bpm.engine.externaltask.ExternalTaskQueryBuilder
-import org.camunda.bpm.engine.externaltask.LockedExternalTask
+import org.camunda.community.rest.client.api.ExternalTaskApiClient
+import org.camunda.community.rest.client.model.ExternalTaskFailureDto
+import org.camunda.community.rest.client.model.FetchExternalTaskTopicDto
+import org.camunda.community.rest.client.model.FetchExternalTasksDto
+import org.camunda.community.rest.client.model.LockedExternalTaskDto
+import org.camunda.community.rest.variables.ValueMapper
 import java.util.concurrent.ExecutorService
 
 private val logger = KotlinLogging.logger {}
@@ -21,15 +24,16 @@ private val logger = KotlinLogging.logger {}
  * Delivers external tasks to subscriptions.
  * This implementation uses internal Java API and pulls tasks for delivery.
  */
-class RemotePullServiceTaskDelivery(
-    private val externalTaskService: ExternalTaskService,
-    private val workerId: String,
-    private val subscriptionRepository: SubscriptionRepository,
-    private val maxTasks: Int,
-    private val lockDurationInSeconds: Long,
-    private val retryTimeoutInSeconds: Long,
-    private val retries: Int,
-    private val executorService: ExecutorService
+class PullServiceTaskDelivery(
+  private val externalTaskApiClient: ExternalTaskApiClient,
+  private val workerId: String,
+  private val subscriptionRepository: SubscriptionRepository,
+  private val maxTasks: Int,
+  private val lockDurationInSeconds: Long,
+  private val retryTimeoutInSeconds: Long,
+  private val retries: Int,
+  private val executorService: ExecutorService,
+  private val valueMapper: ValueMapper
 ) : ServiceTaskDelivery, RefreshableDelivery {
 
   /**
@@ -41,10 +45,15 @@ class RemotePullServiceTaskDelivery(
     if (subscriptions.isNotEmpty()) {
       val deliveredTaskIds = subscriptionRepository.getDeliveredTaskIds(TaskType.EXTERNAL).toMutableList()
       logger.trace { "PROCESS-ENGINE-C7-REMOTE-030: pulling service tasks for subscriptions: $subscriptions" }
-      externalTaskService
-        .fetchAndLock(maxTasks, workerId)
-        .forSubscriptions(subscriptions)
-        .execute()
+      val result = externalTaskApiClient
+        .fetchAndLock(
+          FetchExternalTasksDto(workerId, maxTasks)
+            .forSubscriptions(subscriptions)
+        )
+      val lockedExternalTaskDtoList =
+        requireNotNull(result.body) { "Could not subscribe to external tasks: $subscriptions, status code was ${result.statusCode}" }
+
+      lockedExternalTaskDtoList
         .parallelStream()
         .map { lockedTask ->
           subscriptions
@@ -52,12 +61,13 @@ class RemotePullServiceTaskDelivery(
             ?.let { activeSubscription ->
               executorService.submit {  // in another thread
                 try {
-                  val taskInformation = if (deliveredTaskIds.contains(lockedTask.id) && subscriptionRepository.getActiveSubscriptionForTask(lockedTask.id) == activeSubscription) {
-                    null
-                  } else {
-                    // create task information and set up the reason
-                    lockedTask.toTaskInformation().withReason(TaskInformation.CREATE)
-                  }
+                  val taskInformation =
+                    if (deliveredTaskIds.contains(lockedTask.id) && subscriptionRepository.getActiveSubscriptionForTask(lockedTask.id) == activeSubscription) {
+                      null
+                    } else {
+                      // create task information and set up the reason
+                      lockedTask.toTaskInformation().withReason(TaskInformation.CREATE)
+                    }
                   if (taskInformation != null) {
                     subscriptionRepository.activateSubscriptionForTask(lockedTask.id, activeSubscription)
                     val variables = lockedTask.variables.filterBySubscription(activeSubscription)
@@ -72,7 +82,16 @@ class RemotePullServiceTaskDelivery(
                 } catch (e: Exception) {
                   val jobRetries: Int = lockedTask.retries ?: retries
                   logger.error { "PROCESS-ENGINE-C7-REMOTE-033: failing delivering task ${lockedTask.id}: ${e.message}" }
-                  externalTaskService.handleFailure(lockedTask.id, workerId, e.message, jobRetries - 1, retryTimeoutInSeconds * 1000)
+                  externalTaskApiClient.handleFailure(
+                    lockedTask.id,
+                    ExternalTaskFailureDto().apply {
+                      this.workerId = this@PullServiceTaskDelivery.workerId
+                      this.retries = jobRetries - 1
+                      this.retryTimeout = retryTimeoutInSeconds * 1000 // from seconds to millis
+                      this.errorDetails = e.stackTraceToString()
+                      this.errorMessage = e.message
+                    }
+                  )
                   logger.error { "PROCESS-ENGINE-C7-REMOTE-034: successfully failed delivering task ${lockedTask.id}: ${e.message}" }
                 }
               }
@@ -97,19 +116,42 @@ class RemotePullServiceTaskDelivery(
     }
   }
 
-  private fun ExternalTaskQueryBuilder.forSubscriptions(subscriptions: List<TaskSubscriptionHandle>): ExternalTaskQueryBuilder {
+  private fun FetchExternalTasksDto.forSubscriptions(subscriptions: List<TaskSubscriptionHandle>): FetchExternalTasksDto {
     subscriptions
-      .mapNotNull { it.taskDescriptionKey }
-      .distinct()
-      .forEach { topic ->
-        this.topic(topic, lockDurationInSeconds * 1000) // convert to ms
-          .enableCustomObjectDeserialization()
-          // FIXME -> consider complex tenant filtering
+      .map { it.taskDescriptionKey to it.restrictions }
+      .distinctBy { it.first }
+      .forEach { (topic, restrictions) ->
+        this.topics.add(
+          FetchExternalTaskTopicDto(
+            topic,
+            lockDurationInSeconds * 1000 // convert to ms
+          ).apply {
+            this.deserializeValues = true
+
+            /*
+            TODO: decide should we do it here? or is matches functionality enough?
+
+            if (restrictions.containsKey(CommonRestrictions.BUSINESS_KEY)) {
+              this.businessKey = restrictions.getValue(CommonRestrictions.BUSINESS_KEY) // support business key
+            }
+            require( !(restrictions.containsKey(CommonRestrictions.TENANT_ID) && restrictions.containsKey(CommonRestrictions.WITHOUT_TENANT_ID) ))
+              { "Illegal restriction. Either set required tenant id or without tenant but not both at the same time."}
+            if (restrictions.containsKey(CommonRestrictions.TENANT_ID)) {
+              this.tenantIdIn = listOf(restrictions.getValue(CommonRestrictions.TENANT_ID))
+              this.withoutTenantId = false
+            }
+            if (restrictions.containsKey(CommonRestrictions.WITHOUT_TENANT_ID)) {
+              this.withoutTenantId = true
+            }
+
+            */
+          }
+        )
       }
     return this
   }
 
-  private fun TaskSubscriptionHandle.matches(task: LockedExternalTask): Boolean =
+  private fun TaskSubscriptionHandle.matches(task: LockedExternalTaskDto): Boolean =
     (this.taskDescriptionKey == null
       || this.taskDescriptionKey == task.topicName)
       && this.restrictions.all {

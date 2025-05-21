@@ -1,10 +1,9 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.schedule
 
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.C7RemoteAdapterProperties
-import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.C7RemoteAdapterProperties.UserTaskDeliveryStrategy.CUSTOM
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.C7RemoteAdapterProperties.UserTaskDeliveryStrategy.REMOTE_SCHEDULED
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.ConditionalOnUserTaskDeliveryStrategy
-import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.RemotePullUserTaskDelivery
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.PullUserTaskDelivery
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
@@ -28,7 +27,7 @@ private val logger = KotlinLogging.logger {}
 )
 @AutoConfigureAfter(C7RemoteSchedulingAutoConfiguration::class)
 class C7RemoteUserTaskPullStrategyAutoConfiguration(
-  private val remotePullUserTaskDelivery: RemotePullUserTaskDelivery,
+  private val remotePullUserTaskDelivery: PullUserTaskDelivery,
   private val c7RemoteAdapterProperties: C7RemoteAdapterProperties,
   @Qualifier("c7remote-task-scheduler")
   private val c7taskScheduler: TaskScheduler

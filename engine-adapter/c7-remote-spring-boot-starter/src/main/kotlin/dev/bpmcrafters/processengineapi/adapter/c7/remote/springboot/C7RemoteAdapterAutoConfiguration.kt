@@ -4,8 +4,8 @@ import dev.bpmcrafters.processengineapi.adapter.c7.remote.correlation.Correlatio
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.correlation.SignalApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.deploy.DeploymentApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.process.StartProcessApiImpl
-import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.C7RemoteTaskSubscriptionApiImpl
-import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.completion.C7RemoteServiceUserTaskCompletionApiImpl
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.TaskSubscriptionApiImpl
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.completion.UserTaskCompletionApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.completion.FailureRetrySupplier
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.completion.LinearMemoryFailureRetrySupplier
 import io.toolisticon.spring.condition.ConditionalOnMissingQualifiedBean
@@ -48,7 +48,7 @@ class C7RemoteAdapterAutoConfiguration {
 
   @Bean("c7remote-task-subscription-api")
   @Qualifier("c7remote-task-subscription-api")
-  fun taskSubscriptionApi(subscriptionRepository: SubscriptionRepository): TaskSubscriptionApi = C7RemoteTaskSubscriptionApiImpl(
+  fun taskSubscriptionApi(subscriptionRepository: SubscriptionRepository): TaskSubscriptionApi = TaskSubscriptionApiImpl(
     subscriptionRepository = subscriptionRepository
   )
 
@@ -104,7 +104,7 @@ class C7RemoteAdapterAutoConfiguration {
     @Qualifier("remote") taskService: TaskService,
     subscriptionRepository: SubscriptionRepository
   ): UserTaskCompletionApi =
-    C7RemoteServiceUserTaskCompletionApiImpl(
+    UserTaskCompletionApiImpl(
       taskService = taskService,
       subscriptionRepository = subscriptionRepository
     )

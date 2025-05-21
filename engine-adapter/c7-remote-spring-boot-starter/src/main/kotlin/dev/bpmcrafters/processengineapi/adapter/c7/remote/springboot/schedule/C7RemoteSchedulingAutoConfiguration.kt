@@ -3,10 +3,10 @@ package dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.schedule
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.*
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.C7RemoteAdapterProperties.ExternalServiceTaskDeliveryStrategy
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.C7RemoteAdapterProperties.UserTaskDeliveryStrategy
-import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.completion.C7RemoteServiceServiceTaskCompletionApiImpl
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.completion.FeignServiceTaskCompletionApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.completion.FailureRetrySupplier
-import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.RemotePullServiceTaskDelivery
-import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.RemotePullUserTaskDelivery
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.PullServiceTaskDelivery
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.PullUserTaskDelivery
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import dev.bpmcrafters.processengineapi.task.ServiceTaskCompletionApi
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -63,7 +63,7 @@ class C7RemoteSchedulingAutoConfiguration {
       subscriptionRepository: SubscriptionRepository,
       c7AdapterProperties: C7RemoteAdapterProperties,
       @Qualifier("c7remote-service-task-worker-executor") executorService: ExecutorService,
-  ) = RemotePullServiceTaskDelivery(
+  ) = PullServiceTaskDelivery(
     subscriptionRepository = subscriptionRepository,
     externalTaskService = externalTaskService,
     workerId = c7AdapterProperties.serviceTasks.workerId,
@@ -86,7 +86,7 @@ class C7RemoteSchedulingAutoConfiguration {
       @Qualifier("c7remote-failure-retry-supplier")
     failureRetrySupplier: FailureRetrySupplier
   ): ServiceTaskCompletionApi =
-    C7RemoteServiceServiceTaskCompletionApiImpl(
+    FeignServiceTaskCompletionApiImpl(
       workerId = c7AdapterProperties.serviceTasks.workerId,
       externalTaskService = externalTaskService,
       subscriptionRepository = subscriptionRepository,
@@ -104,8 +104,8 @@ class C7RemoteSchedulingAutoConfiguration {
       c7AdapterProperties: C7RemoteAdapterProperties,
       @Qualifier("remote") repositoryService: RepositoryService,
       @Qualifier("c7remote-user-task-worker-executor") executorService: ExecutorService,
-  ): RemotePullUserTaskDelivery {
-    return RemotePullUserTaskDelivery(
+  ): PullUserTaskDelivery {
+    return PullUserTaskDelivery(
       subscriptionRepository = subscriptionRepository,
       taskService = taskService,
       repositoryService = repositoryService,

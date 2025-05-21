@@ -2,5 +2,5 @@ dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.C7RemoteAdapterAut
 dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.schedule.C7RemoteSchedulingAutoConfiguration
 dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.schedule.C7RemoteServiceTaskPullStrategyAutoConfiguration
 dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.schedule.C7RemoteUserTaskPullStrategyAutoConfiguration
-dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.client.C7RemoteClientServiceTaskAutoConfiguration
+dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.client.OfficialClientServiceTaskAutoConfiguration
 dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.initial.C7RemoteInitialPullOnStartupAutoConfiguration

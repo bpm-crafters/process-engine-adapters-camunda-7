@@ -1,12 +1,12 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull
 
-import org.camunda.bpm.engine.RepositoryService
+import org.camunda.community.rest.client.api.ProcessDefinitionApiClient
 
 /**
  * Simple in-memory caching resolver for process definition for a given process definition id.
  */
 data class CachingProcessDefinitionKeyResolver(
-  val repositoryService: RepositoryService,
+  val processDefinitionApiClient: ProcessDefinitionApiClient,
   private val keys: MutableMap<String, String> = mutableMapOf(),
   private val versionTags: MutableMap<String, String> = mutableMapOf()
 ) {
@@ -20,13 +20,10 @@ data class CachingProcessDefinitionKeyResolver(
     return if (processDefinitionId == null) {
       null
     } else {
-      return keys.getOrPut(processDefinitionId) {
-        repositoryService
-          .createProcessDefinitionQuery()
-          .processDefinitionId(processDefinitionId)
-          .singleResult()
-          .key
+      if (!keys.containsKey(processDefinitionId)) {
+        fetchProcessByDefinitionId(processDefinitionId)
       }
+      keys[processDefinitionId]
     }
   }
 
@@ -39,13 +36,18 @@ data class CachingProcessDefinitionKeyResolver(
     return if (processDefinitionId == null) {
       null
     } else {
-      return versionTags.getOrPut(processDefinitionId) {
-        repositoryService
-          .createProcessDefinitionQuery()
-          .processDefinitionId(processDefinitionId)
-          .singleResult()
-          .versionTag
+      if (!versionTags.containsKey(processDefinitionId)) {
+        fetchProcessByDefinitionId(processDefinitionId)
       }
+      versionTags[processDefinitionId]
     }
+  }
+
+  private fun fetchProcessByDefinitionId(processDefinitionId: String) {
+    val result = processDefinitionApiClient.getProcessDefinition(processDefinitionId)
+    val definition =
+      requireNotNull(result.body) { "Could not retrieve process definition for id $processDefinitionId, resulted in status code ${result.statusCode}" }
+    this.keys[processDefinitionId] = definition.key
+    this.versionTags[processDefinitionId] = definition.versionTag
   }
 }

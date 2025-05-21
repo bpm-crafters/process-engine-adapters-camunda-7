@@ -8,8 +8,8 @@ import com.tngtech.jgiven.integration.spring.EnableJGiven
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.C7RemoteAdapterProperties.ExternalServiceTaskDeliveryStrategy.REMOTE_SCHEDULED
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.C7RemoteAdapterProperties.ExternalServiceTaskDeliveryStrategy.REMOTE_SUBSCRIBED
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.UserTaskDelivery
-import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.RemotePullServiceTaskDelivery
-import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.subscribe.SubscribingClientServiceTaskDelivery
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.PullServiceTaskDelivery
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.subscribe.SubscribingServiceTaskDelivery
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import dev.bpmcrafters.processengineapi.process.StartProcessApi
 import dev.bpmcrafters.processengineapi.task.ServiceTaskCompletionApi
@@ -44,7 +44,7 @@ class C7RemoteTestApplication {
       startProcessApi: StartProcessApi,
       taskSubscriptionApi: TaskSubscriptionApi,
       userTaskDelivery: UserTaskDelivery,
-      serviceTaskDelivery: RemotePullServiceTaskDelivery,
+      serviceTaskDelivery: PullServiceTaskDelivery,
       userTaskCompletionApi: UserTaskCompletionApi,
       serviceTaskCompletionApi: ServiceTaskCompletionApi,
       subscriptionRepository: SubscriptionRepository,
@@ -68,7 +68,7 @@ class C7RemoteTestApplication {
       startProcessApi: StartProcessApi,
       taskSubscriptionApi: TaskSubscriptionApi,
       userTaskDelivery: UserTaskDelivery,
-      serviceTaskDelivery: SubscribingClientServiceTaskDelivery,
+      serviceTaskDelivery: SubscribingServiceTaskDelivery,
       userTaskCompletionApi: UserTaskCompletionApi,
       serviceTaskCompletionApi: ServiceTaskCompletionApi,
       subscriptionRepository: SubscriptionRepository,

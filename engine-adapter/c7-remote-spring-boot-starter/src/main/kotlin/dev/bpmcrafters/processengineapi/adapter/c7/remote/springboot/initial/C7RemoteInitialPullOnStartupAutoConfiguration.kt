@@ -3,7 +3,7 @@ package dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.initial
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.C7RemoteAdapterEnabledCondition
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.C7RemoteAdapterProperties
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.C7RemoteAdapterProperties.Companion.DEFAULT_PREFIX
-import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.client.C7RemoteClientServiceTaskAutoConfiguration
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.client.OfficialClientServiceTaskAutoConfiguration
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import io.github.oshai.kotlinlogging.KotlinLogging
 import jakarta.annotation.PostConstruct
@@ -27,7 +27,7 @@ private val logger = KotlinLogging.logger {}
  * and deliver tasks to the task handlers.
  */
 @Configuration
-@AutoConfigureAfter(C7RemoteClientServiceTaskAutoConfiguration::class)
+@AutoConfigureAfter(OfficialClientServiceTaskAutoConfiguration::class)
 @EnableAsync
 @Conditional(C7RemoteAdapterEnabledCondition::class)
 class C7RemoteInitialPullOnStartupAutoConfiguration {

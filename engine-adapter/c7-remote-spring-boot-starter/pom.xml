@@ -21,14 +21,6 @@
         <scope>import</scope>
         <type>pom</type>
       </dependency>
-      <!-- https://mvnrepository.com/artifact/org.camunda.bpm/camunda-bom -->
-      <dependency>
-        <groupId>org.camunda.bpm</groupId>
-        <artifactId>camunda-bom</artifactId>
-        <version>7.23.0</version>
-        <scope>import</scope>
-        <type>pom</type>
-      </dependency>
     </dependencies>
   </dependencyManagement>
 
@@ -47,19 +39,25 @@
       <artifactId>spring-boot-starter-validation</artifactId>
     </dependency>
 
-
     <!-- Use subscription-based delivery using official client -->
     <dependency>
       <groupId>org.camunda.bpm.springboot</groupId>
       <artifactId>camunda-bpm-spring-boot-starter-external-task-client</artifactId>
+      <version>7.23.0</version>
       <optional>true</optional>
     </dependency>
 
-    <!-- Use for abstraction of the remote Camunda REST API by implementing the Camunda Java API -->
+    <!-- Use for abstraction of the remote Camunda REST API by provided Feign Client -->
     <dependency>
       <groupId>org.camunda.community.rest</groupId>
-      <artifactId>camunda-platform-7-rest-client-spring-boot-starter</artifactId>
-      <version>7.23.1</version>
+      <artifactId>camunda-platform-7-rest-client-spring-boot-openapi</artifactId>
+      <version>${camunda-platform-7-rest-client.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.camunda.community.rest</groupId>
+      <artifactId>camunda-platform-7-rest-client-variables</artifactId>
+      <version>${camunda-platform-7-rest-client.version}</version>
       <scope>provided</scope>
     </dependency>
 
