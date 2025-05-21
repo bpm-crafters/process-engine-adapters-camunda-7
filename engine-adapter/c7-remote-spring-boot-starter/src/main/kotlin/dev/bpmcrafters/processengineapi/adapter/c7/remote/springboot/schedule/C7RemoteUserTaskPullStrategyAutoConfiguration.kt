@@ -36,7 +36,7 @@ class C7RemoteUserTaskPullStrategyAutoConfiguration(
 
   override fun configureTasks(taskRegistrar: ScheduledTaskRegistrar) {
     taskRegistrar.setScheduler(c7taskScheduler)
-    taskRegistrar.addFixedRateTask(
+    taskRegistrar.addFixedDelayTask(
       {
         logger.trace { "PROCESS-ENGINE-C7-REMOTE-107: Delivering user tasks..." }
         remotePullUserTaskDelivery.refresh()

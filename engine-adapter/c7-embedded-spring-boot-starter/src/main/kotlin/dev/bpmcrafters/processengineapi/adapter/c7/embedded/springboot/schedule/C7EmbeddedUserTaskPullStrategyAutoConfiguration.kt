@@ -36,7 +36,7 @@ class C7EmbeddedUserTaskPullStrategyAutoConfiguration(
 
   override fun configureTasks(taskRegistrar: ScheduledTaskRegistrar) {
     taskRegistrar.setScheduler(c7taskScheduler)
-    taskRegistrar.addFixedRateTask(
+    taskRegistrar.addFixedDelayTask(
       {
         logger.trace { "PROCESS-ENGINE-C7-EMBEDDED-107: Delivering user tasks..." }
         embeddedPullUserTaskDelivery.refresh()

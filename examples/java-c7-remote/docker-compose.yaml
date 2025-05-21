@@ -1,7 +1,7 @@
 services:
 
   camunda-bpm-platform-7:
-    image: camunda/camunda-bpm-platform:run-7.22.0
+    image: camunda/camunda-bpm-platform:run-7.23.0
     pull_policy: always
     ports:
       - '9090:8080'

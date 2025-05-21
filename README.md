@@ -1,7 +1,7 @@
 # Process Engine Adapter Camunda 7
 
 
-[![incubating](https://img.shields.io/badge/lifecycle-INCUBATING-orange.svg)](https://github.com/holisticon#open-source-lifecycle)
+[![stable](https://img.shields.io/badge/lifecycle-STABLE-green.svg)](https://github.com/holisticon#open-source-lifecycle)
 [![Development branches](https://github.com/bpm-crafters/process-engine-adapters-camunda-7/actions/workflows/development.yml/badge.svg)](https://github.com/bpm-crafters/process-engine-adapters-camunda-7/actions/workflows/development.yml)
 [![Maven Central Version](https://img.shields.io/maven-central/v/dev.bpm-crafters.process-engine-adapters/process-engine-adapter-camunda-platform-c7-bom)](https://maven-badges.herokuapp.com/maven-central/dev.bpm-crafters.process-engine-adapters/process-engine-adapter-camunda-platform-c7-bom)
 [![Camunda Platform 7](https://img.shields.io/badge/Compatible%20with-Camunda%20Platform%207-26d07c)](https://img.shields.io/badge/Compatible%20with-Camunda%20Platform%207-26d07c)
@@ -39,6 +39,8 @@ If you want to start usage, please add the BOM to your Maven project and add cor
 
 | Adapter-7 Version | Camunda 7 Version | API Version |
 |-------------------|-------------------|-------------|
+| 2025.05.2         | 7.23              | 1.1         |
+| 2025.05.1         | 7.23              | 1.1         |
 | 2025.04.4         | 7.22              | 1.1         |
 | 2025.04.3         | 7.22              | 1.1         |
 | 2025.04.2         | 7.22              | 1.0         |

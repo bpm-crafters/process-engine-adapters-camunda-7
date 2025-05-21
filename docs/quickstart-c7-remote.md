@@ -21,7 +21,13 @@ you will also need to add some additional libraries. Here is the result:
   <dependency>
     <groupId>org.camunda.community.rest</groupId>
     <artifactId>camunda-platform-7-rest-client-spring-boot-starter</artifactId>
-    <version>7.22.3</version>
+    <version>7.23.0</version>
+  </dependency>
+  <!-- Optional, if you want to use the official camunda client for service task delivery-->
+  <dependency>
+    <groupId>org.camunda.bpm.springboot</groupId>
+    <artifactId>camunda-bpm-spring-boot-starter-external-task-client</artifactId>
+    <version>7.23.0</version>
   </dependency>
 </dependendcies>
 ```
@@ -36,7 +42,7 @@ dev:
         c7remote:
           enabled: true
           service-tasks:
-            delivery-strategy: remote_scheduled
+            delivery-strategy: remote_scheduled # or remote_subscribed if you want to use official camunda client
             schedule-delivery-fixed-rate-in-seconds: 10
             worker-id: embedded-worker
             lock-time-in-seconds: 10
@@ -51,4 +57,9 @@ feign:
       default:
         url: "http://localhost:9090/engine-rest/"
 
+# Just needed if you use remote_subscribed as delivery-strategy for service-tasks
+camunda:
+  bpm:
+    client:
+      base-url: "http://localhost:9090/engine-rest/"
 ```
