@@ -29,10 +29,10 @@ dev:
             worker-id: embedded-worker
             lock-time-in-seconds: 10
             execute-initial-pull-on-startup: true
-            schedule-delivery-fixed-rate-in-seconds: 5
+            schedule-delivery-fixed-rate-in-seconds: 60
           user-tasks:
             delivery-strategy: embedded_scheduled
             execute-initial-pull-on-startup: true
-            schedule-delivery-fixed-rate-in-seconds: 5
+            schedule-delivery-fixed-rate-in-seconds: 60
 
 ```
