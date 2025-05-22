@@ -5,39 +5,36 @@ import dev.bpmcrafters.processengineapi.adapter.c7.remote.correlation.SignalApiI
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.deploy.DeploymentApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.process.StartProcessApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.TaskSubscriptionApiImpl
-import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.completion.UserTaskCompletionApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.completion.FailureRetrySupplier
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.completion.LinearMemoryFailureRetrySupplier
-import io.toolisticon.spring.condition.ConditionalOnMissingQualifiedBean
-import dev.bpmcrafters.processengineapi.impl.task.InMemSubscriptionRepository
-import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.completion.UserTaskCompletionApiImpl
 import dev.bpmcrafters.processengineapi.correlation.CorrelationApi
 import dev.bpmcrafters.processengineapi.correlation.SignalApi
 import dev.bpmcrafters.processengineapi.deploy.DeploymentApi
+import dev.bpmcrafters.processengineapi.impl.task.InMemSubscriptionRepository
+import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import dev.bpmcrafters.processengineapi.process.StartProcessApi
 import dev.bpmcrafters.processengineapi.task.TaskSubscriptionApi
 import dev.bpmcrafters.processengineapi.task.UserTaskCompletionApi
 import io.github.oshai.kotlinlogging.KotlinLogging
+import io.toolisticon.spring.condition.ConditionalOnMissingQualifiedBean
 import jakarta.annotation.PostConstruct
-import org.camunda.bpm.engine.RepositoryService
-import org.camunda.bpm.engine.RuntimeService
-import org.camunda.bpm.engine.TaskService
-import org.camunda.community.rest.EnableCamundaRestClient
+import org.camunda.community.rest.client.api.*
+import org.camunda.community.rest.variables.ValueMapper
 import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.boot.autoconfigure.AutoConfiguration
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Conditional
-import org.springframework.context.annotation.Configuration
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
 private val logger = KotlinLogging.logger {}
 
-@Configuration
+@AutoConfiguration
 @EnableConfigurationProperties(value = [C7RemoteAdapterProperties::class])
 @Conditional(C7RemoteAdapterEnabledCondition::class)
-@EnableCamundaRestClient
 class C7RemoteAdapterAutoConfiguration {
 
   @PostConstruct
@@ -54,28 +51,39 @@ class C7RemoteAdapterAutoConfiguration {
 
   @Bean("c7remote-start-process-api")
   @Qualifier("c7remote-start-process-api")
-  fun startProcessApi(@Qualifier("remote") runtimeService: RuntimeService): StartProcessApi = StartProcessApiImpl(
-    runtimeService = runtimeService
+  fun startProcessApi(
+    processDefinitionApiClient: ProcessDefinitionApiClient,
+    messageApiClient: MessageApiClient,
+    valueMapper: ValueMapper,
+  ): StartProcessApi = StartProcessApiImpl(
+    processDefinitionApiClient = processDefinitionApiClient,
+    messageApiClient = messageApiClient,
+    valueMapper = valueMapper
   )
 
   @Bean("c7remote-correlation-api")
   @Qualifier("c7remote-correlation-api")
-  fun correlationApi(@Qualifier("remote") runtimeService: RuntimeService): CorrelationApi = CorrelationApiImpl(
-    runtimeService = runtimeService
+  fun correlationApi(messageApiClient: MessageApiClient, valueMapper: ValueMapper): CorrelationApi = CorrelationApiImpl(
+    messageApiClient = messageApiClient,
+    valueMapper = valueMapper
   )
 
   @Bean("c7remote-signal-api")
   @Qualifier("c7remote-signal-api")
-  fun signalApi(@Qualifier("remote") runtimeService: RuntimeService): SignalApi = SignalApiImpl(
-    runtimeService = runtimeService
+  fun signalApi(signalApiClient: SignalApiClient, valueMapper: ValueMapper): SignalApi = SignalApiImpl(
+    signalApiClient = signalApiClient,
+    valueMapper = valueMapper
   )
 
   @Bean("c7remote-deploy-api")
   @Qualifier("c7remote-deploy-api")
-  fun deployApi(@Qualifier("remote") repositoryService: RepositoryService): DeploymentApi = DeploymentApiImpl(
-    repositoryService = repositoryService
+  fun deployApi(deploymentApiClient: DeploymentApiClient): DeploymentApi = DeploymentApiImpl(
+    deploymentApiClient = deploymentApiClient
   )
 
+  /**
+   * Subscription Repository.
+   */
   @Bean
   @ConditionalOnMissingBean
   fun subscriptionRepository(): SubscriptionRepository = InMemSubscriptionRepository()
@@ -98,15 +106,20 @@ class C7RemoteAdapterAutoConfiguration {
   @ConditionalOnMissingQualifiedBean(beanClass = ExecutorService::class, qualifier = "c7remote-user-task-worker-executor")
   fun userTaskWorkerExecutor(): ExecutorService = Executors.newFixedThreadPool(10)
 
+  /**
+   * User completion API.
+   */
   @Bean("c7remote-user-task-completion-api")
   @Qualifier("c7remote-user-task-completion-api")
   fun userTaskCompletionApi(
-    @Qualifier("remote") taskService: TaskService,
-    subscriptionRepository: SubscriptionRepository
+    taskApiClient: TaskApiClient,
+    subscriptionRepository: SubscriptionRepository,
+    valueMapper: ValueMapper,
   ): UserTaskCompletionApi =
     UserTaskCompletionApiImpl(
-      taskService = taskService,
-      subscriptionRepository = subscriptionRepository
+      taskApiClient = taskApiClient,
+      subscriptionRepository = subscriptionRepository,
+      valueMapper = valueMapper
     )
 
   /**

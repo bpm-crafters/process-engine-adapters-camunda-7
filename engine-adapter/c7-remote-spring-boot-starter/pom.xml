@@ -39,7 +39,7 @@
       <artifactId>spring-boot-starter-validation</artifactId>
     </dependency>
 
-    <!-- Use subscription-based delivery using official client -->
+    <!-- Use subscription-based delivery using official Camunda client -->
     <dependency>
       <groupId>org.camunda.bpm.springboot</groupId>
       <artifactId>camunda-bpm-spring-boot-starter-external-task-client</artifactId>
@@ -47,20 +47,13 @@
       <optional>true</optional>
     </dependency>
 
-    <!-- Use for abstraction of the remote Camunda REST API by provided Feign Client -->
+    <!-- Use for Camunda REST API by provided Feign Client -->
     <dependency>
       <groupId>org.camunda.community.rest</groupId>
-      <artifactId>camunda-platform-7-rest-client-spring-boot-openapi</artifactId>
+      <artifactId>camunda-platform-7-rest-client-spring-boot-starter-feign</artifactId>
       <version>${camunda-platform-7-rest-client.version}</version>
       <scope>provided</scope>
     </dependency>
-    <dependency>
-      <groupId>org.camunda.community.rest</groupId>
-      <artifactId>camunda-platform-7-rest-client-variables</artifactId>
-      <version>${camunda-platform-7-rest-client.version}</version>
-      <scope>provided</scope>
-    </dependency>
-
 
     <!-- Testing -->
     <dependency>
@@ -70,5 +63,32 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>enforce-banned-dependencies</id>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <configuration>
+              <rules>
+                <bannedDependencies>
+                  <excludes>
+                    <exclude>org.camunda.bpm:camunda-engine</exclude>
+                  </excludes>
+                </bannedDependencies>
+              </rules>
+              <fail>true</fail>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
 
 </project>

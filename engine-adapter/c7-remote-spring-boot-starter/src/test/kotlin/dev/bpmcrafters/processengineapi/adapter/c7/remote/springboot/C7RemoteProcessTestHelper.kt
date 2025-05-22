@@ -13,17 +13,17 @@ import dev.bpmcrafters.processengineapi.task.ServiceTaskCompletionApi
 import dev.bpmcrafters.processengineapi.task.TaskSubscriptionApi
 import dev.bpmcrafters.processengineapi.task.UserTaskCompletionApi
 import dev.bpmcrafters.processengineapi.test.ProcessTestHelper
-import org.camunda.bpm.engine.RuntimeService
+import org.camunda.community.rest.client.api.ProcessInstanceApiClient
 
 class C7RemoteProcessTestHelper(
-  private val runtimeService: RuntimeService,
   private val startProcessApi: StartProcessApi,
   private val userTaskDelivery: UserTaskDelivery,
   private val serviceTaskDelivery: ServiceTaskDelivery,
   private val taskSubscriptionApi: TaskSubscriptionApi,
   private val userTaskCompletionApi: UserTaskCompletionApi,
   private val serviceTaskCompletionApi: ServiceTaskCompletionApi,
-  private val subscriptionRepository: SubscriptionRepository
+  private val subscriptionRepository: SubscriptionRepository,
+  private val processInstanceApiClient: ProcessInstanceApiClient
 ) : ProcessTestHelper {
 
   override fun getStartProcessApi(): StartProcessApi = startProcessApi
@@ -46,11 +46,10 @@ class C7RemoteProcessTestHelper(
   }
 
   override fun getProcessInformation(instanceId: String): ProcessInformation =
-    runtimeService
-      .createProcessInstanceQuery()
-      .processInstanceId(instanceId)
-      .singleResult()
-      .toProcessInformation()
+    processInstanceApiClient
+      .getProcessInstance(instanceId)
+      .body!!.toProcessInformation()
+
 
   override fun clearAllSubscriptions() {
     (subscriptionRepository as InMemSubscriptionRepository).deleteAllTaskSubscriptions()

@@ -7,10 +7,7 @@ import dev.bpmcrafters.processengineapi.process.*
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.camunda.community.rest.client.api.MessageApiClient
 import org.camunda.community.rest.client.api.ProcessDefinitionApiClient
-import org.camunda.community.rest.client.model.CorrelationMessageDto
-import org.camunda.community.rest.client.model.MessageCorrelationResultWithVariableDto
-import org.camunda.community.rest.client.model.ProcessInstanceWithVariablesDto
-import org.camunda.community.rest.client.model.StartProcessInstanceDto
+import org.camunda.community.rest.client.model.*
 import org.camunda.community.rest.variables.ValueMapper
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Future
@@ -104,3 +101,14 @@ fun ProcessInstanceWithVariablesDto.toProcessInformation() = ProcessInformation(
     CommonRestrictions.PROCESS_DEFINITION_ID to this.definitionId,
   )
 )
+
+fun ProcessInstanceDto.toProcessInformation() = ProcessInformation(
+  instanceId = this.id,
+  meta = mapOf(
+    CommonRestrictions.PROCESS_DEFINITION_KEY to this.definitionKey,
+    CommonRestrictions.BUSINESS_KEY to this.businessKey,
+    CommonRestrictions.TENANT_ID to this.tenantId,
+    CommonRestrictions.PROCESS_DEFINITION_ID to this.definitionId,
+  )
+)
+

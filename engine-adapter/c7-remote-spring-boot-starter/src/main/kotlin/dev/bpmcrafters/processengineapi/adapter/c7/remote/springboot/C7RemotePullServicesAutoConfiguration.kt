@@ -1,42 +1,38 @@
-package dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.schedule
+package dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot
 
-import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.*
-import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.C7RemoteAdapterProperties.ExternalServiceTaskDeliveryStrategy
-import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.C7RemoteAdapterProperties.UserTaskDeliveryStrategy
-import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.completion.FeignServiceTaskCompletionApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.completion.FailureRetrySupplier
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.completion.FeignServiceTaskCompletionApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.PullServiceTaskDelivery
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.PullUserTaskDelivery
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import dev.bpmcrafters.processengineapi.task.ServiceTaskCompletionApi
 import io.github.oshai.kotlinlogging.KotlinLogging
 import jakarta.annotation.PostConstruct
-import org.camunda.bpm.engine.ExternalTaskService
-import org.camunda.bpm.engine.RepositoryService
-import org.camunda.bpm.engine.TaskService
+import org.camunda.community.rest.client.api.ExternalTaskApiClient
+import org.camunda.community.rest.client.api.ProcessDefinitionApiClient
+import org.camunda.community.rest.client.api.TaskApiClient
+import org.camunda.community.rest.variables.ValueMapper
 import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.boot.autoconfigure.AutoConfiguration
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Conditional
-import org.springframework.context.annotation.Configuration
 import org.springframework.scheduling.TaskScheduler
 import org.springframework.scheduling.annotation.EnableAsync
-import org.springframework.scheduling.annotation.EnableScheduling
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler
 import java.util.concurrent.ExecutorService
 
 private val logger = KotlinLogging.logger {}
 
 /**
- * Auto-configuration for scheduled delivery.
+ * Autoconfiguration for scheduled delivery.
  */
-@Configuration
-@EnableScheduling
+@AutoConfiguration
 @EnableAsync
 @AutoConfigureAfter(C7RemoteAdapterAutoConfiguration::class)
 @Conditional(C7RemoteAdapterEnabledCondition::class)
-class C7RemoteSchedulingAutoConfiguration {
+class C7RemotePullServicesAutoConfiguration {
 
   @PostConstruct
   fun report() {
@@ -56,60 +52,70 @@ class C7RemoteSchedulingAutoConfiguration {
   @Bean("c7remote-service-task-delivery")
   @Qualifier("c7remote-service-task-delivery")
   @ConditionalOnServiceTaskDeliveryStrategy(
-    strategy = ExternalServiceTaskDeliveryStrategy.REMOTE_SCHEDULED
+    strategy = C7RemoteAdapterProperties.ExternalServiceTaskDeliveryStrategy.REMOTE_SCHEDULED
   )
   fun scheduledServiceTaskDelivery(
-      @Qualifier("remote") externalTaskService: ExternalTaskService,
-      subscriptionRepository: SubscriptionRepository,
-      c7AdapterProperties: C7RemoteAdapterProperties,
-      @Qualifier("c7remote-service-task-worker-executor") executorService: ExecutorService,
+    externalTaskApiClient: ExternalTaskApiClient,
+    subscriptionRepository: SubscriptionRepository,
+    c7AdapterProperties: C7RemoteAdapterProperties,
+    @Qualifier("c7remote-service-task-worker-executor")
+    executorService: ExecutorService,
+    valueMapper: ValueMapper
   ) = PullServiceTaskDelivery(
     subscriptionRepository = subscriptionRepository,
-    externalTaskService = externalTaskService,
     workerId = c7AdapterProperties.serviceTasks.workerId,
     maxTasks = c7AdapterProperties.serviceTasks.maxTaskCount,
     lockDurationInSeconds = c7AdapterProperties.serviceTasks.lockTimeInSeconds,
     retryTimeoutInSeconds = c7AdapterProperties.serviceTasks.retryTimeoutInSeconds,
     retries = c7AdapterProperties.serviceTasks.retries,
-    executorService = executorService
+    executorService = executorService,
+    externalTaskApiClient = externalTaskApiClient,
+    valueMapper = valueMapper,
+    deserializeOnServer = c7AdapterProperties.serviceTasks.deserializeOnServer
   )
 
   @Bean("c7remote-service-task-completion-api")
   @Qualifier("c7remote-service-task-completion-api")
   @ConditionalOnServiceTaskDeliveryStrategy(
-    strategy = ExternalServiceTaskDeliveryStrategy.REMOTE_SCHEDULED
+    strategy = C7RemoteAdapterProperties.ExternalServiceTaskDeliveryStrategy.REMOTE_SCHEDULED
   )
-  fun serviceTaskCompletionApi(
-      @Qualifier("remote") externalTaskService: ExternalTaskService,
-      subscriptionRepository: SubscriptionRepository,
-      c7AdapterProperties: C7RemoteAdapterProperties,
-      @Qualifier("c7remote-failure-retry-supplier")
-    failureRetrySupplier: FailureRetrySupplier
+  fun scheduledServiceTaskCompletionApi(
+    externalTaskApiClient: ExternalTaskApiClient,
+    subscriptionRepository: SubscriptionRepository,
+    c7AdapterProperties: C7RemoteAdapterProperties,
+    @Qualifier("c7remote-failure-retry-supplier")
+    failureRetrySupplier: FailureRetrySupplier,
+    valueMapper: ValueMapper
   ): ServiceTaskCompletionApi =
     FeignServiceTaskCompletionApiImpl(
       workerId = c7AdapterProperties.serviceTasks.workerId,
-      externalTaskService = externalTaskService,
+      externalTaskApiClient = externalTaskApiClient,
       subscriptionRepository = subscriptionRepository,
-      failureRetrySupplier = failureRetrySupplier
+      failureRetrySupplier = failureRetrySupplier,
+      valueMapper = valueMapper
     )
 
   @Bean("c7remote-user-task-delivery")
   @Qualifier("c7remote-user-task-delivery")
   @ConditionalOnUserTaskDeliveryStrategy(
-    strategy = UserTaskDeliveryStrategy.REMOTE_SCHEDULED
+    strategy = C7RemoteAdapterProperties.UserTaskDeliveryStrategy.REMOTE_SCHEDULED
   )
-  fun userTaskDelivery(
-      @Qualifier("remote") taskService: TaskService,
-      subscriptionRepository: SubscriptionRepository,
-      c7AdapterProperties: C7RemoteAdapterProperties,
-      @Qualifier("remote") repositoryService: RepositoryService,
-      @Qualifier("c7remote-user-task-worker-executor") executorService: ExecutorService,
+  fun scheduledUserTaskDelivery(
+    processDefinitionApiClient: ProcessDefinitionApiClient,
+    taskApiClient: TaskApiClient,
+    subscriptionRepository: SubscriptionRepository,
+    c7AdapterProperties: C7RemoteAdapterProperties,
+    @Qualifier("c7remote-user-task-worker-executor")
+    executorService: ExecutorService,
+    valueMapper: ValueMapper
   ): PullUserTaskDelivery {
     return PullUserTaskDelivery(
       subscriptionRepository = subscriptionRepository,
-      taskService = taskService,
-      repositoryService = repositoryService,
-      executorService = executorService
+      executorService = executorService,
+      valueMapper = valueMapper,
+      processDefinitionApiClient = processDefinitionApiClient,
+      taskApiClient = taskApiClient,
+      deserializeOnServer = c7AdapterProperties.userTasks.deserializeOnServer
     )
   }
 

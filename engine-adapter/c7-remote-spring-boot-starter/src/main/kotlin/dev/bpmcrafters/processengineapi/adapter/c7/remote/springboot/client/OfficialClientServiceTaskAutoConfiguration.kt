@@ -4,8 +4,8 @@ import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.C7RemoteAda
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.C7RemoteAdapterProperties
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.C7RemoteAdapterProperties.ExternalServiceTaskDeliveryStrategy.REMOTE_SUBSCRIBED
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.ConditionalOnServiceTaskDeliveryStrategy
-import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.completion.OfficialClientServiceTaskCompletionApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.completion.FailureRetrySupplier
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.completion.OfficialClientServiceTaskCompletionApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.subscribe.SubscribingServiceTaskDelivery
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import dev.bpmcrafters.processengineapi.task.ServiceTaskCompletionApi
@@ -16,16 +16,16 @@ import org.camunda.bpm.client.impl.ExternalTaskClientImpl
 import org.camunda.bpm.client.task.ExternalTaskService
 import org.camunda.bpm.client.task.impl.ExternalTaskServiceImpl
 import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.boot.autoconfigure.AutoConfiguration
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Configuration
 
 private val logger = KotlinLogging.logger {}
 
 /**
  * Auto-configuration for subscribed delivery using Camunda External Client.
  */
-@Configuration
+@AutoConfiguration
 @AutoConfigureAfter(C7RemoteAdapterAutoConfiguration::class)
 @ConditionalOnServiceTaskDeliveryStrategy(
   strategy = REMOTE_SUBSCRIBED
@@ -45,9 +45,9 @@ class OfficialClientServiceTaskAutoConfiguration {
 
   @Bean(name = ["c7remote-service-task-delivery"], initMethod = "subscribe", destroyMethod = "unsubscribe")
   fun subscribingClientExternalTaskDelivery(
-      subscriptionRepository: SubscriptionRepository,
-      externalTaskClient: ExternalTaskClient,
-      c7AdapterProperties: C7RemoteAdapterProperties
+    subscriptionRepository: SubscriptionRepository,
+    externalTaskClient: ExternalTaskClient,
+    c7AdapterProperties: C7RemoteAdapterProperties
   ) = SubscribingServiceTaskDelivery(
     subscriptionRepository = subscriptionRepository,
     lockDurationInSeconds = c7AdapterProperties.serviceTasks.lockTimeInSeconds,
@@ -59,9 +59,9 @@ class OfficialClientServiceTaskAutoConfiguration {
   @Bean("c7remote-service-task-completion-api")
   @Qualifier("c7remote-service-task-completion-api")
   fun externalTaskClientCompletionApi(
-      externalTaskService: ExternalTaskService,
-      subscriptionRepository: SubscriptionRepository,
-      @Qualifier("c7remote-failure-retry-supplier")
+    externalTaskService: ExternalTaskService,
+    subscriptionRepository: SubscriptionRepository,
+    @Qualifier("c7remote-failure-retry-supplier")
     failureRetrySupplier: FailureRetrySupplier
   ): ServiceTaskCompletionApi =
     OfficialClientServiceTaskCompletionApiImpl(

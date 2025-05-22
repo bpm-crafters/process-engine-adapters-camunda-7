@@ -33,7 +33,8 @@ class PullServiceTaskDelivery(
   private val retryTimeoutInSeconds: Long,
   private val retries: Int,
   private val executorService: ExecutorService,
-  private val valueMapper: ValueMapper
+  private val valueMapper: ValueMapper,
+  private val deserializeOnServer: Boolean
 ) : ServiceTaskDelivery, RefreshableDelivery {
 
   /**
@@ -70,7 +71,7 @@ class PullServiceTaskDelivery(
                     }
                   if (taskInformation != null) {
                     subscriptionRepository.activateSubscriptionForTask(lockedTask.id, activeSubscription)
-                    val variables = lockedTask.variables.filterBySubscription(activeSubscription)
+                    val variables = valueMapper.mapDtos(lockedTask.variables).filterBySubscription(activeSubscription)
                     logger.debug { "PROCESS-ENGINE-C7-REMOTE-031: delivering service task ${lockedTask.id}." }
                     activeSubscription.action.accept(taskInformation, variables)
                     logger.debug { "PROCESS-ENGINE-C7-REMOTE-032: successfully delivered service task ${lockedTask.id}." }
@@ -120,13 +121,13 @@ class PullServiceTaskDelivery(
     subscriptions
       .map { it.taskDescriptionKey to it.restrictions }
       .distinctBy { it.first }
-      .forEach { (topic, restrictions) ->
-        this.topics.add(
+      .forEach { (topic, _) ->
+        this.addTopicsItem(
           FetchExternalTaskTopicDto(
             topic,
             lockDurationInSeconds * 1000 // convert to ms
           ).apply {
-            this.deserializeValues = true
+            this.deserializeValues = this@PullServiceTaskDelivery.deserializeOnServer
 
             /*
             TODO: decide should we do it here? or is matches functionality enough?
@@ -143,7 +144,6 @@ class PullServiceTaskDelivery(
             if (restrictions.containsKey(CommonRestrictions.WITHOUT_TENANT_ID)) {
               this.withoutTenantId = true
             }
-
             */
           }
         )

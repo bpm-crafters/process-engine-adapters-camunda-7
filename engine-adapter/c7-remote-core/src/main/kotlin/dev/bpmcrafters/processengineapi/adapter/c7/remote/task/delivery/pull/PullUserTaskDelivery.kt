@@ -88,11 +88,11 @@ class PullUserTaskDelivery(
                   if (taskInformation != null) {
                     subscriptionRepository.activateSubscriptionForTask(task.id, activeSubscription)
                     deliveredTasks[task.id] = taskInformation
-                    val variableResult = taskApiClient.getTaskVariables(task.id, deserializeOnServer)
+                    val variableResult = taskApiClient.getTaskVariables(task.id, deserializeOnServer) // FIXME?
                     val variables =
                       requireNotNull(variableResult.body) { "Could not retrieve variables for task ${task.id}, status was ${variableResult.statusCode}" }
                         .filterBySubscription(activeSubscription)
-                        .let { dtoList -> valueMapper.mapDtos(variables = dtoList, deserializeValues = deserializeOnServer) }
+                        .let { dtoList -> valueMapper.mapDtos(variables = dtoList, deserializeValues = true) }
                     logger.debug { "PROCESS-ENGINE-C7-REMOTE-037: delivering user task ${task.id}." }
                     activeSubscription.action.accept(taskInformation, variables)
                   } else {

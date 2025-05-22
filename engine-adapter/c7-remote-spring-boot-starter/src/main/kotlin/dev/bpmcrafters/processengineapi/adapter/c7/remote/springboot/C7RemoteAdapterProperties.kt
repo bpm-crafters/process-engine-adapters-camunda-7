@@ -45,6 +45,10 @@ class C7RemoteAdapterProperties(
      * Should an initial pull be executed on startup.
      */
     val executeInitialPullOnStartup: Boolean = true,
+    /**
+     * Should variables be deserialized on server?
+     */
+    val deserializeOnServer: Boolean = false,
     )
 
   /**
@@ -82,7 +86,11 @@ class C7RemoteAdapterProperties(
     /**
      * Default initial number of retries.
      */
-    val retries: Int = 3
+    val retries: Int = 3,
+    /**
+     * Should variables be deserialized on server?
+     */
+    val deserializeOnServer: Boolean = false,
   )
 
   /**

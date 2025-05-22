@@ -49,7 +49,7 @@ class DeploymentApiImpl(
       }
 
       val deployment = deploymentApiClient.createDeployment(
-        cmd.tenantId,
+        if (cmd.tenantId.isNullOrBlank()) { null } else { cmd.tenantId },
         null,
         false,
         true,

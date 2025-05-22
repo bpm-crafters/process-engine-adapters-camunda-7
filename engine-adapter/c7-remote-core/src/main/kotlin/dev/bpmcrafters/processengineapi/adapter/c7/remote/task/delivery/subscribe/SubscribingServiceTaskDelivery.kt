@@ -40,7 +40,7 @@ class SubscribingServiceTaskDelivery(
           camundaTaskListTopicSubscriptions.add(
             externalTaskClient
               .subscribe(subscription.taskDescriptionKey)
-              .lockDuration(lockDurationInSeconds * 1000)
+              .lockDuration(lockDurationInSeconds * 1000) // millis
               .handler { externalTask, externalTaskService ->
                 if (subscription.matches(externalTask)) {
                   try {
@@ -57,7 +57,7 @@ class SubscribingServiceTaskDelivery(
                       "Error delivering external task",
                       e.message,
                       jobRetries - 1,
-                      retryTimeoutInSeconds * 1000
+                      retryTimeoutInSeconds * 1000 // millis
                     )
                     subscriptionRepository.deactivateSubscriptionForTask(taskId = externalTask.id)
                     logger.error { "PROCESS-ENGINE-C7-REMOTE-034: successfully failed delivering task ${externalTask.id}: ${e.message}" }
