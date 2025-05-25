@@ -2,10 +2,10 @@ package dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.initial
 
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.C7RemoteAdapterProperties
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.initial.C7RemoteInitialPullUserTasksDeliveryBinding.Companion.ORDER
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.process.ProcessDefinitionMetaDataResolver
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.PullUserTaskDelivery
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import io.github.oshai.kotlinlogging.KotlinLogging
-import org.camunda.community.rest.client.api.ProcessDefinitionApiClient
 import org.camunda.community.rest.client.api.TaskApiClient
 import org.camunda.community.rest.variables.ValueMapper
 import org.springframework.boot.context.event.ApplicationStartedEvent
@@ -25,7 +25,7 @@ private val logger = KotlinLogging.logger {}
 @Order(ORDER)
 open class C7RemoteInitialPullUserTasksDeliveryBinding(
   subscriptionRepository: SubscriptionRepository,
-  processDefinitionApiClient: ProcessDefinitionApiClient,
+  processDefinitionMetaDataResolver: ProcessDefinitionMetaDataResolver,
   taskApiClient: TaskApiClient,
   executorService: ExecutorService,
   valueMapper: ValueMapper,
@@ -41,7 +41,7 @@ open class C7RemoteInitialPullUserTasksDeliveryBinding(
     executorService = executorService,
     valueMapper = valueMapper,
     taskApiClient = taskApiClient,
-    processDefinitionApiClient = processDefinitionApiClient,
+    processDefinitionMetaDataResolver = processDefinitionMetaDataResolver,
     deserializeOnServer = c7RemoteAdapterProperties.userTasks.deserializeOnServer
   )
 

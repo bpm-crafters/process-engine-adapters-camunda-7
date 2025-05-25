@@ -1,9 +1,9 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery
 
 import dev.bpmcrafters.processengineapi.CommonRestrictions
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.process.ProcessDefinitionMetaDataResolver
 import dev.bpmcrafters.processengineapi.impl.task.TaskSubscriptionHandle
 import dev.bpmcrafters.processengineapi.task.TaskInformation
-import org.camunda.bpm.client.task.ExternalTask
 import org.camunda.community.rest.client.model.IdentityLinkDto
 import org.camunda.community.rest.client.model.LockedExternalTaskDto
 import org.camunda.community.rest.client.model.TaskWithAttachmentAndCommentDto
@@ -12,7 +12,7 @@ import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.util.*
 
-fun LockedExternalTaskDto.toTaskInformation(): TaskInformation =
+fun LockedExternalTaskDto.toTaskInformation(pdMetaDataResolver: ProcessDefinitionMetaDataResolver): TaskInformation =
   TaskInformation(
     taskId = this.id,
     meta = mapOf(
@@ -23,10 +23,10 @@ fun LockedExternalTaskDto.toTaskInformation(): TaskInformation =
       CommonRestrictions.TENANT_ID to this.tenantId,
       "topicName" to this.topicName,
       "creationDate" to this.createTime.toDateString()
-    )
+    ).enrichWithProcessDefinitionMetadata(this.processDefinitionId, pdMetaDataResolver)
   )
 
-fun TaskWithAttachmentAndCommentDto.toTaskInformation(candidates: Set<IdentityLinkDto>, processDefinitionKey: String? = null) =
+fun TaskWithAttachmentAndCommentDto.toTaskInformation(candidates: Set<IdentityLinkDto>, pdMetaDataResolver: ProcessDefinitionMetaDataResolver) =
   TaskInformation(
     taskId = this.id,
     meta = mapOf(
@@ -44,14 +44,25 @@ fun TaskWithAttachmentAndCommentDto.toTaskInformation(candidates: Set<IdentityLi
       "candidateUsers" to candidates.toUsersString(),
       "candidateGroups" to candidates.toGroupsString(),
       "lastUpdatedDate" to this.lastUpdated.toDateString()
-    ).let {
-      if (processDefinitionKey != null) {
-        it + (CommonRestrictions.PROCESS_DEFINITION_KEY to processDefinitionKey)
-      } else {
-        it
-      }
-    }
+    ).enrichWithProcessDefinitionMetadata(this.processDefinitionId, pdMetaDataResolver)
   )
+
+fun Map<String, String>.enrichWithProcessDefinitionMetadata(processDefinitionId: String, pdMetaDataResolver: ProcessDefinitionMetaDataResolver) =
+  this.let {
+    val processDefinitionKey = pdMetaDataResolver.getProcessDefinitionKey(processDefinitionId)
+    if (processDefinitionKey != null) {
+      it + (CommonRestrictions.PROCESS_DEFINITION_KEY to processDefinitionKey)
+    } else {
+      it
+    }
+  }.let {
+    val processDefinitionVersionTag = pdMetaDataResolver.getProcessDefinitionVersionTag(processDefinitionId)
+    if (processDefinitionVersionTag != null) {
+      it + (CommonRestrictions.PROCESS_DEFINITION_VERSION_TAG to processDefinitionVersionTag)
+    } else {
+      it
+    }
+  }
 
 /**
  * Converts engine internal representation into a string.

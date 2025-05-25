@@ -2,11 +2,14 @@ package dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot
 
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.completion.FailureRetrySupplier
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.completion.FeignServiceTaskCompletionApiImpl
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.process.CachingProcessDefinitionMetaDataResolver
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.process.ProcessDefinitionMetaDataResolver
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.PullServiceTaskDelivery
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.PullUserTaskDelivery
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import dev.bpmcrafters.processengineapi.task.ServiceTaskCompletionApi
 import io.github.oshai.kotlinlogging.KotlinLogging
+import io.toolisticon.spring.condition.ConditionalOnMissingQualifiedBean
 import jakarta.annotation.PostConstruct
 import org.camunda.community.rest.client.api.ExternalTaskApiClient
 import org.camunda.community.rest.client.api.ProcessDefinitionApiClient
@@ -56,6 +59,8 @@ class C7RemotePullServicesAutoConfiguration {
   )
   fun scheduledServiceTaskDelivery(
     externalTaskApiClient: ExternalTaskApiClient,
+    @Qualifier("c7remote-process-definition-meta-data-resolver")
+    processDefinitionMetaDataResolver: ProcessDefinitionMetaDataResolver,
     subscriptionRepository: SubscriptionRepository,
     c7AdapterProperties: C7RemoteAdapterProperties,
     @Qualifier("c7remote-service-task-worker-executor")
@@ -70,6 +75,7 @@ class C7RemotePullServicesAutoConfiguration {
     retries = c7AdapterProperties.serviceTasks.retries,
     executorService = executorService,
     externalTaskApiClient = externalTaskApiClient,
+    processDefinitionMetaDataResolver = processDefinitionMetaDataResolver,
     valueMapper = valueMapper,
     deserializeOnServer = c7AdapterProperties.serviceTasks.deserializeOnServer
   )
@@ -95,13 +101,21 @@ class C7RemotePullServicesAutoConfiguration {
       valueMapper = valueMapper
     )
 
+  @Bean("c7remote-process-definition-meta-data-resolver")
+  @Qualifier("c7remote-process-definition-meta-data-resolver")
+  @ConditionalOnMissingQualifiedBean(beanClass = ProcessDefinitionMetaDataResolver::class, qualifier = "c7remote-process-definition-meta-data-resolver")
+  fun cachingProcessDefinitionMetaDataResolver(processDefinitionApiClient: ProcessDefinitionApiClient): ProcessDefinitionMetaDataResolver {
+    return CachingProcessDefinitionMetaDataResolver(processDefinitionApiClient)
+  }
+
   @Bean("c7remote-user-task-delivery")
   @Qualifier("c7remote-user-task-delivery")
   @ConditionalOnUserTaskDeliveryStrategy(
     strategy = C7RemoteAdapterProperties.UserTaskDeliveryStrategy.REMOTE_SCHEDULED
   )
   fun scheduledUserTaskDelivery(
-    processDefinitionApiClient: ProcessDefinitionApiClient,
+    @Qualifier("c7remote-process-definition-meta-data-resolver")
+    processDefinitionMetaDataResolver: ProcessDefinitionMetaDataResolver,
     taskApiClient: TaskApiClient,
     subscriptionRepository: SubscriptionRepository,
     c7AdapterProperties: C7RemoteAdapterProperties,
@@ -113,7 +127,7 @@ class C7RemotePullServicesAutoConfiguration {
       subscriptionRepository = subscriptionRepository,
       executorService = executorService,
       valueMapper = valueMapper,
-      processDefinitionApiClient = processDefinitionApiClient,
+      processDefinitionMetaDataResolver = processDefinitionMetaDataResolver,
       taskApiClient = taskApiClient,
       deserializeOnServer = c7AdapterProperties.userTasks.deserializeOnServer
     )

@@ -1,5 +1,6 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.embedded.correlation
 
+import dev.bpmcrafters.processengineapi.CommonRestrictions
 import dev.bpmcrafters.processengineapi.Empty
 import dev.bpmcrafters.processengineapi.MetaInfo
 import dev.bpmcrafters.processengineapi.MetaInfoAware
@@ -26,19 +27,25 @@ class CorrelationApiImpl(
         .createMessageCorrelation(cmd.messageName)
         .localVariableEquals(correlation.correlationVariable, correlation.correlationKey)
         .setVariables(cmd.payloadSupplier.get())
-        .correlate()
+        .also {
+          val tenantId = cmd.restrictions[CommonRestrictions.TENANT_ID]
+          if (!tenantId.isNullOrBlank()) {
+            it.tenantId(tenantId)
+          } else {
+            val withoutTenantId = cmd.restrictions[CommonRestrictions.WITHOUT_TENANT_ID]
+            if (!withoutTenantId.isNullOrBlank()) {
+              it.withoutTenantId()
+            }
+          }
+        }
+        .correlateWithResult()
       Empty
     }
   }
 
   override fun getSupportedRestrictions(): Set<String> = setOf(
-    /*
-    TODO really?
-    CommonRestrictions.PROCESS_INSTANCE_ID,
-    CommonRestrictions.PROCESS_DEFINITION_ID,
     CommonRestrictions.TENANT_ID,
-    CommonRestrictions.BUSINESS_KEY
-     */
+    CommonRestrictions.WITHOUT_TENANT_ID
   )
 
   override fun meta(instance: MetaInfoAware): MetaInfo {

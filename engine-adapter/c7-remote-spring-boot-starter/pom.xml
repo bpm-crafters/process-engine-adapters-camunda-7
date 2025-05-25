@@ -80,6 +80,7 @@
                 <bannedDependencies>
                   <excludes>
                     <exclude>org.camunda.bpm:camunda-engine</exclude>
+                    <exclude>io.holunda.camunda-api:camunda-bpm-engine-api</exclude>
                   </excludes>
                 </bannedDependencies>
               </rules>

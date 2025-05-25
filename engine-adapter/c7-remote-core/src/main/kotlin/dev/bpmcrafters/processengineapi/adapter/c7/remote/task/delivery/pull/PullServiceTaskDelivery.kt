@@ -1,6 +1,7 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull
 
 import dev.bpmcrafters.processengineapi.CommonRestrictions
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.process.ProcessDefinitionMetaDataResolver
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.RefreshableDelivery
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.ServiceTaskDelivery
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.toTaskInformation
@@ -26,6 +27,7 @@ private val logger = KotlinLogging.logger {}
  */
 class PullServiceTaskDelivery(
   private val externalTaskApiClient: ExternalTaskApiClient,
+  private val processDefinitionMetaDataResolver: ProcessDefinitionMetaDataResolver,
   private val workerId: String,
   private val subscriptionRepository: SubscriptionRepository,
   private val maxTasks: Int,
@@ -67,7 +69,7 @@ class PullServiceTaskDelivery(
                       null
                     } else {
                       // create task information and set up the reason
-                      lockedTask.toTaskInformation().withReason(TaskInformation.CREATE)
+                      lockedTask.toTaskInformation(processDefinitionMetaDataResolver).withReason(TaskInformation.CREATE)
                     }
                   if (taskInformation != null) {
                     subscriptionRepository.activateSubscriptionForTask(lockedTask.id, activeSubscription)

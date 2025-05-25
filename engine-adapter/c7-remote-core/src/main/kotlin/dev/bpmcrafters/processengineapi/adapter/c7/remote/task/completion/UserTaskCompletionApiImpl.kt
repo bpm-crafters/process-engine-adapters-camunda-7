@@ -17,7 +17,7 @@ import java.util.concurrent.Future
 private val logger = KotlinLogging.logger {}
 
 /**
- * Strategy for completing user tasks using Camunda taskService Java API.
+ * Strategy for completing user tasks using Feign client.
  */
 class UserTaskCompletionApiImpl(
   private val taskApiClient: TaskApiClient,

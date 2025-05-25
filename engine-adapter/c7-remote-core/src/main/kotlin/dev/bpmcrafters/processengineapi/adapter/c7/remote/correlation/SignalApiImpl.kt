@@ -35,10 +35,14 @@ class SignalApiImpl(
   }
 
   override fun getSupportedRestrictions(): Set<String> = setOf(
-    CommonRestrictions.PROCESS_INSTANCE_ID,
+    CommonRestrictions.EXECUTION_ID,
     CommonRestrictions.TENANT_ID,
     CommonRestrictions.WITHOUT_TENANT_ID,
   )
+
+  override fun meta(instance: MetaInfoAware): MetaInfo {
+    TODO("Not yet implemented")
+  }
 
   private fun SignalDto.applyRestrictions(restrictions: Map<String, String>) = this.apply {
     ensureSupported(restrictions)
@@ -46,14 +50,14 @@ class SignalApiImpl(
       .forEach { (key, value) ->
         when (key) {
           CommonRestrictions.TENANT_ID -> this.tenantId(value).apply {
-            require(restrictions.containsKey(CommonRestrictions.WITHOUT_TENANT_ID)) {
+            require(!restrictions.containsKey(CommonRestrictions.WITHOUT_TENANT_ID)) {
               "Illegal restriction combination. ${CommonRestrictions.WITHOUT_TENANT_ID} " +
                 "and ${CommonRestrictions.WITHOUT_TENANT_ID} can't be provided in the same time because they are mutually exclusive."
             }
           }
 
           CommonRestrictions.WITHOUT_TENANT_ID -> this.withoutTenantId(true).apply {
-            require(restrictions.containsKey(CommonRestrictions.TENANT_ID)) {
+            require(!restrictions.containsKey(CommonRestrictions.TENANT_ID)) {
               "Illegal restriction combination. ${CommonRestrictions.WITHOUT_TENANT_ID} " +
                 "and ${CommonRestrictions.WITHOUT_TENANT_ID} can't be provided in the same time because they are mutually exclusive."
             }
@@ -63,9 +67,4 @@ class SignalApiImpl(
         }
       }
   }
-
-  override fun meta(instance: MetaInfoAware): MetaInfo {
-    TODO("Not yet implemented")
-  }
-
 }

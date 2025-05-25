@@ -3,6 +3,7 @@ package dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.correlation.CorrelationApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.correlation.SignalApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.deploy.DeploymentApiImpl
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.process.ProcessDefinitionMetaDataResolver
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.process.StartProcessApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.TaskSubscriptionApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.completion.FailureRetrySupplier
@@ -55,9 +56,11 @@ class C7RemoteAdapterAutoConfiguration {
     processDefinitionApiClient: ProcessDefinitionApiClient,
     messageApiClient: MessageApiClient,
     valueMapper: ValueMapper,
+    processDefinitionMetaDataResolver: ProcessDefinitionMetaDataResolver,
   ): StartProcessApi = StartProcessApiImpl(
     processDefinitionApiClient = processDefinitionApiClient,
     messageApiClient = messageApiClient,
+    processDefinitionMetaDataResolver = processDefinitionMetaDataResolver,
     valueMapper = valueMapper
   )
 

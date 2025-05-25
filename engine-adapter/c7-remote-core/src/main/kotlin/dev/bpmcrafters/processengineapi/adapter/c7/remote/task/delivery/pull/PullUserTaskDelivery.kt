@@ -1,13 +1,13 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull
 
 import dev.bpmcrafters.processengineapi.CommonRestrictions
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.process.ProcessDefinitionMetaDataResolver
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.*
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import dev.bpmcrafters.processengineapi.impl.task.TaskSubscriptionHandle
 import dev.bpmcrafters.processengineapi.task.TaskInformation
 import dev.bpmcrafters.processengineapi.task.TaskType
 import io.github.oshai.kotlinlogging.KotlinLogging
-import org.camunda.community.rest.client.api.ProcessDefinitionApiClient
 import org.camunda.community.rest.client.api.TaskApiClient
 import org.camunda.community.rest.client.model.IdentityLinkDto
 import org.camunda.community.rest.client.model.TaskQueryDto
@@ -23,15 +23,14 @@ private val logger = KotlinLogging.logger {}
  * Uses internal Java API for pulling tasks.
  */
 class PullUserTaskDelivery(
-  processDefinitionApiClient: ProcessDefinitionApiClient,
   private val taskApiClient: TaskApiClient,
+  private val processDefinitionMetaDataResolver: ProcessDefinitionMetaDataResolver,
   private val subscriptionRepository: SubscriptionRepository,
   private val executorService: ExecutorService,
   private val valueMapper: ValueMapper,
   private val deserializeOnServer: Boolean
 ) : UserTaskDelivery, RefreshableDelivery {
 
-  private val cachingProcessDefinitionKeyResolver = CachingProcessDefinitionKeyResolver(processDefinitionApiClient)
   private val deliveredTasks: ConcurrentHashMap<String, TaskInformation> = ConcurrentHashMap()
 
   /**
@@ -60,7 +59,6 @@ class PullUserTaskDelivery(
             ?.let { activeSubscription ->
               executorService.submit {  // in another thread
                 try {
-                  val processDefinitionKey = cachingProcessDefinitionKeyResolver.getProcessDefinitionKey(task.processDefinitionId)
                   val identityResult = taskApiClient.getIdentityLinks(task.id, null)
                   val candidates =
                     requireNotNull(identityResult.body) { "Could not retrieve identity links for task ${task.id}, status was ${identityResult.statusCode}" }.toSet()
@@ -73,9 +71,9 @@ class PullUserTaskDelivery(
                       // task was already delivered to this subscription
                       if (task.hasChanged()) {
                         if (task.hasChangedAssignees(candidates)) {
-                          task.toTaskInformation(candidates, processDefinitionKey).withReason(TaskInformation.ASSIGN)
+                          task.toTaskInformation(candidates, processDefinitionMetaDataResolver).withReason(TaskInformation.ASSIGN)
                         } else {
-                          task.toTaskInformation(candidates, processDefinitionKey).withReason(TaskInformation.UPDATE)
+                          task.toTaskInformation(candidates, processDefinitionMetaDataResolver).withReason(TaskInformation.UPDATE)
                         }
                       } else {
                         // no change on the task
@@ -83,7 +81,7 @@ class PullUserTaskDelivery(
                       }
                     } else {
                       // task is new for this subscription
-                      task.toTaskInformation(candidates, processDefinitionKey).withReason(TaskInformation.CREATE)
+                      task.toTaskInformation(candidates, processDefinitionMetaDataResolver).withReason(TaskInformation.CREATE)
                     }
                   if (taskInformation != null) {
                     subscriptionRepository.activateSubscriptionForTask(task.id, activeSubscription)
@@ -178,8 +176,8 @@ class PullUserTaskDelivery(
         CommonRestrictions.ACTIVITY_ID -> it.value == task.taskDefinitionKey
         CommonRestrictions.PROCESS_INSTANCE_ID -> it.value == task.processInstanceId
         CommonRestrictions.PROCESS_DEFINITION_ID -> it.value == task.processDefinitionId
-        CommonRestrictions.PROCESS_DEFINITION_KEY -> it.value == cachingProcessDefinitionKeyResolver.getProcessDefinitionKey(task.processDefinitionId)
-        CommonRestrictions.PROCESS_DEFINITION_VERSION_TAG -> it.value == cachingProcessDefinitionKeyResolver.getProcessDefinitionVersionTag(task.processDefinitionId)
+        CommonRestrictions.PROCESS_DEFINITION_KEY -> it.value == processDefinitionMetaDataResolver.getProcessDefinitionKey(task.processDefinitionId)
+        CommonRestrictions.PROCESS_DEFINITION_VERSION_TAG -> it.value == processDefinitionMetaDataResolver.getProcessDefinitionVersionTag(task.processDefinitionId)
         else -> false
       }
     }

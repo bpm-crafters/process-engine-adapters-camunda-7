@@ -1,18 +1,25 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery
 
 import dev.bpmcrafters.processengineapi.CommonRestrictions
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.process.CachingProcessDefinitionMetaDataResolver
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.process.ProcessDefinitionMetaDataResolver
 import org.assertj.core.api.Assertions.assertThat
-import org.camunda.bpm.client.task.impl.ExternalTaskImpl
+import org.camunda.community.rest.client.api.ProcessDefinitionApiClient
 import org.camunda.community.rest.client.model.IdentityLinkDto
 import org.camunda.community.rest.client.model.LockedExternalTaskDto
 import org.camunda.community.rest.client.model.TaskWithAttachmentAndCommentDto
 import org.junit.jupiter.api.Test
-import java.time.Instant
+import org.mockito.Mockito.mock
 import java.time.OffsetDateTime
-import java.util.*
 
 
 class TaskInformationExtensionsKtTest {
+
+  private val processDefinitionMetaDataResolver: ProcessDefinitionMetaDataResolver = CachingProcessDefinitionMetaDataResolver(
+    mock(ProcessDefinitionApiClient::class.java),
+    keys = mutableMapOf("processDefinitionId" to "processDefinitionKey"),
+    versionTags = mutableMapOf("processDefinitionId" to "versionTag")
+  )
 
   @Test
   fun `should map TaskWithAttachmentAndCommentDto`() {
@@ -35,7 +42,7 @@ class TaskInformationExtensionsKtTest {
     val identityLinks =
       listOf(identityLink(groupId = "group"), identityLink(userId = "user-1"), identityLink(userId = "user-2"))
 
-    val taskInformation = task.toTaskInformation(identityLinks.toSet(), "processDefinitionKey")
+    val taskInformation = task.toTaskInformation(identityLinks.toSet(), processDefinitionMetaDataResolver)
 
     assertThat(taskInformation.taskId).isEqualTo("taskId")
     assertThat(taskInformation.meta[CommonRestrictions.PROCESS_DEFINITION_ID]).isEqualTo("processDefinitionId")
@@ -67,7 +74,7 @@ class TaskInformationExtensionsKtTest {
       .activityInstanceId("activityInstanceId")
       .createTime(now)
 
-    val taskInformation = lockedTask.toTaskInformation()
+    val taskInformation = lockedTask.toTaskInformation(processDefinitionMetaDataResolver)
 
     assertThat(taskInformation.taskId).isEqualTo("taskId")
     assertThat(taskInformation.meta[CommonRestrictions.PROCESS_DEFINITION_ID]).isEqualTo("processDefinitionId")

@@ -41,7 +41,8 @@ class C7EmbeddedProcessTestHelper(private val processEngine: ProcessEngine) : Pr
   )
 
   override fun getStartProcessApi(): StartProcessApi = StartProcessApiImpl(
-    runtimeService = processEngine.runtimeService
+    runtimeService = processEngine.runtimeService,
+    repositoryService = processEngine.repositoryService,
   )
 
   override fun getTaskSubscriptionApi(): TaskSubscriptionApi = C7TaskSubscriptionApiImpl(

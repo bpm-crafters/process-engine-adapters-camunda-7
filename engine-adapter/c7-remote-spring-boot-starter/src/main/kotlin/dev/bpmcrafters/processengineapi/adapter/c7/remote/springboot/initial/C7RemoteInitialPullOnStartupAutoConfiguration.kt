@@ -4,6 +4,7 @@ import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.C7RemoteAda
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.C7RemoteAdapterProperties
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.C7RemoteAdapterProperties.Companion.DEFAULT_PREFIX
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.client.OfficialClientServiceTaskAutoConfiguration
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.process.ProcessDefinitionMetaDataResolver
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import io.github.oshai.kotlinlogging.KotlinLogging
 import jakarta.annotation.PostConstruct
@@ -48,10 +49,12 @@ class C7RemoteInitialPullOnStartupAutoConfiguration {
     @Qualifier("c7remote-user-task-worker-executor")
     executorService: ExecutorService,
     valueMapper: ValueMapper,
+    @Qualifier("c7remote-process-definition-meta-data-resolver")
+    processDefinitionMetaDataResolver: ProcessDefinitionMetaDataResolver,
     c7AdapterProperties: C7RemoteAdapterProperties
   ) = C7RemoteInitialPullUserTasksDeliveryBinding(
     taskApiClient = taskApiClient,
-    processDefinitionApiClient = processDefinitionApiClient,
+    processDefinitionMetaDataResolver = processDefinitionMetaDataResolver,
     subscriptionRepository = subscriptionRepository,
     executorService = executorService,
     valueMapper = valueMapper,
@@ -68,11 +71,14 @@ class C7RemoteInitialPullOnStartupAutoConfiguration {
     @Qualifier("c7remote-service-task-worker-executor")
     executorService: ExecutorService,
     valueMapper: ValueMapper,
+    @Qualifier("c7remote-process-definition-meta-data-resolver")
+    processDefinitionMetaDataResolver: ProcessDefinitionMetaDataResolver
   ) = C7RemoteInitialPullServiceTasksDeliveryBinding(
     externalTaskApiClient = externalTaskApi,
     subscriptionRepository = subscriptionRepository,
     c7AdapterProperties = c7AdapterProperties,
     executorService = executorService,
     valueMapper = valueMapper,
+    processDefinitionMetaDataResolver = processDefinitionMetaDataResolver
   )
 }

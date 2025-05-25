@@ -3,6 +3,7 @@ package dev.bpmcrafters.processengineapi.adapter.c7.remote.process
 import dev.bpmcrafters.processengineapi.CommonRestrictions
 import dev.bpmcrafters.processengineapi.MetaInfo
 import dev.bpmcrafters.processengineapi.MetaInfoAware
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.correlation.applyRestrictions
 import dev.bpmcrafters.processengineapi.process.*
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.camunda.community.rest.client.api.MessageApiClient
@@ -17,6 +18,7 @@ private val logger = KotlinLogging.logger {}
 class StartProcessApiImpl(
   private val processDefinitionApiClient: ProcessDefinitionApiClient,
   private val messageApiClient: MessageApiClient,
+  private val processDefinitionMetaDataResolver: ProcessDefinitionMetaDataResolver,
   private val valueMapper: ValueMapper,
 ) : StartProcessApi {
 
@@ -25,8 +27,26 @@ class StartProcessApiImpl(
       is StartProcessByDefinitionCmd ->
         CompletableFuture.supplyAsync {
           logger.debug { "PROCESS-ENGINE-C7-REMOTE-004: starting a new process instance by definition ${cmd.definitionKey}." }
+          ensureSupported(cmd.restrictions)
           val payload = cmd.payloadSupplier.get()
-          val instance = processDefinitionApiClient.startProcessInstanceByKey(cmd.definitionKey, createStartProcessInstanceDto(payload))
+          val tenantId = cmd.restrictions[CommonRestrictions.TENANT_ID]
+          val processDefinitionId = requireNotNull(
+            processDefinitionMetaDataResolver.getProcessDefinitionId(
+              processDefinitionKey = cmd.definitionKey,
+              tenantId = tenantId
+            )
+          ) { "Could not find process definition id for key ${cmd.definitionKey} and tenant $tenantId." }
+
+          val instance = processDefinitionApiClient.startProcessInstance(
+            processDefinitionId,
+            StartProcessInstanceDto()
+              .apply {
+                if (payload.containsKey(CommonRestrictions.BUSINESS_KEY)) {
+                  this.businessKey = payload.getValue(CommonRestrictions.BUSINESS_KEY).toString()
+                }
+                this.variables = valueMapper.mapValues(payload)
+              }
+          )
 
           requireNotNull(instance.body) { "Could not start process instance ${cmd.definitionKey}, resulting status was ${instance.statusCode}" }.toProcessInformation()
         }
@@ -34,13 +54,16 @@ class StartProcessApiImpl(
       is StartProcessByMessageCmd ->
         CompletableFuture.supplyAsync {
           logger.debug { "PROCESS-ENGINE-C7-REMOTE-005: starting a new process instance by message ${cmd.messageName}." }
+          ensureSupported(cmd.restrictions)
           val payload = cmd.payloadSupplier.get()
-
           val messageCorrelation = messageApiClient.deliverMessage(
             CorrelationMessageDto()
               .messageName(cmd.messageName)
               .processVariables(valueMapper.mapValues(cmd.payloadSupplier.get()))
               .resultEnabled(true)
+              .applyRestrictions(
+                ensureSupported(cmd.restrictions)
+              )
               .apply {
                 if (payload.containsKey(CommonRestrictions.BUSINESS_KEY)) {
                   this.businessKey = payload[CommonRestrictions.BUSINESS_KEY].toString()
@@ -62,24 +85,13 @@ class StartProcessApiImpl(
     }
   }
 
+  override fun getSupportedRestrictions(): Set<String> = setOf(
+    CommonRestrictions.TENANT_ID
+  )
+
   override fun meta(instance: MetaInfoAware): MetaInfo {
     TODO()
   }
-
-  /**
-   * Create process instance start DTO.
-   */
-  private fun createStartProcessInstanceDto(
-    variables: Map<String, Any>? = null
-  ) = StartProcessInstanceDto().apply {
-    if (variables != null) {
-      if (variables.containsKey(CommonRestrictions.BUSINESS_KEY)) {
-        this.businessKey = variables.getValue(CommonRestrictions.BUSINESS_KEY).toString()
-      }
-      this.variables = valueMapper.mapValues(variables)
-    }
-  }
-
 }
 
 fun MessageCorrelationResultWithVariableDto.toProcessInformation() = ProcessInformation(
