@@ -4,6 +4,7 @@ import dev.bpmcrafters.processengineapi.CommonRestrictions
 import dev.bpmcrafters.processengineapi.Empty
 import dev.bpmcrafters.processengineapi.MetaInfo
 import dev.bpmcrafters.processengineapi.MetaInfoAware
+import dev.bpmcrafters.processengineapi.adapter.c7.embedded.process.applyRestrictions
 import dev.bpmcrafters.processengineapi.correlation.*
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.camunda.bpm.engine.RuntimeService
@@ -25,19 +26,9 @@ class CorrelationApiImpl(
       logger.debug { "PROCESS-ENGINE-C7-EMBEDDED-001: Correlating message ${cmd.messageName} using local variable ${correlation.correlationVariable} with value ${correlation.correlationKey}" }
       runtimeService
         .createMessageCorrelation(cmd.messageName)
-        .localVariableEquals(correlation.correlationVariable, correlation.correlationKey)
+        .localVariableEquals(correlation.correlationKey, correlation.correlationVariable)
         .setVariables(cmd.payloadSupplier.get())
-        .also {
-          val tenantId = cmd.restrictions[CommonRestrictions.TENANT_ID]
-          if (!tenantId.isNullOrBlank()) {
-            it.tenantId(tenantId)
-          } else {
-            val withoutTenantId = cmd.restrictions[CommonRestrictions.WITHOUT_TENANT_ID]
-            if (!withoutTenantId.isNullOrBlank()) {
-              it.withoutTenantId()
-            }
-          }
-        }
+        .applyRestrictions(ensureSupported(cmd.restrictions))
         .correlateWithResult()
       Empty
     }

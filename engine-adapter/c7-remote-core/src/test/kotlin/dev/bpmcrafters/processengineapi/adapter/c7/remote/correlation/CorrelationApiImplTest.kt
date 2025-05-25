@@ -53,8 +53,8 @@ class CorrelationApiImplTest {
     correlationApi.correlateMessage(
       CorrelateMessageCmd(
         messageName = "messageName",
-        payloadSupplier = { mapOf("correlationId" to 1L) },
-        correlation = { Correlation.withKey("myCorrelation").withVariable("correlationId") },
+        payloadSupplier = { mapOf("some" to 1L) },
+        correlation = { Correlation.withKey("myCorrelation").withVariable("varValue") },
         restrictions = mapOf(CommonRestrictions.TENANT_ID to "tenantId")
       )
     ).get()
@@ -63,8 +63,8 @@ class CorrelationApiImplTest {
       CorrelationMessageDto()
         .messageName("messageName")
         .tenantId("tenantId")
-        .localCorrelationKeys(valueMapper.mapValues(mapOf("myCorrelation" to 1L)))
-        .processVariables(valueMapper.mapValues(mapOf("correlationId" to 1L)))
+        .localCorrelationKeys(valueMapper.mapValues(mapOf("myCorrelation" to "varValue")))
+        .processVariables(valueMapper.mapValues(mapOf("some" to 1L)))
         .resultEnabled(true)
     )
   }
@@ -75,7 +75,7 @@ class CorrelationApiImplTest {
       correlationApi.correlateMessage(
         CorrelateMessageCmd(
           messageName = "messageName",
-          payloadSupplier = { mapOf("correlationId" to 1L) },
+          payloadSupplier = { mapOf() },
           correlation = { Correlation.withKey("myCorrelation").withVariable("correlationId") },
           restrictions = mapOf(CommonRestrictions.PROCESS_DEFINITION_ID to "definitionId")
         )

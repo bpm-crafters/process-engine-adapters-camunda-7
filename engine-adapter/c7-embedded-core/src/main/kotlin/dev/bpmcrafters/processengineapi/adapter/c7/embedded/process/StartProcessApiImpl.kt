@@ -7,6 +7,7 @@ import dev.bpmcrafters.processengineapi.process.*
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.camunda.bpm.engine.RepositoryService
 import org.camunda.bpm.engine.RuntimeService
+import org.camunda.bpm.engine.runtime.MessageCorrelationBuilder
 import org.camunda.bpm.engine.runtime.ProcessInstance
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Future
@@ -26,6 +27,7 @@ class StartProcessApiImpl(
       is StartProcessByDefinitionCmd ->
         CompletableFuture.supplyAsync {
           logger.debug { "PROCESS-ENGINE-C7-EMBEDDED-004: starting a new process instance by definition ${cmd.definitionKey}." }
+          ensureSupported(cmd.restrictions)
           val payload = cmd.payloadSupplier.get()
           val tenantId = cmd.restrictions[CommonRestrictions.TENANT_ID]
           if (!tenantId.isNullOrBlank()) {
@@ -57,15 +59,11 @@ class StartProcessApiImpl(
           val payload = cmd.payloadSupplier.get()
           var correlationBuilder = runtimeService
             .createMessageCorrelation(cmd.messageName)
-          if (payload[CommonRestrictions.BUSINESS_KEY] != null) {
+          payload[CommonRestrictions.BUSINESS_KEY]?.apply {
             correlationBuilder = correlationBuilder.processInstanceBusinessKey(payload[CommonRestrictions.BUSINESS_KEY]?.toString())
           }
-          if (cmd.restrictions.containsKey(CommonRestrictions.TENANT_ID)) {
-            correlationBuilder.tenantId(cmd.restrictions[CommonRestrictions.TENANT_ID])
-          } else if (cmd.restrictions.containsKey(CommonRestrictions.WITHOUT_TENANT_ID)) {
-            correlationBuilder.withoutTenantId()
-          }
           correlationBuilder
+            .applyRestrictions(ensureSupported(cmd.restrictions))
             .setVariables(payload)
             .correlateStartMessage()
             .toProcessInformation()
@@ -80,8 +78,25 @@ class StartProcessApiImpl(
   }
 
   override fun getSupportedRestrictions(): Set<String> = setOf(
-    CommonRestrictions.TENANT_ID
+    CommonRestrictions.TENANT_ID,
+    CommonRestrictions.WITHOUT_TENANT_ID,
   )
+}
+
+fun MessageCorrelationBuilder.applyRestrictions(restrictions: Map<String, String>) = this.apply {
+  restrictions
+    .forEach { (key, value) ->
+      when (key) {
+        CommonRestrictions.TENANT_ID -> this.tenantId(value).apply {
+          require(restrictions.containsKey(CommonRestrictions.WITHOUT_TENANT_ID)) { "Illegal restriction combination. ${CommonRestrictions.WITHOUT_TENANT_ID} " +
+            "and ${CommonRestrictions.WITHOUT_TENANT_ID} can't be provided in the same time because they are mutually exclusive." }
+        }
+        CommonRestrictions.WITHOUT_TENANT_ID -> this.withoutTenantId().apply {
+          require(restrictions.containsKey(CommonRestrictions.TENANT_ID)) { "Illegal restriction combination. ${CommonRestrictions.WITHOUT_TENANT_ID} " +
+            "and ${CommonRestrictions.WITHOUT_TENANT_ID} can't be provided in the same time because they are mutually exclusive." }
+        }
+      }
+    }
 }
 
 fun ProcessInstance.toProcessInformation() = ProcessInformation(

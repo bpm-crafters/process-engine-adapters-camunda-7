@@ -25,11 +25,10 @@ class CorrelationApiImpl(
       val correlation = cmd.correlation.get()
       logger.debug { "PROCESS-ENGINE-C7-REMOTE-001: Correlating message ${cmd.messageName} using local variable ${correlation.correlationVariable} with value ${correlation.correlationKey}" }
       val payload = cmd.payloadSupplier.get()
-      val correlationValue = requireNotNull(payload[correlation.correlationVariable]) { "Correlation variable ${correlation.correlationVariable} is missing" }
       val messageCorrelation = messageApiClient.deliverMessage(
         CorrelationMessageDto()
           .messageName(cmd.messageName)
-          .localCorrelationKeys(valueMapper.mapValues(mapOf(correlation.correlationKey to correlationValue)))
+          .localCorrelationKeys(valueMapper.mapValues(mapOf(correlation.correlationKey to correlation.correlationVariable)))
           .processVariables(valueMapper.mapValues(payload))
           .resultEnabled(true)
           .applyRestrictions(

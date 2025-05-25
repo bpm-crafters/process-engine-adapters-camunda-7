@@ -30,7 +30,7 @@ class DeploymentApiImpl(
           cmd.resources.forEach { resource -> this.addInputStream(resource.name, resource.resourceStream) }
         }
         .apply {
-          if (cmd.tenantId?.isNotEmpty() == true) {
+          if (!cmd.tenantId.isNullOrBlank()) {
             this.tenantId(cmd.tenantId)
           }
         }
