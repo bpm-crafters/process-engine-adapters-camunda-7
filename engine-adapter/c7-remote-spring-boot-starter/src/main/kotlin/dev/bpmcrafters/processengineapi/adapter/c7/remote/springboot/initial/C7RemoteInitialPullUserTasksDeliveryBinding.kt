@@ -1,11 +1,13 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.initial
 
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.C7RemoteAdapterProperties
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.initial.C7RemoteInitialPullUserTasksDeliveryBinding.Companion.ORDER
-import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.RemotePullUserTaskDelivery
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.process.ProcessDefinitionMetaDataResolver
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.PullUserTaskDelivery
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import io.github.oshai.kotlinlogging.KotlinLogging
-import org.camunda.bpm.engine.RepositoryService
-import org.camunda.bpm.engine.TaskService
+import org.camunda.community.rest.client.api.TaskApiClient
+import org.camunda.community.rest.variables.ValueMapper
 import org.springframework.boot.context.event.ApplicationStartedEvent
 import org.springframework.context.event.EventListener
 import org.springframework.core.Ordered
@@ -22,28 +24,32 @@ private val logger = KotlinLogging.logger {}
  */
 @Order(ORDER)
 open class C7RemoteInitialPullUserTasksDeliveryBinding(
-    subscriptionRepository: SubscriptionRepository,
-    taskService: TaskService,
-    repositoryService: RepositoryService,
-    executorService: ExecutorService
+  subscriptionRepository: SubscriptionRepository,
+  processDefinitionMetaDataResolver: ProcessDefinitionMetaDataResolver,
+  taskApiClient: TaskApiClient,
+  executorService: ExecutorService,
+  valueMapper: ValueMapper,
+  c7RemoteAdapterProperties: C7RemoteAdapterProperties
 ) {
 
   companion object {
     const val ORDER = Ordered.HIGHEST_PRECEDENCE + 2000
   }
 
-  private val pullDelivery = RemotePullUserTaskDelivery(
+  private val pullUserTaskDelivery = PullUserTaskDelivery(
     subscriptionRepository = subscriptionRepository,
-    taskService = taskService,
-    repositoryService = repositoryService,
-    executorService = executorService
+    executorService = executorService,
+    valueMapper = valueMapper,
+    taskApiClient = taskApiClient,
+    processDefinitionMetaDataResolver = processDefinitionMetaDataResolver,
+    deserializeOnServer = c7RemoteAdapterProperties.userTasks.deserializeOnServer
   )
 
   @EventListener
   @Async
   open fun pullUserTasks(event: ApplicationStartedEvent) {
     logger.trace { "PROCESS-ENGINE-C7-REMOTE-103: Delivering user tasks..." }
-    pullDelivery.refresh()
+    pullUserTaskDelivery.refresh()
     logger.trace { "PROCESS-ENGINE-C7-REMOTE-104: Delivered user tasks." }
   }
 }

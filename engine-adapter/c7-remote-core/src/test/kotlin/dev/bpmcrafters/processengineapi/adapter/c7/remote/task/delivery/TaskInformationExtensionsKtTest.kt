@@ -1,23 +1,30 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery
 
 import dev.bpmcrafters.processengineapi.CommonRestrictions
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.process.CachingProcessDefinitionMetaDataResolver
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.process.ProcessDefinitionMetaDataResolver
 import org.assertj.core.api.Assertions.assertThat
-import org.camunda.bpm.client.task.impl.ExternalTaskImpl
-import org.camunda.bpm.engine.impl.persistence.entity.IdentityLinkEntity
-import org.camunda.bpm.engine.task.IdentityLink
-import org.camunda.community.mockito.task.LockedExternalTaskFake
-import org.camunda.community.mockito.task.TaskFake
+import org.camunda.community.rest.client.api.ProcessDefinitionApiClient
+import org.camunda.community.rest.client.model.IdentityLinkDto
+import org.camunda.community.rest.client.model.LockedExternalTaskDto
+import org.camunda.community.rest.client.model.TaskWithAttachmentAndCommentDto
 import org.junit.jupiter.api.Test
-import java.time.Instant
-import java.util.*
+import org.mockito.Mockito.mock
+import java.time.OffsetDateTime
 
 
 class TaskInformationExtensionsKtTest {
 
+  private val processDefinitionMetaDataResolver: ProcessDefinitionMetaDataResolver = CachingProcessDefinitionMetaDataResolver(
+    mock(ProcessDefinitionApiClient::class.java),
+    keys = mutableMapOf("processDefinitionId" to "processDefinitionKey"),
+    versionTags = mutableMapOf("processDefinitionId" to "versionTag")
+  )
+
   @Test
-  fun `should map Task`() {
-    val now = Date.from(Instant.now())
-    val task = TaskFake.builder()
+  fun `should map TaskWithAttachmentAndCommentDto`() {
+    val now = OffsetDateTime.now()
+    val task = TaskWithAttachmentAndCommentDto()
       .id("taskId")
       .processDefinitionId("processDefinitionId")
       .processInstanceId("processInstanceId")
@@ -26,17 +33,16 @@ class TaskInformationExtensionsKtTest {
       .name("name")
       .description("description")
       .assignee("assignee")
-      .createTime(now)
-      .followUpDate(now)
-      .dueDate(now)
+      .created(now)
+      .followUp(now)
+      .due(now)
       .formKey("formKey")
       .lastUpdated(now)
-      .build()
 
     val identityLinks =
       listOf(identityLink(groupId = "group"), identityLink(userId = "user-1"), identityLink(userId = "user-2"))
 
-    val taskInformation = task.toTaskInformation(identityLinks.toSet(), "processDefinitionKey")
+    val taskInformation = task.toTaskInformation(identityLinks.toSet(), processDefinitionMetaDataResolver)
 
     assertThat(taskInformation.taskId).isEqualTo("taskId")
     assertThat(taskInformation.meta[CommonRestrictions.PROCESS_DEFINITION_ID]).isEqualTo("processDefinitionId")
@@ -56,21 +62,19 @@ class TaskInformationExtensionsKtTest {
 
   @Test
   fun `should map LockedExternalTask`() {
-    val now = Date.from(Instant.now())
+    val now = OffsetDateTime.now()
 
-    var lockedTaskBuilder = LockedExternalTaskFake.builder()
-    lockedTaskBuilder = lockedTaskBuilder.processDefinitionId("processDefinitionId")
-    lockedTaskBuilder = lockedTaskBuilder.processInstanceId("processInstanceId")
-    lockedTaskBuilder = lockedTaskBuilder.tenantId("tenantId")
-    lockedTaskBuilder = lockedTaskBuilder.topicName("topicName")
-    lockedTaskBuilder = lockedTaskBuilder.id("taskId")
-    lockedTaskBuilder = lockedTaskBuilder.activityId("activityId")
-    lockedTaskBuilder = lockedTaskBuilder.activityInstanceId("activityInstanceId")
-    lockedTaskBuilder = lockedTaskBuilder.createTime(now)
+    val lockedTask = LockedExternalTaskDto()
+      .processDefinitionId("processDefinitionId")
+      .processInstanceId("processInstanceId")
+      .tenantId("tenantId")
+      .topicName("topicName")
+      .id("taskId")
+      .activityId("activityId")
+      .activityInstanceId("activityInstanceId")
+      .createTime(now)
 
-    val lockedTask = lockedTaskBuilder.build()
-
-    val taskInformation = lockedTask.toTaskInformation()
+    val taskInformation = lockedTask.toTaskInformation(processDefinitionMetaDataResolver)
 
     assertThat(taskInformation.taskId).isEqualTo("taskId")
     assertThat(taskInformation.meta[CommonRestrictions.PROCESS_DEFINITION_ID]).isEqualTo("processDefinitionId")
@@ -82,34 +86,8 @@ class TaskInformationExtensionsKtTest {
 
   }
 
-  @Test
-  fun `should map RemoteExternalTask`() {
-    val now = Date.from(Instant.now())
-
-    val externalTask = ExternalTaskImpl()
-    externalTask.processDefinitionId = "processDefinitionId"
-    externalTask.processInstanceId = "processInstanceId"
-    externalTask.tenantId = "tenantId"
-    externalTask.topicName = "topicName"
-    externalTask.id = "taskId"
-    externalTask.activityId = "activityId"
-    externalTask.activityInstanceId = "activityInstanceId"
-    externalTask.createTime = now
-
-    val taskInformation = externalTask.toTaskInformation()
-
-    assertThat(taskInformation.taskId).isEqualTo("taskId")
-    assertThat(taskInformation.meta[CommonRestrictions.PROCESS_DEFINITION_ID]).isEqualTo("processDefinitionId")
-    assertThat(taskInformation.meta[CommonRestrictions.PROCESS_INSTANCE_ID]).isEqualTo("processInstanceId")
-    assertThat(taskInformation.meta[CommonRestrictions.ACTIVITY_ID]).isEqualTo("activityId")
-    assertThat(taskInformation.meta[CommonRestrictions.TENANT_ID]).isEqualTo("tenantId")
-    assertThat(taskInformation.meta["topicName"]).isEqualTo("topicName")
-    assertThat(taskInformation.meta["creationDate"]).isEqualTo(now.toDateString())
-
-  }
-
-  private fun identityLink(userId: String? = null, groupId: String? = null): IdentityLink {
-    val identityLink = IdentityLinkEntity.newIdentityLink()
+  private fun identityLink(userId: String? = null, groupId: String? = null): IdentityLinkDto {
+    val identityLink = IdentityLinkDto()
     identityLink.userId = userId
     identityLink.groupId = groupId
     return identityLink

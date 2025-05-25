@@ -16,17 +16,22 @@ dev:
         c7remote:
           enabled: true
           service-tasks:
-            delivery-strategy: remote_subscribed
+            delivery-strategy: remote_scheduled
             schedule-delivery-fixed-rate-in-seconds: 5
             worker-id: embedded-worker
             lock-time-in-seconds: 10
+            deserialize-on-server: false
           user-tasks:
             schedule-delivery-fixed-rate-in-seconds: 5
             delivery-strategy: remote_scheduled
+            execute-initial-pull-on-startup: false
+            deserialize-on-server: false
 
 #Just needed if you use remote_subscribed as delivery-strategy for service-tasks
-camunda.bpm.client:
-  base-url: http://localhost:9090/engine-rest/
+camunda:
+  bpm:
+    client:
+      base-url: "http://localhost:9090/engine-rest/"
 
 feign:
   client:
@@ -37,4 +42,5 @@ feign:
 logging:
   level:
     dev.bpmcrafters.processengineapi: DEBUG
-    dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.RemotePullUserTaskDelivery: TRACE
+    dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.PullUserTaskDelivery: TRACE
+    dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.PullServiceTaskDelivery: TRACE

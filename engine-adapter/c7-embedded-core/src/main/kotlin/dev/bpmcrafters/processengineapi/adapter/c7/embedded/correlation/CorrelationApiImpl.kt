@@ -1,8 +1,10 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.embedded.correlation
 
+import dev.bpmcrafters.processengineapi.CommonRestrictions
 import dev.bpmcrafters.processengineapi.Empty
 import dev.bpmcrafters.processengineapi.MetaInfo
 import dev.bpmcrafters.processengineapi.MetaInfoAware
+import dev.bpmcrafters.processengineapi.adapter.c7.embedded.process.applyRestrictions
 import dev.bpmcrafters.processengineapi.correlation.*
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.camunda.bpm.engine.RuntimeService
@@ -24,21 +26,17 @@ class CorrelationApiImpl(
       logger.debug { "PROCESS-ENGINE-C7-EMBEDDED-001: Correlating message ${cmd.messageName} using local variable ${correlation.correlationVariable} with value ${correlation.correlationKey}" }
       runtimeService
         .createMessageCorrelation(cmd.messageName)
-        .localVariableEquals(correlation.correlationVariable, correlation.correlationKey)
+        .localVariableEquals(correlation.correlationKey, correlation.correlationVariable)
         .setVariables(cmd.payloadSupplier.get())
-        .correlate()
+        .applyRestrictions(ensureSupported(cmd.restrictions))
+        .correlateWithResult()
       Empty
     }
   }
 
   override fun getSupportedRestrictions(): Set<String> = setOf(
-    /*
-    TODO really?
-    CommonRestrictions.PROCESS_INSTANCE_ID,
-    CommonRestrictions.PROCESS_DEFINITION_ID,
     CommonRestrictions.TENANT_ID,
-    CommonRestrictions.BUSINESS_KEY
-     */
+    CommonRestrictions.WITHOUT_TENANT_ID
   )
 
   override fun meta(instance: MetaInfoAware): MetaInfo {

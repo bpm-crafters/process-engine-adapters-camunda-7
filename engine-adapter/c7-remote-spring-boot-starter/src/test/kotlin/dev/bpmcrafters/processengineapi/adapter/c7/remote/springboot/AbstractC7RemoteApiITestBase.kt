@@ -1,15 +1,15 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot
 
+import dev.bpmcrafters.processengineapi.deploy.DeployBundleCommand
+import dev.bpmcrafters.processengineapi.deploy.DeploymentApi
+import dev.bpmcrafters.processengineapi.deploy.NamedResource
 import dev.bpmcrafters.processengineapi.test.JGivenSpringBaseIntegrationTest
-import dev.bpmcrafters.processengineapi.test.ProcessTestHelper
 import io.toolisticon.testing.jgiven.GIVEN
-import org.camunda.bpm.engine.RepositoryService
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.annotation.DirtiesContext
-import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.testcontainers.junit.jupiter.Container
@@ -45,7 +45,7 @@ abstract class AbstractC7RemoteApiITestBase : JGivenSpringBaseIntegrationTest() 
   }
 
   @Autowired
-  lateinit var repositoryService: RepositoryService
+  lateinit var deploymentApi: DeploymentApi
 
   @Autowired
   lateinit var myProcessTestHelper: C7RemoteProcessTestHelper
@@ -53,10 +53,12 @@ abstract class AbstractC7RemoteApiITestBase : JGivenSpringBaseIntegrationTest() 
   @BeforeEach
   fun setUp() {
     super.processTestHelper = myProcessTestHelper
-    repositoryService.createDeployment()
-      .name("Simple Process")
-      .addClasspathResource(BPMN)
-      .deploy()
+    deploymentApi
+      .deploy(
+        DeployBundleCommand(
+          listOf(NamedResource.fromClasspath(BPMN))
+        )
+      ).get()
 
     GIVEN
       .`process helper`(this.processTestHelper)
