@@ -1,8 +1,8 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot
 
-import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.RemotePullServiceTaskDelivery
-import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.RemotePullUserTaskDelivery
-import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.subscribe.SubscribingClientServiceTaskDelivery
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.PullServiceTaskDelivery
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.PullUserTaskDelivery
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.subscribe.SubscribingServiceTaskDelivery
 import dev.bpmcrafters.processengineapi.task.ServiceTaskCompletionApi
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -28,9 +28,9 @@ class C7RemoteAdapterScheduledStrategyConditionsTest {
 
   @Test
   fun test() {
-    assertThat(context.getBean(RemotePullServiceTaskDelivery::class.java)).isNotNull()
+    assertThat(context.getBean(PullServiceTaskDelivery::class.java)).isNotNull()
     assertThat(context.getBean(ServiceTaskCompletionApi::class.java)).isNotNull()
-    assertThat(context.getBean(RemotePullUserTaskDelivery::class.java)).isNotNull()
+    assertThat(context.getBean(PullUserTaskDelivery::class.java)).isNotNull()
   }
 
 }
@@ -51,9 +51,9 @@ class C7RemoteAdapterSubscribedStrategyConditionsTest {
 
   @Test
   fun test() {
-    assertThat(context.getBean(SubscribingClientServiceTaskDelivery::class.java)).isNotNull()
+    assertThat(context.getBean(SubscribingServiceTaskDelivery::class.java)).isNotNull()
     assertThat(context.getBean(ServiceTaskCompletionApi::class.java)).isNotNull()
-    assertThat(context.getBean(RemotePullUserTaskDelivery::class.java)).isNotNull()
+    assertThat(context.getBean(PullUserTaskDelivery::class.java)).isNotNull()
   }
 
 }
@@ -73,13 +73,13 @@ class C7RemoteAdapterDisabledConditionsTest {
   @Test
   fun test() {
     assertThrows<NoSuchBeanDefinitionException> {
-      context.getBean(RemotePullServiceTaskDelivery::class.java)
+      context.getBean(PullServiceTaskDelivery::class.java)
     }
     assertThrows<NoSuchBeanDefinitionException> {
       context.getBean(ServiceTaskCompletionApi::class.java)
     }
     assertThrows<NoSuchBeanDefinitionException> {
-      context.getBean(RemotePullUserTaskDelivery::class.java)
+      context.getBean(PullUserTaskDelivery::class.java)
     }
   }
 
@@ -95,13 +95,13 @@ class C7RemoteAdapterWithoutPropsConditionsTest {
   @Test
   fun test() {
     assertThrows<NoSuchBeanDefinitionException> {
-      context.getBean(RemotePullServiceTaskDelivery::class.java)
+      context.getBean(PullServiceTaskDelivery::class.java)
     }
     assertThrows<NoSuchBeanDefinitionException> {
       context.getBean(ServiceTaskCompletionApi::class.java)
     }
     assertThrows<NoSuchBeanDefinitionException> {
-      context.getBean(RemotePullUserTaskDelivery::class.java)
+      context.getBean(PullUserTaskDelivery::class.java)
     }
   }
 

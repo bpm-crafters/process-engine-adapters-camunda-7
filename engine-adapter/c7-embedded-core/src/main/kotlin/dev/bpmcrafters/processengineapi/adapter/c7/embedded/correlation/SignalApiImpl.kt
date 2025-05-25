@@ -34,7 +34,7 @@ class SignalApiImpl(
   }
 
   override fun getSupportedRestrictions(): Set<String> = setOf(
-    CommonRestrictions.PROCESS_INSTANCE_ID,
+    CommonRestrictions.EXECUTION_ID,
     CommonRestrictions.TENANT_ID,
     CommonRestrictions.WITHOUT_TENANT_ID,
   )

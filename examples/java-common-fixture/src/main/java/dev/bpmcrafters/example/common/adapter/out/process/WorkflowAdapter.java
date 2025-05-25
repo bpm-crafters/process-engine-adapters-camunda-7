@@ -53,10 +53,10 @@ public class WorkflowAdapter implements WorkflowOutPort {
     return startProcessApi.startProcess(
         new StartProcessByDefinitionCmd(
           SimpleProcessWorkflowConst.KEY,
-          () -> Map.of(
+          Map.of(
             "stringValue", value,
-            "intValue", intValue
-            // "listVariable", List.of("element1", "element2") // FIXME -> will be resolved with https://github.com/bpm-crafters/process-engine-api/issues/33
+            "intValue", intValue,
+            "listVariable", List.of("element1", "element2")
           )
         )
       ).get()
@@ -69,10 +69,10 @@ public class WorkflowAdapter implements WorkflowOutPort {
     correlationApi.correlateMessage(
       new CorrelateMessageCmd(
         Expressions.MESSAGE_1,
-        () -> Map.of(
+        Map.of(
           "message-delivered-value", variableValue
         ),
-        () -> Correlation.withKey(correlationValue)
+        Correlation.withKey(correlationValue)
       )
     ).get();
   }

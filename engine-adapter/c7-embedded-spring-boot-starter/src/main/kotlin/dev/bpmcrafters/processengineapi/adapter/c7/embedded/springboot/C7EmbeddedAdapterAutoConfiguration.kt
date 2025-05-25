@@ -48,8 +48,9 @@ class C7EmbeddedAdapterAutoConfiguration {
 
   @Bean("c7embedded-start-process-api")
   @Qualifier("c7embedded-start-process-api")
-  fun startProcessApi(runtimeService: RuntimeService): StartProcessApi = StartProcessApiImpl(
-    runtimeService = runtimeService
+  fun startProcessApi(runtimeService: RuntimeService, repositoryService: RepositoryService): StartProcessApi = StartProcessApiImpl(
+    runtimeService = runtimeService,
+    repositoryService = repositoryService
   )
 
   @Bean("c7embedded-task-subscription-api")
