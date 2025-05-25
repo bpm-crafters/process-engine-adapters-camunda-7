@@ -5,7 +5,7 @@ title: Camunda Platform 7 as remote engine
 If you start with a Camunda Platform 7, operated remotely, the following configuration is applicable for you.
 
 First of all add the corresponding adapter to your project's classpath. In order to connect to remote engine,
-you will need to use some client. Assuming you are using Camunda Hub extension [camunda-platform-7-rest-client-spring-boot](https://github.com/camunda-community-hub/camunda-platform-7-rest-client-spring-boot),
+you will need to use some client. Currently, the Camunda Hub extension [camunda-platform-7-rest-client-spring-boot](https://github.com/camunda-community-hub/camunda-platform-7-rest-client-spring-boot),
 you will also need to add some additional libraries. Here is the result:
 
 ```xml
@@ -20,7 +20,7 @@ you will also need to add some additional libraries. Here is the result:
   <!-- rest client library -->
   <dependency>
     <groupId>org.camunda.community.rest</groupId>
-    <artifactId>camunda-platform-7-rest-client-spring-boot-starter</artifactId>
+    <artifactId>camunda-platform-7-rest-client-spring-boot-starter-feign</artifactId>
     <version>7.23.0</version>
   </dependency>
   <!-- Optional, if you want to use the official camunda client for service task delivery-->
