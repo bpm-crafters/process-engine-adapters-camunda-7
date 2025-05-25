@@ -5,7 +5,7 @@
   <parent>
     <groupId>dev.bpm-crafters.process-engine-examples</groupId>
     <artifactId>process-engine-api-example-root-c7</artifactId>
-    <version>2025.05.2</version>
+    <version>2025.05.3</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
@@ -23,16 +23,20 @@
       <artifactId>process-engine-adapter-camunda-platform-c7-remote-spring-boot-starter</artifactId>
     </dependency>
 
+    <!-- Feign REST Client -->
     <dependency>
       <groupId>org.camunda.community.rest</groupId>
-      <artifactId>camunda-platform-7-rest-client-spring-boot-starter</artifactId>
-      <version>7.23.1</version>
+      <artifactId>camunda-platform-7-rest-client-spring-boot-starter-feign</artifactId>
+      <version>${camunda-platform-7-rest-client.version}</version>
     </dependency>
+
+    <!-- Official Camunda Client -->
     <dependency>
       <groupId>org.camunda.bpm.springboot</groupId>
       <artifactId>camunda-bpm-spring-boot-starter-external-task-client</artifactId>
       <version>7.23.0</version>
     </dependency>
+
     <dependency>
       <groupId>com.fasterxml.jackson.module</groupId>
       <artifactId>jackson-module-kotlin</artifactId>

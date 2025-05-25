@@ -26,7 +26,7 @@ class SignalApiImpl(
     return CompletableFuture.supplyAsync {
       runtimeService
         .createSignalEvent(cmd.signalName)
-        .applyRestrictions(cmd.restrictions)
+        .applyRestrictions(ensureSupported(cmd.restrictions))
         .setVariables(cmd.payloadSupplier.get())
         .send()
       Empty
@@ -34,13 +34,12 @@ class SignalApiImpl(
   }
 
   override fun getSupportedRestrictions(): Set<String> = setOf(
-    CommonRestrictions.PROCESS_INSTANCE_ID,
+    CommonRestrictions.EXECUTION_ID,
     CommonRestrictions.TENANT_ID,
     CommonRestrictions.WITHOUT_TENANT_ID,
   )
 
   private fun SignalEventReceivedBuilder.applyRestrictions(restrictions: Map<String, String>) = this.apply {
-    ensureSupported(restrictions)
     restrictions
       .forEach { (key, value) ->
         when (key) {

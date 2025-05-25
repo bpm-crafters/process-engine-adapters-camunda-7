@@ -115,7 +115,10 @@ abstract class AbstractC7EmbeddedStage<SUBTYPE : AbstractC7EmbeddedStage<SUBTYPE
 
     val subscriptionRepository = InMemSubscriptionRepository()
 
-    startProcessApi = StartProcessApiImpl(processEngineServices.runtimeService)
+    startProcessApi = StartProcessApiImpl(
+      runtimeService = processEngineServices.runtimeService,
+      repositoryService = processEngineServices.repositoryService,
+    )
     deploymentApi = DeploymentApiImpl(processEngineServices.repositoryService)
     userTaskCompletionApi = C7UserTaskCompletionApiImpl(processEngineServices.taskService, subscriptionRepository)
     serviceTaskCompletionApi = C7ServiceTaskCompletionApiImpl(

@@ -4,31 +4,35 @@ import dev.bpmcrafters.processengineapi.Empty
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import dev.bpmcrafters.processengineapi.task.*
 import io.github.oshai.kotlinlogging.KotlinLogging
-import org.camunda.bpm.engine.ExternalTaskService
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Future
+import org.camunda.bpm.client.task.ExternalTaskService as ClientExternalTaskService
 
 private val logger = KotlinLogging.logger {}
 
 /**
- * Strategy for completing external tasks using Camunda externalTaskService Java API.
+ * External task completion API implementation using official client-based external task service.
+ * @param externalTaskService external task service provided by the official Camunda Platform 7 client
+ * @param subscriptionRepository repository for subscriptions.
  */
-class C7RemoteServiceServiceTaskCompletionApiImpl(
-    private val workerId: String,
-    private val externalTaskService: ExternalTaskService,
-    private val subscriptionRepository: SubscriptionRepository,
-    private val failureRetrySupplier: FailureRetrySupplier
+class OfficialClientServiceTaskCompletionApiImpl(
+  private val externalTaskService: ClientExternalTaskService,
+  private val subscriptionRepository: SubscriptionRepository,
+  private val failureRetrySupplier: FailureRetrySupplier
 ) : ServiceTaskCompletionApi {
 
   override fun completeTask(cmd: CompleteTaskCmd): Future<Empty> {
     logger.debug { "PROCESS-ENGINE-C7-REMOTE-006: completing service task ${cmd.taskId}." }
-    externalTaskService.complete(
-      cmd.taskId,
-      workerId,
-      cmd.get()
-    )
+    externalTaskService
+      .complete(
+        cmd.taskId,
+        cmd.get(),
+        mapOf()
+      )
     subscriptionRepository.deactivateSubscriptionForTask(cmd.taskId)?.apply {
-      termination.accept(TaskInformation(cmd.taskId, emptyMap()).withReason(TaskInformation.COMPLETE))
+      termination.accept(
+        TaskInformation(cmd.taskId, mapOf()).withReason(TaskInformation.COMPLETE)
+      )
       logger.debug { "PROCESS-ENGINE-C7-REMOTE-007: successfully completed service task ${cmd.taskId}." }
     }
     return CompletableFuture.completedFuture(Empty)
@@ -36,15 +40,17 @@ class C7RemoteServiceServiceTaskCompletionApiImpl(
 
   override fun completeTaskByError(cmd: CompleteTaskByErrorCmd): Future<Empty> {
     logger.debug { "PROCESS-ENGINE-C7-REMOTE-008: throwing error ${cmd.errorCode} in service task ${cmd.taskId}." }
-    externalTaskService.handleBpmnError(
-      cmd.taskId,
-      workerId,
-      cmd.errorCode,
-      cmd.errorMessage,
-      cmd.get()
-    )
+    externalTaskService
+      .handleBpmnError(
+        cmd.taskId,
+        cmd.errorCode,
+        cmd.errorMessage,
+        cmd.get()
+      )
     subscriptionRepository.deactivateSubscriptionForTask(cmd.taskId)?.apply {
-      termination.accept(TaskInformation(cmd.taskId, emptyMap()).withReason(TaskInformation.COMPLETE))
+      termination.accept(
+        TaskInformation(cmd.taskId, mapOf()).withReason(TaskInformation.COMPLETE)
+      )
       logger.debug { "PROCESS-ENGINE-C7-REMOTE-009: successfully thrown error in service task ${cmd.taskId}." }
     }
     return CompletableFuture.completedFuture(Empty)
@@ -53,16 +59,18 @@ class C7RemoteServiceServiceTaskCompletionApiImpl(
   override fun failTask(cmd: FailTaskCmd): Future<Empty> {
     logger.debug { "PROCESS-ENGINE-C7-REMOTE-010: failing service task ${cmd.taskId}." }
     val (retries, retryTimeoutInSeconds) = failureRetrySupplier.apply(cmd.taskId)
-    externalTaskService.handleFailure(
-      cmd.taskId,
-      workerId,
-      cmd.reason,
-      cmd.errorDetails,
-      retries,
-      retryTimeoutInSeconds
-    )
+    externalTaskService
+      .handleFailure(
+        cmd.taskId,
+        cmd.reason,
+        cmd.errorDetails,
+        retries,
+        retryTimeoutInSeconds
+      )
     subscriptionRepository.deactivateSubscriptionForTask(cmd.taskId)?.apply {
-      termination.accept(TaskInformation(cmd.taskId, emptyMap()).withReason(TaskInformation.COMPLETE))
+      termination.accept(
+        TaskInformation(cmd.taskId, mapOf()).withReason(TaskInformation.COMPLETE)
+      )
       logger.debug { "PROCESS-ENGINE-C7-REMOTE-011: successfully failed service task ${cmd.taskId} handling." }
     }
     return CompletableFuture.completedFuture(Empty)

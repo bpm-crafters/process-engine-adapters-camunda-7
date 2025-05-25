@@ -2,10 +2,12 @@ package dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.initial
 
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.C7RemoteAdapterProperties
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.initial.C7RemoteInitialPullServiceTasksDeliveryBinding.Companion.ORDER
-import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.RemotePullServiceTaskDelivery
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.process.ProcessDefinitionMetaDataResolver
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.PullServiceTaskDelivery
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import io.github.oshai.kotlinlogging.KotlinLogging
-import org.camunda.bpm.engine.ExternalTaskService
+import org.camunda.community.rest.client.api.ExternalTaskApiClient
+import org.camunda.community.rest.variables.ValueMapper
 import org.springframework.boot.context.event.ApplicationStartedEvent
 import org.springframework.context.event.EventListener
 import org.springframework.core.Ordered
@@ -22,25 +24,29 @@ private val logger = KotlinLogging.logger {}
  */
 @Order(ORDER)
 open class C7RemoteInitialPullServiceTasksDeliveryBinding(
-    externalTaskService: ExternalTaskService,
-    subscriptionRepository: SubscriptionRepository,
-    c7AdapterProperties: C7RemoteAdapterProperties,
-    executorService: ExecutorService
+  externalTaskApiClient: ExternalTaskApiClient,
+  subscriptionRepository: SubscriptionRepository,
+  c7AdapterProperties: C7RemoteAdapterProperties,
+  executorService: ExecutorService,
+  valueMapper: ValueMapper,
+  processDefinitionMetaDataResolver: ProcessDefinitionMetaDataResolver
 ) {
   companion object {
     const val ORDER = Ordered.HIGHEST_PRECEDENCE + 1000
   }
 
-
-  private val pullDelivery = RemotePullServiceTaskDelivery(
+  private val pullDelivery = PullServiceTaskDelivery(
     subscriptionRepository = subscriptionRepository,
-    externalTaskService = externalTaskService,
+    externalTaskApiClient = externalTaskApiClient,
     workerId = c7AdapterProperties.serviceTasks.workerId,
     maxTasks = c7AdapterProperties.serviceTasks.maxTaskCount,
     lockDurationInSeconds = c7AdapterProperties.serviceTasks.lockTimeInSeconds,
     retryTimeoutInSeconds = c7AdapterProperties.serviceTasks.retryTimeoutInSeconds,
     retries = c7AdapterProperties.serviceTasks.retries,
-    executorService = executorService
+    executorService = executorService,
+    valueMapper = valueMapper,
+    deserializeOnServer = c7AdapterProperties.serviceTasks.deserializeOnServer,
+    processDefinitionMetaDataResolver = processDefinitionMetaDataResolver
   )
 
   @EventListener
