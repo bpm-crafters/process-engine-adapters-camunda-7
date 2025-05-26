@@ -28,7 +28,7 @@ class CorrelationApiImpl(
       val messageCorrelation = messageApiClient.deliverMessage(
         CorrelationMessageDto()
           .messageName(cmd.messageName)
-          .localCorrelationKeys(valueMapper.mapValues(mapOf(correlation.correlationKey to correlation.correlationVariable)))
+          .localCorrelationKeys(valueMapper.mapValues(mapOf(correlation.correlationVariable to correlation.correlationKey)))
           .processVariables(valueMapper.mapValues(payload))
           .resultEnabled(true)
           .applyRestrictions(

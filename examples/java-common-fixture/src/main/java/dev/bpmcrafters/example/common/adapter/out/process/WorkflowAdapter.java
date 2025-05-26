@@ -72,7 +72,7 @@ public class WorkflowAdapter implements WorkflowOutPort {
         Map.of(
           "message-delivered-value", variableValue
         ),
-        Correlation.withKey("correlationKey").withVariable(correlationValue)
+        Correlation.withKey(correlationValue)
       )
     ).get();
   }

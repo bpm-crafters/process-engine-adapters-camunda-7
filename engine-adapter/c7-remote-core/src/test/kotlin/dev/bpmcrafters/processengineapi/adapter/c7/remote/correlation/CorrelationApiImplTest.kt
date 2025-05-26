@@ -54,7 +54,7 @@ class CorrelationApiImplTest {
       CorrelateMessageCmd(
         messageName = "messageName",
         payloadSupplier = { mapOf("some" to 1L) },
-        correlation = { Correlation.withKey("myCorrelation").withVariable("varValue") },
+        correlation = { Correlation.withKey("varValue").withVariable("myCorrelation") },
         restrictions = mapOf(CommonRestrictions.TENANT_ID to "tenantId")
       )
     ).get()

@@ -26,7 +26,7 @@ class CorrelationApiImpl(
       logger.debug { "PROCESS-ENGINE-C7-EMBEDDED-001: Correlating message ${cmd.messageName} using local variable ${correlation.correlationVariable} with value ${correlation.correlationKey}" }
       runtimeService
         .createMessageCorrelation(cmd.messageName)
-        .localVariableEquals(correlation.correlationKey, correlation.correlationVariable)
+        .localVariableEquals(correlation.correlationVariable, correlation.correlationKey)
         .setVariables(cmd.payloadSupplier.get())
         .applyRestrictions(ensureSupported(cmd.restrictions))
         .correlateWithResult()
