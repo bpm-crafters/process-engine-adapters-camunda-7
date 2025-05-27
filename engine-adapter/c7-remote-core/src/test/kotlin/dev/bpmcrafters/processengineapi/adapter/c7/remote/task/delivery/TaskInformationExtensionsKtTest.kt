@@ -83,7 +83,52 @@ class TaskInformationExtensionsKtTest {
     assertThat(taskInformation.meta[CommonRestrictions.TENANT_ID]).isEqualTo("tenantId")
     assertThat(taskInformation.meta["topicName"]).isEqualTo("topicName")
     assertThat(taskInformation.meta["creationDate"]).isEqualTo(now.toDateString())
+  }
 
+  @Test
+  fun `should map null date to empty string for TaskWithAttachmentAndCommentDto`() {
+
+    val task = TaskWithAttachmentAndCommentDto()
+      .id("taskId")
+      .processDefinitionId("processDefinitionId")
+      .processInstanceId("processInstanceId")
+      .tenantId("tenantId")
+      .taskDefinitionKey("taskDefinitionKey")
+      .name("name")
+      .description("description")
+      .assignee("assignee")
+      .formKey("formKey")
+      .created(null)
+      .followUp(null)
+      .due(null)
+      .lastUpdated(null)
+
+    val taskInformation = task.toTaskInformation(setOf(), processDefinitionMetaDataResolver)
+
+    assertThat(taskInformation.meta["creationDate"]).isEqualTo("")
+    assertThat(taskInformation.meta["followUpDate"]).isEqualTo("")
+    assertThat(taskInformation.meta["dueDate"]).isEqualTo("")
+    assertThat(taskInformation.meta["lastUpdatedDate"]).isEqualTo("")
+  }
+
+  @Test
+  fun `should map null date to empty string for LockedExternalTaskDto`() {
+    val now = OffsetDateTime.now()
+
+    val lockedTask = LockedExternalTaskDto()
+      .processDefinitionId("processDefinitionId")
+      .processInstanceId("processInstanceId")
+      .tenantId("tenantId")
+      .topicName("topicName")
+      .id("taskId")
+      .activityId("activityId")
+      .activityInstanceId("activityInstanceId")
+      .createTime(null)
+
+
+    val taskInformation = lockedTask.toTaskInformation(processDefinitionMetaDataResolver)
+
+    assertThat(taskInformation.meta["creationDate"]).isEqualTo("")
   }
 
   private fun identityLink(userId: String? = null, groupId: String? = null): IdentityLinkDto {
