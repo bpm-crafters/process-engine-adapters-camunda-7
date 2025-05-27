@@ -72,7 +72,7 @@ fun Date?.toDateString() = this?.toInstant()?.toIso8601() ?: ""
 /**
  * Converts offset date time to string representation in ISO8601 in UTC.
  */
-fun OffsetDateTime?.toDateString() = this?.atZoneSameInstant(ZoneOffset.UTC).toString()
+fun OffsetDateTime?.toDateString() = this?.atZoneSameInstant(ZoneOffset.UTC)?.toString() ?: ""
 
 /**
  * Converts to offset date time in ISO8601 in UTC.
