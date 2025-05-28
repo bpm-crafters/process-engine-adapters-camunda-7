@@ -4,10 +4,12 @@ import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.completion.Failur
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.completion.FeignServiceTaskCompletionApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.process.CachingProcessDefinitionMetaDataResolver
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.process.ProcessDefinitionMetaDataResolver
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.completion.UserTaskCompletionApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.PullServiceTaskDelivery
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.PullUserTaskDelivery
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import dev.bpmcrafters.processengineapi.task.ServiceTaskCompletionApi
+import dev.bpmcrafters.processengineapi.task.UserTaskCompletionApi
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.toolisticon.spring.condition.ConditionalOnMissingQualifiedBean
 import jakarta.annotation.PostConstruct
@@ -132,5 +134,25 @@ class C7RemotePullServicesAutoConfiguration {
       deserializeOnServer = c7AdapterProperties.userTasks.deserializeOnServer
     )
   }
+
+  /**
+   * User completion API.
+   */
+  @Bean("c7remote-user-task-completion-api")
+  @Qualifier("c7remote-user-task-completion-api")
+  @ConditionalOnUserTaskDeliveryStrategy(
+    strategy = C7RemoteAdapterProperties.UserTaskDeliveryStrategy.REMOTE_SCHEDULED
+  )
+  fun userTaskCompletionApi(
+    taskApiClient: TaskApiClient,
+    subscriptionRepository: SubscriptionRepository,
+    valueMapper: ValueMapper,
+  ): UserTaskCompletionApi =
+    UserTaskCompletionApiImpl(
+      taskApiClient = taskApiClient,
+      subscriptionRepository = subscriptionRepository,
+      valueMapper = valueMapper
+    )
+
 
 }
