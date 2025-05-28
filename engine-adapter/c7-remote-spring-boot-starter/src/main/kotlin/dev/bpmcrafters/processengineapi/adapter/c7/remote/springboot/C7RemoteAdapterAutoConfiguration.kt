@@ -8,7 +8,6 @@ import dev.bpmcrafters.processengineapi.adapter.c7.remote.process.StartProcessAp
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.TaskSubscriptionApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.completion.FailureRetrySupplier
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.completion.LinearMemoryFailureRetrySupplier
-import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.completion.UserTaskCompletionApiImpl
 import dev.bpmcrafters.processengineapi.correlation.CorrelationApi
 import dev.bpmcrafters.processengineapi.correlation.SignalApi
 import dev.bpmcrafters.processengineapi.deploy.DeploymentApi
@@ -16,7 +15,6 @@ import dev.bpmcrafters.processengineapi.impl.task.InMemSubscriptionRepository
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import dev.bpmcrafters.processengineapi.process.StartProcessApi
 import dev.bpmcrafters.processengineapi.task.TaskSubscriptionApi
-import dev.bpmcrafters.processengineapi.task.UserTaskCompletionApi
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.toolisticon.spring.condition.ConditionalOnMissingQualifiedBean
 import jakarta.annotation.PostConstruct
@@ -42,7 +40,6 @@ class C7RemoteAdapterAutoConfiguration {
   fun report() {
     logger.debug { "PROCESS-ENGINE-C7-REMOTE-200: Configuration applied." }
   }
-
 
   @Bean("c7remote-task-subscription-api")
   @Qualifier("c7remote-task-subscription-api")
@@ -108,22 +105,6 @@ class C7RemoteAdapterAutoConfiguration {
   @Qualifier("c7remote-user-task-worker-executor")
   @ConditionalOnMissingQualifiedBean(beanClass = ExecutorService::class, qualifier = "c7remote-user-task-worker-executor")
   fun userTaskWorkerExecutor(): ExecutorService = Executors.newFixedThreadPool(10)
-
-  /**
-   * User completion API.
-   */
-  @Bean("c7remote-user-task-completion-api")
-  @Qualifier("c7remote-user-task-completion-api")
-  fun userTaskCompletionApi(
-    taskApiClient: TaskApiClient,
-    subscriptionRepository: SubscriptionRepository,
-    valueMapper: ValueMapper,
-  ): UserTaskCompletionApi =
-    UserTaskCompletionApiImpl(
-      taskApiClient = taskApiClient,
-      subscriptionRepository = subscriptionRepository,
-      valueMapper = valueMapper
-    )
 
   /**
    * Failure retry supplier.

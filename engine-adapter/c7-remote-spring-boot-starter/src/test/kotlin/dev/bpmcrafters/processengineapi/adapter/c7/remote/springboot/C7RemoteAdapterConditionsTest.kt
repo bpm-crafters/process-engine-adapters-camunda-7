@@ -1,9 +1,12 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot
 
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.completion.NoOpServiceTaskCompletionApiImpl
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.completion.NoOpUserTaskCompletionApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.PullServiceTaskDelivery
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.PullUserTaskDelivery
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.subscribe.SubscribingServiceTaskDelivery
 import dev.bpmcrafters.processengineapi.task.ServiceTaskCompletionApi
+import dev.bpmcrafters.processengineapi.task.UserTaskCompletionApi
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -76,11 +79,10 @@ class C7RemoteAdapterDisabledConditionsTest {
       context.getBean(PullServiceTaskDelivery::class.java)
     }
     assertThrows<NoSuchBeanDefinitionException> {
-      context.getBean(ServiceTaskCompletionApi::class.java)
-    }
-    assertThrows<NoSuchBeanDefinitionException> {
       context.getBean(PullUserTaskDelivery::class.java)
     }
+    assertThat(context.getBean(ServiceTaskCompletionApi::class.java)).isInstanceOf(NoOpServiceTaskCompletionApiImpl::class.java)
+    assertThat(context.getBean(UserTaskCompletionApi::class.java)).isInstanceOf(NoOpUserTaskCompletionApiImpl::class.java)
   }
 
 }
