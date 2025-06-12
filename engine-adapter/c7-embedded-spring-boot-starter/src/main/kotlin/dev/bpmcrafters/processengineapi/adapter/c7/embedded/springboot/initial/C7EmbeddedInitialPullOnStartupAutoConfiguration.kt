@@ -1,5 +1,6 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot.initial
 
+import dev.bpmcrafters.processengineapi.adapter.c7.embedded.process.ProcessDefinitionMetaDataResolver
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot.C7EmbeddedAdapterAutoConfiguration
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot.C7EmbeddedAdapterProperties
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot.C7EmbeddedAdapterServiceTaskInitialPullEnabledCondition
@@ -39,15 +40,16 @@ class C7EmbeddedInitialPullOnStartupAutoConfiguration {
   @Qualifier("c7embedded-user-task-initial-pull")
   @Conditional(C7EmbeddedAdapterUserTaskInitialPullEnabledCondition::class)
   fun configureInitialPullForUserTaskDelivery(
-      taskService: TaskService,
-      repositoryService: RepositoryService,
-      subscriptionRepository: SubscriptionRepository,
-      @Qualifier("c7embedded-user-task-worker-executor")
+    taskService: TaskService,
+    @Qualifier("c7embedded-process-definition-meta-data-resolver")
+    processDefinitionMetaDataResolver: ProcessDefinitionMetaDataResolver,
+    subscriptionRepository: SubscriptionRepository,
+    @Qualifier("c7embedded-user-task-worker-executor")
     executorService: ExecutorService
   ) = C7EmbeddedInitialPullUserTasksDeliveryBinding(
     taskService = taskService,
     subscriptionRepository = subscriptionRepository,
-    repositoryService = repositoryService,
+    processDefinitionMetaDataResolver = processDefinitionMetaDataResolver,
     executorService = executorService
   )
 

@@ -1,5 +1,7 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot.schedule
 
+import dev.bpmcrafters.processengineapi.adapter.c7.embedded.process.CachingProcessDefinitionMetaDataResolver
+import dev.bpmcrafters.processengineapi.adapter.c7.embedded.process.ProcessDefinitionMetaDataResolver
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot.*
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot.C7EmbeddedAdapterProperties.ExternalServiceTaskDeliveryStrategy.EMBEDDED_SCHEDULED
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot.C7EmbeddedAdapterProperties.UserTaskDeliveryStrategy
@@ -7,6 +9,7 @@ import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.delivery.pull.E
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.delivery.pull.EmbeddedPullUserTaskDelivery
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import io.github.oshai.kotlinlogging.KotlinLogging
+import io.toolisticon.spring.condition.ConditionalOnMissingQualifiedBean
 import jakarta.annotation.PostConstruct
 import org.camunda.bpm.engine.ExternalTaskService
 import org.camunda.bpm.engine.RepositoryService
@@ -53,10 +56,10 @@ class C7EmbeddedSchedulingAutoConfiguration {
     strategy = EMBEDDED_SCHEDULED
   )
   fun serviceTaskDelivery(
-      subscriptionRepository: SubscriptionRepository,
-      externalTaskService: ExternalTaskService,
-      c7AdapterProperties: C7EmbeddedAdapterProperties,
-      @Qualifier("c7embedded-service-task-worker-executor")
+    subscriptionRepository: SubscriptionRepository,
+    externalTaskService: ExternalTaskService,
+    c7AdapterProperties: C7EmbeddedAdapterProperties,
+    @Qualifier("c7embedded-service-task-worker-executor")
     executorService: ExecutorService
   ) = EmbeddedPullServiceTaskDelivery(
     subscriptionRepository = subscriptionRepository,
@@ -69,23 +72,33 @@ class C7EmbeddedSchedulingAutoConfiguration {
     executorService = executorService
   )
 
+
+  @Bean("c7embedded-process-definition-meta-data-resolver")
+  @Qualifier("c7embedded-process-definition-meta-data-resolver")
+  @ConditionalOnMissingQualifiedBean(beanClass = ProcessDefinitionMetaDataResolver::class, qualifier = "c7embedded-process-definition-meta-data-resolver")
+  fun cachingProcessDefinitionMetaDataResolver(repositoryService: RepositoryService): ProcessDefinitionMetaDataResolver {
+    return CachingProcessDefinitionMetaDataResolver(repositoryService = repositoryService)
+  }
+
+
   @Bean("c7embedded-schedule-user-task-delivery")
   @Qualifier("c7embedded-schedule-user-task-delivery")
   @ConditionalOnUserTaskDeliveryStrategy(
     strategies = [UserTaskDeliveryStrategy.EMBEDDED_SCHEDULED]
   )
   fun embeddedScheduledUserTaskDelivery(
-      subscriptionRepository: SubscriptionRepository,
-      taskService: TaskService,
-      repositoryService: RepositoryService,
-      c7AdapterProperties: C7EmbeddedAdapterProperties,
-      @Qualifier("c7embedded-service-task-worker-executor")
+    subscriptionRepository: SubscriptionRepository,
+    taskService: TaskService,
+    @Qualifier("c7embedded-process-definition-meta-data-resolver")
+    processDefinitionMetaDataResolver: ProcessDefinitionMetaDataResolver,
+    c7AdapterProperties: C7EmbeddedAdapterProperties,
+    @Qualifier("c7embedded-service-task-worker-executor")
     executorService: ExecutorService
   ): EmbeddedPullUserTaskDelivery {
     return EmbeddedPullUserTaskDelivery(
       subscriptionRepository = subscriptionRepository,
       taskService = taskService,
-      repositoryService = repositoryService,
+      processDefinitionMetaDataResolver = processDefinitionMetaDataResolver,
       executorService = executorService
     )
   }

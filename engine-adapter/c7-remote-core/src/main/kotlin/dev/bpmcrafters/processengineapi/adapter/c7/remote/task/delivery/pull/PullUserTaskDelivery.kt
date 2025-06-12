@@ -43,7 +43,9 @@ class PullUserTaskDelivery(
       // clean up task information items which are not in the list of delivered task ids. This is because,
       // if a task has been completed via API and the list of delivered tasks is reduced, the `deliveredTasks`
       // variable has not been updated yet.
-      (deliveredTasks.keys().asSequence().filterNot { deliveredTaskIds.contains(it) }).forEach(deliveredTasks::remove)
+      synchronized(deliveredTasks) {
+        (deliveredTasks.keys().asSequence().filterNot { deliveredTaskIds.contains(it) }).forEach(deliveredTasks::remove)
+      }
 
       logger.trace { "PROCESS-ENGINE-C7-REMOTE-036: pulling user tasks for subscriptions: $subscriptions" }
       val result = taskApiClient
@@ -85,8 +87,10 @@ class PullUserTaskDelivery(
                     }
                   if (taskInformation != null) {
                     subscriptionRepository.activateSubscriptionForTask(task.id, activeSubscription)
-                    deliveredTasks[task.id] = taskInformation
-                    val variableResult = taskApiClient.getTaskVariables(task.id, deserializeOnServer) // FIXME?
+                    synchronized(deliveredTasks) {
+                      deliveredTasks[task.id] = taskInformation
+                    }
+                    val variableResult = taskApiClient.getTaskVariables(task.id, deserializeOnServer)
                     val variables =
                       requireNotNull(variableResult.body) { "Could not retrieve variables for task ${task.id}, status was ${variableResult.statusCode}" }
                         .filterBySubscription(activeSubscription)
@@ -99,7 +103,14 @@ class PullUserTaskDelivery(
                   // successfully handled the task, remove from already delivered
                   // since we do it from another thread, this must terminate before
                   // we can access the `deliveredTaskIds` for
-                  deliveredTaskIds.remove(task.id)
+                  synchronized(deliveredTasks) {
+                    if (deliveredTaskIds.contains(task.id)) { // if the task was already there, remove it from unprocessed list
+                      val successful = deliveredTaskIds.remove(task.id)
+                      if (!successful) {
+                        logger.error { "PROCESS-ENGINE-C7-REMOTE-038: error processing task ${task.id}, could not mark updated task as processed." }
+                      }
+                    }
+                  }
 
                 } catch (e: Exception) {
                   logger.error { "PROCESS-ENGINE-C7-REMOTE-038: error delivering task ${task.id}: ${e.message}" }
@@ -124,7 +135,9 @@ class PullUserTaskDelivery(
           )
           // deactivate active subscription and handle termination
           logger.trace { "PROCESS-ENGINE-C7-REMOTE-042: deactivating $taskId, task is gone." }
-          deliveredTasks.remove(taskId)
+          synchronized(deliveredTasks) {
+            deliveredTasks.remove(taskId)
+          }
         }
       }.forEach { taskTerminationFuture -> taskTerminationFuture.get() }
     } else {

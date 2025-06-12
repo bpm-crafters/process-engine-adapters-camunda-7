@@ -81,7 +81,9 @@ class PullServiceTaskDelivery(
                     logger.trace { "PROCESS-ENGINE-C7-REMOTE-041: skipping task ${lockedTask.id} since it is unchanged." }
                   }
                   // remove from already delivered
-                  deliveredTaskIds.remove(lockedTask.id)
+                  synchronized(deliveredTaskIds) {
+                    deliveredTaskIds.remove(lockedTask.id)
+                  }
                 } catch (e: Exception) {
                   val jobRetries: Int = lockedTask.retries ?: retries
                   logger.error { "PROCESS-ENGINE-C7-REMOTE-033: failing delivering task ${lockedTask.id}: ${e.message}" }
