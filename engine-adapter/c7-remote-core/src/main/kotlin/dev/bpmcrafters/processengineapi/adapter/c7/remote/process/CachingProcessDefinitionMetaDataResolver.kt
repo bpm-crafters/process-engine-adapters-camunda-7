@@ -8,7 +8,7 @@ import org.camunda.community.rest.client.api.ProcessDefinitionApiClient
 data class CachingProcessDefinitionMetaDataResolver(
   val processDefinitionApiClient: ProcessDefinitionApiClient,
   private val keys: MutableMap<String, String> = mutableMapOf(),
-  private val versionTags: MutableMap<String, String> = mutableMapOf(),
+  private val versionTags: MutableMap<String, String?> = mutableMapOf(),
   private val processDefinitionIds: MutableMap<Pair<String, String?>, String> = mutableMapOf()
 ) : ProcessDefinitionMetaDataResolver {
 
@@ -56,9 +56,7 @@ data class CachingProcessDefinitionMetaDataResolver(
     val processDefinition = result.body
     if (processDefinition != null) {
       processDefinitionIds[processDefinitionKey to tenantId] = processDefinition.id
-      processDefinition.versionTag?.apply {
-        versionTags[processDefinition.id] = this
-      }
+      versionTags[processDefinition.id] = processDefinition.versionTag
       keys[processDefinition.id] = processDefinition.key
     }
   }
@@ -68,8 +66,6 @@ data class CachingProcessDefinitionMetaDataResolver(
     val definition =
       requireNotNull(result.body) { "Could not retrieve process definition for id $processDefinitionId, resulted in status code ${result.statusCode}" }
     this.keys[processDefinitionId] = definition.key
-    definition.versionTag?.apply {
-      this@CachingProcessDefinitionMetaDataResolver.versionTags[processDefinitionId] = this
-    }
+    this.versionTags[processDefinitionId] = definition.versionTag
   }
 }

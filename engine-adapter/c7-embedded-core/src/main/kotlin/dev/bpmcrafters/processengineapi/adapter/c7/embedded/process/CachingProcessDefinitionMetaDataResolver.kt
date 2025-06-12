@@ -1,22 +1,22 @@
-package dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.delivery.pull
+package dev.bpmcrafters.processengineapi.adapter.c7.embedded.process
 
 import org.camunda.bpm.engine.RepositoryService
 
 /**
  * Simple in-memory caching resolver for process definition for a given process definition id.
  */
-data class CachingProcessDefinitionKeyResolver(
+data class CachingProcessDefinitionMetaDataResolver(
   val repositoryService: RepositoryService,
   private val keys: MutableMap<String, String> = mutableMapOf(),
-  private val versionTags: MutableMap<String, String> = mutableMapOf()
-) {
+  private val versionTags: MutableMap<String, String?> = mutableMapOf()
+) : ProcessDefinitionMetaDataResolver {
 
   /**
    * Resolves process definition key from repository service and uses an in-mem cache.
    * @param processDefinitionId process definition id.
    * @return corresponding key.
    */
-  fun getProcessDefinitionKey(processDefinitionId: String?): String? {
+  override fun getProcessDefinitionKey(processDefinitionId: String?): String? {
     return if (processDefinitionId == null) {
       null
     } else {
@@ -35,7 +35,7 @@ data class CachingProcessDefinitionKeyResolver(
    * @param processDefinitionId process definition id.
    * @return corresponding version tag.
    */
-  fun getProcessDefinitionVersionTag(processDefinitionId: String?): String? {
+  override fun getProcessDefinitionVersionTag(processDefinitionId: String?): String? {
     return if (processDefinitionId == null) {
       null
     } else {
@@ -48,5 +48,4 @@ data class CachingProcessDefinitionKeyResolver(
       }
     }
   }
-
 }

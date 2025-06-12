@@ -1,5 +1,6 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot.initial
 
+import dev.bpmcrafters.processengineapi.adapter.c7.embedded.process.ProcessDefinitionMetaDataResolver
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot.initial.C7EmbeddedInitialPullUserTasksDeliveryBinding.Companion.ORDER
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.delivery.pull.EmbeddedPullUserTaskDelivery
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
@@ -7,6 +8,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.camunda.bpm.engine.RepositoryService
 import org.camunda.bpm.engine.TaskService
 import org.camunda.bpm.spring.boot.starter.event.ProcessApplicationStartedEvent
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.context.event.EventListener
 import org.springframework.core.Ordered
 import org.springframework.core.annotation.Order
@@ -24,7 +26,7 @@ private val logger = KotlinLogging.logger {}
 open class C7EmbeddedInitialPullUserTasksDeliveryBinding(
     subscriptionRepository: SubscriptionRepository,
     taskService: TaskService,
-    repositoryService: RepositoryService,
+    processDefinitionMetaDataResolver: ProcessDefinitionMetaDataResolver,
     executorService: ExecutorService
 ) {
 
@@ -35,7 +37,7 @@ open class C7EmbeddedInitialPullUserTasksDeliveryBinding(
   private val pullDelivery = EmbeddedPullUserTaskDelivery(
     subscriptionRepository = subscriptionRepository,
     taskService = taskService,
-    repositoryService = repositoryService,
+    processDefinitionMetaDataResolver = processDefinitionMetaDataResolver,
     executorService = executorService
   )
 
