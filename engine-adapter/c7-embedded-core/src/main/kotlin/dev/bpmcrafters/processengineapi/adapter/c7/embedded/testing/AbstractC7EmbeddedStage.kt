@@ -6,6 +6,7 @@ import dev.bpmcrafters.processengineapi.CommonRestrictions
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.correlation.CorrelationApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.correlation.SignalApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.deploy.DeploymentApiImpl
+import dev.bpmcrafters.processengineapi.adapter.c7.embedded.process.CachingProcessDefinitionMetaDataResolver
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.process.StartProcessApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.completion.C7ServiceTaskCompletionApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.completion.C7UserTaskCompletionApiImpl
@@ -125,7 +126,10 @@ abstract class AbstractC7EmbeddedStage<SUBTYPE : AbstractC7EmbeddedStage<SUBTYPE
       workerId, processEngineServices.externalTaskService, subscriptionRepository, LinearMemoryFailureRetrySupplier(3, 3L)
     )
     embeddedPullUserTaskDelivery = EmbeddedPullUserTaskDelivery(
-      processEngineServices.taskService, processEngineServices.repositoryService, subscriptionRepository, Executors.newFixedThreadPool(1)
+      taskService = processEngineServices.taskService,
+      processDefinitionMetaDataResolver = CachingProcessDefinitionMetaDataResolver(repositoryService = processEngineServices.repositoryService),
+      subscriptionRepository = subscriptionRepository,
+      executorService = Executors.newFixedThreadPool(1)
     )
 
     embeddedPullServiceTaskDelivery = EmbeddedPullServiceTaskDelivery(

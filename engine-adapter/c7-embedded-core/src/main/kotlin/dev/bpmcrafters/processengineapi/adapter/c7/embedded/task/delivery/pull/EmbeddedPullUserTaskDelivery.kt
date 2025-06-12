@@ -1,6 +1,8 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.delivery.pull
 
 import dev.bpmcrafters.processengineapi.CommonRestrictions
+import dev.bpmcrafters.processengineapi.adapter.c7.embedded.process.CachingProcessDefinitionMetaDataResolver
+import dev.bpmcrafters.processengineapi.adapter.c7.embedded.process.ProcessDefinitionMetaDataResolver
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.delivery.*
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import dev.bpmcrafters.processengineapi.impl.task.TaskSubscriptionHandle
@@ -24,12 +26,11 @@ private val logger = KotlinLogging.logger {}
  */
 class EmbeddedPullUserTaskDelivery(
   private val taskService: TaskService,
-  private val repositoryService: RepositoryService,
   private val subscriptionRepository: SubscriptionRepository,
+  private val processDefinitionMetaDataResolver: ProcessDefinitionMetaDataResolver,
   private val executorService: ExecutorService
 ) : UserTaskDelivery, RefreshableDelivery {
 
-  private val cachingProcessDefinitionKeyResolver = CachingProcessDefinitionKeyResolver(repositoryService)
   private val deliveredTasks: ConcurrentHashMap<String, TaskInformation> = ConcurrentHashMap()
 
   /**
@@ -42,7 +43,9 @@ class EmbeddedPullUserTaskDelivery(
       // clean up task information items which are not in the list of delivered task ids. This is because,
       // if a task has been completed via API and the list of delivered tasks is reduced, the `deliveredTasks`
       // variable has not been updated yet.
-      (deliveredTasks.keys().asSequence().filterNot { deliveredTaskIds.contains(it) }).forEach(deliveredTasks::remove)
+      synchronized(deliveredTasks) {
+        (deliveredTasks.keys().asSequence().filterNot { deliveredTaskIds.contains(it) }).forEach(deliveredTasks::remove)
+      }
 
       logger.trace { "PROCESS-ENGINE-C7-EMBEDDED-036: pulling user tasks for subscriptions: $subscriptions" }
       taskService
@@ -57,7 +60,7 @@ class EmbeddedPullUserTaskDelivery(
             ?.let { activeSubscription: TaskSubscriptionHandle ->
               executorService.submit {  // in another thread
                 try {
-                  val processDefinitionKey = cachingProcessDefinitionKeyResolver.getProcessDefinitionKey(task.processDefinitionId)
+                  val processDefinitionKey = processDefinitionMetaDataResolver.getProcessDefinitionKey(task.processDefinitionId)
                   val candidates = taskService.getIdentityLinksForTask(task.id).toSet()
                   // create task information and set up the reason
                   val taskInformation =
@@ -75,13 +78,16 @@ class EmbeddedPullUserTaskDelivery(
                         // no change on the task
                         null
                       }
+
                     } else {
                       // task is new for this subscription
                       task.toTaskInformation(candidates, processDefinitionKey).withReason(TaskInformation.CREATE)
                     }
                   if (taskInformation != null) {
                     subscriptionRepository.activateSubscriptionForTask(task.id, activeSubscription)
-                    deliveredTasks[task.id] = taskInformation
+                    synchronized(deliveredTasks) {
+                      deliveredTasks[task.id] = taskInformation
+                    }
                     val variables = taskService.getVariables(task.id).filterBySubscription(activeSubscription)
                     logger.debug { "PROCESS-ENGINE-C7-EMBEDDED-037: delivering user task ${task.id}." }
                     activeSubscription.action.accept(taskInformation, variables)
@@ -91,7 +97,15 @@ class EmbeddedPullUserTaskDelivery(
                   // successfully handled the task, remove from already delivered
                   // since we do it from another thread, this must terminate before
                   // we can access the `deliveredTaskIds` for
-                  deliveredTaskIds.remove(task.id)
+                  synchronized(deliveredTaskIds) {
+                    if (deliveredTaskIds.contains(task.id)) { // if the task was already there, remove it from unprocessed list
+                      val successful = deliveredTaskIds.remove(task.id)
+                      if (!successful) {
+                        logger.error { "PROCESS-ENGINE-C7-EMBEDDED-038: error processing task ${task.id}, could not mark updated task as processed." }
+                      }
+                    }
+                  }
+
                 } catch (e: Exception) {
                   logger.error { "PROCESS-ENGINE-C7-EMBEDDED-038: error delivering task ${task.id}: ${e.message}" }
                   subscriptionRepository.deactivateSubscriptionForTask(taskId = task.id)
@@ -115,7 +129,9 @@ class EmbeddedPullUserTaskDelivery(
               ?.accept(
                 TaskInformation(taskId = taskId, meta = emptyMap()).withReason(TaskInformation.DELETE)
               )
-            deliveredTasks.remove(taskId)
+            synchronized(deliveredTasks) {
+              deliveredTasks.remove(taskId)
+            }
           }
         }.forEach { terminationExecutionFuture ->
           terminationExecutionFuture.get() // finish this thread too
@@ -168,8 +184,8 @@ class EmbeddedPullUserTaskDelivery(
         CommonRestrictions.ACTIVITY_ID -> it.value == task.taskDefinitionKey
         CommonRestrictions.PROCESS_INSTANCE_ID -> it.value == task.processInstanceId
         CommonRestrictions.PROCESS_DEFINITION_ID -> it.value == task.processDefinitionId
-        CommonRestrictions.PROCESS_DEFINITION_KEY -> it.value == cachingProcessDefinitionKeyResolver.getProcessDefinitionKey(task.processDefinitionId)
-        CommonRestrictions.PROCESS_DEFINITION_VERSION_TAG -> it.value == cachingProcessDefinitionKeyResolver.getProcessDefinitionVersionTag(task.processDefinitionId)
+        CommonRestrictions.PROCESS_DEFINITION_KEY -> it.value == processDefinitionMetaDataResolver.getProcessDefinitionKey(task.processDefinitionId)
+        CommonRestrictions.PROCESS_DEFINITION_VERSION_TAG -> it.value == processDefinitionMetaDataResolver.getProcessDefinitionVersionTag(task.processDefinitionId)
         else -> false
       }
     }
