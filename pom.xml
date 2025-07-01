@@ -21,7 +21,7 @@
     <!-- COMMON GLOBAL -->
     <spring-boot.version>3.4.5</spring-boot.version>
     <process-engine-api.version>1.2</process-engine-api.version>
-    <camunda-platform-7-rest-client.version>7.23.3</camunda-platform-7-rest-client.version>
+    <camunda-platform-7-rest-client.version>7.23.4</camunda-platform-7-rest-client.version>
     <!-- TEST -->
     <mockito.version>5.4.0</mockito.version>
     <assertj.version>3.27.3</assertj.version>
