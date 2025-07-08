@@ -3,16 +3,23 @@ package dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.modification
 import org.camunda.bpm.engine.TaskService
 import org.camunda.bpm.engine.task.IdentityLinkType
 
-fun TaskService.removeAllCandidateUsers(taskId: String) = this
+fun TaskService.getAllCandidates(taskId: String) = this
   .getIdentityLinksForTask(taskId)
-  .filter { it.userId != null && it.type == IdentityLinkType.CANDIDATE }
-  .forEach { this.deleteCandidateUser(taskId, it.userId) }
+  .filter { it.type == IdentityLinkType.CANDIDATE }
+
+fun TaskService.getCandidateUsers(taskId: String) = getAllCandidates(taskId)
+  .filter { it.userId != null }
+  .map { it.userId }
+
+fun TaskService.getCandidateGroups(taskId: String) = getAllCandidates(taskId)
+  .filter { it.groupId != null }
+  .map { it.groupId }
+
+fun TaskService.removeAllCandidateUsers(taskId: String) = this
+  .setCandidateUsers(taskId, listOf())
 
 fun TaskService.setCandidateUsers(taskId: String, allCandidateUsers: List<String>) {
-  val oldCandidates = this
-    .getIdentityLinksForTask(taskId)
-    .filter { it.userId != null && it.type == IdentityLinkType.CANDIDATE }
-    .map { it.userId }
+  val oldCandidates = this.getCandidateUsers(taskId)
   val candidatesToRemove = oldCandidates.filter { it !in allCandidateUsers }
   val candidatesToAdd = allCandidateUsers.filter { it !in oldCandidates }
 
@@ -25,15 +32,10 @@ fun TaskService.setCandidateUsers(taskId: String, allCandidateUsers: List<String
 }
 
 fun TaskService.removeAllCandidateGroups(taskId: String) = this
-  .getIdentityLinksForTask(taskId)
-  .filter { it.groupId != null && it.type == IdentityLinkType.CANDIDATE }
-  .forEach { this.deleteCandidateGroup(taskId, it.groupId) }
+  .setCandidateGroups(taskId, listOf())
 
 fun TaskService.setCandidateGroups(taskId: String, allCandidateGroups: List<String>) {
-  val oldCandidates = this
-    .getIdentityLinksForTask(taskId)
-    .filter { it.groupId != null && it.type == IdentityLinkType.CANDIDATE }
-    .map { it.groupId }
+  val oldCandidates = this.getCandidateGroups(taskId)
   val candidatesToRemove = oldCandidates.filter { it !in allCandidateGroups }
   val candidatesToAdd = allCandidateGroups.filter { it !in oldCandidates }
 

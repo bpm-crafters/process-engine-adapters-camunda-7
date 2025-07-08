@@ -56,7 +56,7 @@ class UserTaskModificationApiImpl(
 
   private fun changePayload(cmd: ChangePayloadModifyTaskCmd) {
     when (cmd) {
-      is UpdatePayloadTaskCmd -> taskApiClient.modifyTaskVariables(
+      is UpdatePayloadTaskCmd -> taskApiClient.modifyTaskLocalVariables(
         cmd.taskId,
         PatchVariablesDto().modifications(valueMapper.mapValues(cmd.get()))
       )
