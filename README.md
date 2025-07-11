@@ -39,6 +39,8 @@ If you want to start usage, please add the BOM to your Maven project and add cor
 
 | Adapter-7 Version                                                                                     | Camunda 7 Version | API Version |
 |-------------------------------------------------------------------------------------------------------|-------------------|-------------|
+| [2025.07.1](https://github.com/bpm-crafters/process-engine-adapters-camunda-7/releases/tag/2025.07.1) | 7.23.4            | 1.3         |
+| [2025.06.1](https://github.com/bpm-crafters/process-engine-adapters-camunda-7/releases/tag/2025.06.1) | 7.23              | 1.2         |
 | [2025.05.5](https://github.com/bpm-crafters/process-engine-adapters-camunda-7/releases/tag/2025.05.5) | 7.23              | 1.2         |
 | [2025.05.4](https://github.com/bpm-crafters/process-engine-adapters-camunda-7/releases/tag/2025.05.4) | 7.23              | 1.2         |
 | [2025.05.3](https://github.com/bpm-crafters/process-engine-adapters-camunda-7/releases/tag/2025.05.3) | 7.23              | 1.2         |

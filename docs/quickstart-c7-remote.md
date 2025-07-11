@@ -21,7 +21,7 @@ you will also need to add some additional libraries. Here is the result:
   <dependency>
     <groupId>org.camunda.community.rest</groupId>
     <artifactId>camunda-platform-7-rest-client-spring-boot-starter-feign</artifactId>
-    <version>7.23.0</version>
+    <version>7.23.4</version>
   </dependency>
   <!-- Optional, if you want to use the official camunda client for service task delivery-->
   <dependency>

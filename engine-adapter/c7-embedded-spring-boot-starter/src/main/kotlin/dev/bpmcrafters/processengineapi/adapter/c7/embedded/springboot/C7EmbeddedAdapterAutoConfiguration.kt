@@ -10,6 +10,7 @@ import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.completion.C7Se
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.completion.C7UserTaskCompletionApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.completion.FailureRetrySupplier
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.completion.LinearMemoryFailureRetrySupplier
+import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.modification.C7UserTaskModificationApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.subscription.C7TaskSubscriptionApiImpl
 import io.toolisticon.spring.condition.ConditionalOnMissingQualifiedBean
 import dev.bpmcrafters.processengineapi.impl.task.InMemSubscriptionRepository
@@ -21,6 +22,7 @@ import dev.bpmcrafters.processengineapi.process.StartProcessApi
 import dev.bpmcrafters.processengineapi.task.ServiceTaskCompletionApi
 import dev.bpmcrafters.processengineapi.task.TaskSubscriptionApi
 import dev.bpmcrafters.processengineapi.task.UserTaskCompletionApi
+import dev.bpmcrafters.processengineapi.task.UserTaskModificationApi
 import io.github.oshai.kotlinlogging.KotlinLogging
 import jakarta.annotation.PostConstruct
 import org.camunda.bpm.engine.ExternalTaskService
@@ -77,6 +79,12 @@ class C7EmbeddedAdapterAutoConfiguration {
   @Qualifier("c7embedded-deployment-api")
   fun deploymentApi(repositoryService: RepositoryService): DeploymentApi = DeploymentApiImpl(
     repositoryService = repositoryService
+  )
+
+  @Bean("c7embedded-user-task-modification-api")
+  @Qualifier("c7embedded-user-task-modification-api")
+  fun userTaskModificationApi(taskService: TaskService): UserTaskModificationApi = C7UserTaskModificationApiImpl(
+    taskService = taskService
   )
 
   @Bean
