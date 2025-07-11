@@ -13,6 +13,7 @@ import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.completion.C7Us
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.completion.LinearMemoryFailureRetrySupplier
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.delivery.pull.EmbeddedPullServiceTaskDelivery
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.delivery.pull.EmbeddedPullUserTaskDelivery
+import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.modification.C7UserTaskModificationApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.subscription.C7TaskSubscriptionApiImpl
 import dev.bpmcrafters.processengineapi.correlation.CorrelationApi
 import dev.bpmcrafters.processengineapi.correlation.SignalApi
@@ -70,6 +71,9 @@ abstract class AbstractC7EmbeddedStage<SUBTYPE : AbstractC7EmbeddedStage<SUBTYPE
 
   @ProvidedScenarioState
   protected lateinit var correlationApi: CorrelationApi
+
+  @ProvidedScenarioState
+  protected lateinit var userTaskModificationApi: UserTaskModificationApi
 
   @ProvidedScenarioState
   protected lateinit var processEngineServices: ProcessEngineServices
@@ -139,6 +143,8 @@ abstract class AbstractC7EmbeddedStage<SUBTYPE : AbstractC7EmbeddedStage<SUBTYPE
     taskSubscriptionApi = C7TaskSubscriptionApiImpl(
       subscriptionRepository
     )
+
+    userTaskModificationApi = C7UserTaskModificationApiImpl(processEngineServices.taskService)
 
     this.userTaskSupport = UserTaskSupport()
     userTaskSupport.subscribe(

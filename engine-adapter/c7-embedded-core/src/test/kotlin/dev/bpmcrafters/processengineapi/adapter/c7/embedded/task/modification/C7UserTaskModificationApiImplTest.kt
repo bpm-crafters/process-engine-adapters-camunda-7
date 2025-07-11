@@ -117,35 +117,29 @@ internal class C7UserTaskModificationApiImplTest {
   }
 
   @Test
-  fun `add candidate users`() {
+  fun `set candidate users without previous`() {
     whenever(taskService.getIdentityLinksForTask(taskId)).thenReturn(
-      listOf(IdentityLinkEntity().apply {
-        id = taskId
-        type = "candidate"
-        userId = "kermit"
-      })
+      listOf()
     )
     api.update(
       ChangeAssignmentModifyTaskCmd.SetCandidateUsersTaskCmd(taskId = taskId, candidateUsers = listOf("kermit", "piggy"))
     ).get()
     verify(taskService).getIdentityLinksForTask(taskId)
+    verify(taskService).addCandidateUser(taskId, "kermit")
     verify(taskService).addCandidateUser(taskId, "piggy")
     verifyNoMoreInteractions(taskService)
   }
 
   @Test
-  fun `add candidate groups`() {
+  fun `set candidate groups without previous`() {
     whenever(taskService.getIdentityLinksForTask(taskId)).thenReturn(
-      listOf(IdentityLinkEntity().apply {
-        id = taskId
-        type = "candidate"
-        groupId = "muppets"
-      })
+      listOf()
     )
     api.update(
       ChangeAssignmentModifyTaskCmd.SetCandidateGroupsTaskCmd(taskId = taskId, candidateGroups = listOf("muppets", "avengers"))
     ).get()
     verify(taskService).getIdentityLinksForTask(taskId)
+    verify(taskService).addCandidateGroup(taskId, "muppets")
     verify(taskService).addCandidateGroup(taskId, "avengers")
     verifyNoMoreInteractions(taskService)
   }

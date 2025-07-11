@@ -139,10 +139,10 @@ internal class UserTaskModificationApiImplTest {
   }
 
   @Test
-  fun `add candidate users`() {
+  fun `set candidate users without previous`() {
     whenever(taskApiClient.getIdentityLinks(taskId, "candidate")).thenReturn(
       ResponseEntity.ok(
-        listOf(IdentityLinkDto().type("candidate").userId("kermit"))
+        listOf()
       )
     )
     api.update(
@@ -150,20 +150,22 @@ internal class UserTaskModificationApiImplTest {
     ).get()
     verify(taskApiClient).getIdentityLinks(taskId, "candidate")
     verify(taskApiClient).addIdentityLink(taskId, IdentityLinkDto().userId("piggy").type("candidate"))
+    verify(taskApiClient).addIdentityLink(taskId, IdentityLinkDto().userId("kermit").type("candidate"))
     verifyNoMoreInteractions(taskApiClient)
   }
 
   @Test
-  fun `add candidate groups`() {
+  fun `set candidate groups without previous`() {
     whenever(taskApiClient.getIdentityLinks(taskId, "candidate")).thenReturn(
       ResponseEntity.ok(
-        listOf(IdentityLinkDto().type("candidate").groupId("muppets").type("candidate"))
+        listOf()
       )
     )
     api.update(
       ChangeAssignmentModifyTaskCmd.SetCandidateGroupsTaskCmd(taskId = taskId, candidateGroups = listOf("muppets", "avengers"))
     ).get()
     verify(taskApiClient).getIdentityLinks(taskId, "candidate")
+    verify(taskApiClient).addIdentityLink(taskId, IdentityLinkDto().groupId("muppets").type("candidate"))
     verify(taskApiClient).addIdentityLink(taskId, IdentityLinkDto().groupId("avengers").type("candidate"))
     verifyNoMoreInteractions(taskApiClient)
   }
