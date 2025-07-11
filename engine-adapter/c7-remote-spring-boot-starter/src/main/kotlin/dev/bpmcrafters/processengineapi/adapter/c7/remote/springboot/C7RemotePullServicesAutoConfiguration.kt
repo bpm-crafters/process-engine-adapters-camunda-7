@@ -7,9 +7,11 @@ import dev.bpmcrafters.processengineapi.adapter.c7.remote.process.ProcessDefinit
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.completion.UserTaskCompletionApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.PullServiceTaskDelivery
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.PullUserTaskDelivery
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.modification.UserTaskModificationApiImpl
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import dev.bpmcrafters.processengineapi.task.ServiceTaskCompletionApi
 import dev.bpmcrafters.processengineapi.task.UserTaskCompletionApi
+import dev.bpmcrafters.processengineapi.task.UserTaskModificationApi
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.toolisticon.spring.condition.ConditionalOnMissingQualifiedBean
 import jakarta.annotation.PostConstruct
@@ -136,7 +138,7 @@ class C7RemotePullServicesAutoConfiguration {
   }
 
   /**
-   * User completion API.
+   * User task completion API.
    */
   @Bean("c7remote-user-task-completion-api")
   @Qualifier("c7remote-user-task-completion-api")
@@ -154,5 +156,20 @@ class C7RemotePullServicesAutoConfiguration {
       valueMapper = valueMapper
     )
 
-
+  /**
+   * User task modification api.
+   */
+  @Bean("c7remote-user-task-modification-api")
+  @Qualifier("c7remote-user-task-modification-api")
+  @ConditionalOnUserTaskDeliveryStrategy(
+    strategy = C7RemoteAdapterProperties.UserTaskDeliveryStrategy.REMOTE_SCHEDULED
+  )
+  fun userTaskModificationApi(
+    taskApiClient: TaskApiClient,
+    valueMapper: ValueMapper
+  ): UserTaskModificationApi =
+    UserTaskModificationApiImpl(
+      taskApiClient = taskApiClient,
+      valueMapper = valueMapper
+    )
 }
