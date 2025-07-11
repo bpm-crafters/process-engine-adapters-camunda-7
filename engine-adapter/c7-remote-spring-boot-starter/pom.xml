@@ -12,18 +12,6 @@
   <artifactId>process-engine-adapter-camunda-platform-c7-remote-spring-boot-starter</artifactId>
   <name>Adapter: C7 Remote Spring-Boot Starter</name>
 
-  <dependencyManagement>
-    <dependencies>
-      <dependency>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-dependencies</artifactId>
-        <version>${spring-boot.version}</version>
-        <scope>import</scope>
-        <type>pom</type>
-      </dependency>
-    </dependencies>
-  </dependencyManagement>
-
   <dependencies>
     <dependency>
       <groupId>dev.bpm-crafters.process-engine-adapters</groupId>
