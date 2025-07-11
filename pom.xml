@@ -19,13 +19,13 @@
 
   <properties>
     <!-- COMMON GLOBAL -->
-    <spring-boot.version>3.4.5</spring-boot.version>
-    <process-engine-api.version>1.3-SNAPSHOT</process-engine-api.version>
-    <camunda-platform-7-rest-client.version>7.23.3</camunda-platform-7-rest-client.version>
+    <spring-boot.version>3.5.3</spring-boot.version>
+    <process-engine-api.version>1.2</process-engine-api.version>
+    <camunda-platform-7-rest-client.version>7.23.4</camunda-platform-7-rest-client.version>
     <!-- TEST -->
     <mockito.version>5.4.0</mockito.version>
     <assertj.version>3.27.3</assertj.version>
-    <junit5.version>5.11.3</junit5.version>
+    <junit5.version>5.13.3</junit5.version>
     <jgiven.version>2.0.2</jgiven.version>
     <awaitility.version>4.3.0</awaitility.version>
     <mockk.version>1.14.4</mockk.version>
@@ -53,10 +53,11 @@
       <dependency>
         <groupId>io.toolisticon.spring</groupId>
         <artifactId>spring-boot-support-bom</artifactId>
-        <version>1.0.0</version>
+        <version>1.0.1</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
+
       <dependency>
         <groupId>org.assertj</groupId>
         <artifactId>assertj-core</artifactId>

@@ -11,7 +11,7 @@
   </parent>
 
 	<artifactId>process-engine-adapter-camunda-platform-c7-testing</artifactId>
-    <name>Test: Camunda 7 Adapter Test Fixtures</name>
+  <name>Test: Camunda 7 Adapter Test Fixtures</name>
 
 	<dependencies>
     <!-- This is a library used on a test scope, so we put everything into compile scope -->
