@@ -28,7 +28,7 @@
     <junit5.version>5.13.3</junit5.version>
     <jgiven.version>2.0.2</jgiven.version>
     <awaitility.version>4.3.0</awaitility.version>
-    <mockk.version>1.14.4</mockk.version>
+    <mockk.version>1.14.5</mockk.version>
   </properties>
 
   <modules>
