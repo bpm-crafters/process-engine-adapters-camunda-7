@@ -1,5 +1,6 @@
 package dev.bpmcrafters.example.common.adapter.out.process;
 
+import dev.bpmcrafters.example.common.adapter.in.process.ComplexPayload;
 import dev.bpmcrafters.example.common.adapter.shared.SimpleProcessWorkflowConst;
 import dev.bpmcrafters.example.common.adapter.shared.SimpleProcessWorkflowConst.Expressions;
 import dev.bpmcrafters.example.common.application.port.out.WorkflowOutPort;
@@ -15,6 +16,8 @@ import dev.bpmcrafters.processengineapi.deploy.DeploymentInformation;
 import dev.bpmcrafters.processengineapi.deploy.NamedResource;
 import dev.bpmcrafters.processengineapi.process.StartProcessApi;
 import dev.bpmcrafters.processengineapi.process.StartProcessByDefinitionCmd;
+
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -56,7 +59,15 @@ public class WorkflowAdapter implements WorkflowOutPort {
           Map.of(
             "stringValue", value,
             "intValue", intValue,
-            "listVariable", List.of("element1", "element2")
+            "listVariable", List.of("element1", "element2"),
+// FIXME
+            "complex", new ComplexPayload(
+              "string",
+              List.of(
+                new ComplexPayload.Foo(42, OffsetDateTime.now()),
+                new ComplexPayload.Foo(43, OffsetDateTime.now().plusDays(1))
+              )
+            )
           )
         )
       ).get()

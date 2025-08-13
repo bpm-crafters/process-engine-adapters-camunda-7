@@ -56,6 +56,7 @@ class PullServiceTaskDelivery(
       val lockedExternalTaskDtoList =
         requireNotNull(result.body) { "Could not subscribe to external tasks: $subscriptions, status code was ${result.statusCode}" }
 
+      // TODO -> executor.submitAll(subscriptions.map ( it -> Callable(it)))
       lockedExternalTaskDtoList
         .parallelStream()
         .map { lockedTask ->

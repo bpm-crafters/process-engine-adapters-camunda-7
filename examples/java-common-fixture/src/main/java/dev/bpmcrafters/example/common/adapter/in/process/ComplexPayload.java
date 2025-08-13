@@ -17,7 +17,7 @@ public class ComplexPayload {
 
   @AllArgsConstructor
   @Data
-  static class Foo {
+  public static class Foo {
     private Integer intValue;
     private OffsetDateTime dateTime;
   }
