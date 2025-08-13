@@ -14,6 +14,7 @@ import org.springframework.core.Ordered
 import org.springframework.core.annotation.Order
 import org.springframework.scheduling.annotation.Async
 import java.util.concurrent.ExecutorService
+import java.util.function.Supplier
 
 private val logger = KotlinLogging.logger {}
 
@@ -46,7 +47,8 @@ open class C7RemoteInitialPullServiceTasksDeliveryBinding(
     executorService = executorService,
     valueMapper = valueMapper,
     deserializeOnServer = c7AdapterProperties.serviceTasks.deserializeOnServer,
-    processDefinitionMetaDataResolver = processDefinitionMetaDataResolver
+    processDefinitionMetaDataResolver = processDefinitionMetaDataResolver,
+    remainingQueueSizeSupplier = { c7AdapterProperties.serviceTasks.maxTaskCount } // we pull only once, use the number of tasks
   )
 
   @EventListener

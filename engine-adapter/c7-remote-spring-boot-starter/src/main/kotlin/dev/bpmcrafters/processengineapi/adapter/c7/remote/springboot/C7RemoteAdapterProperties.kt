@@ -91,6 +91,14 @@ class C7RemoteAdapterProperties(
      * Should variables be deserialized on server?
      */
     val deserializeOnServer: Boolean = false,
+    /**
+     * External task executor thread pool size.
+     */
+    val workerThreadPoolSize: Int = 10,
+    /**
+     * External task executor queue size.
+     */
+    val workerThreadPoolQueueSize: Int = 50,
   )
 
   /**

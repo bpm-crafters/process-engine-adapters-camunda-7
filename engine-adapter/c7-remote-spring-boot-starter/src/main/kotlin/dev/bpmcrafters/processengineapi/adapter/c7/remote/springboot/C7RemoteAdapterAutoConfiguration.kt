@@ -28,8 +28,8 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Conditional
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
+import java.util.concurrent.*
+import java.util.function.Supplier
 
 private val logger = KotlinLogging.logger {}
 
@@ -90,13 +90,40 @@ class C7RemoteAdapterAutoConfiguration {
   fun subscriptionRepository(): SubscriptionRepository = InMemSubscriptionRepository()
 
   /**
-   * Creates a default fixed thread pool for 10 threads used for process engine worker executions.
+   * Creates a default fixed thread pool used for external task worker executions.
    * This one is used for pull-strategies only.
    */
   @Bean("c7remote-service-task-worker-executor")
   @Qualifier("c7remote-service-task-worker-executor")
   @ConditionalOnMissingQualifiedBean(beanClass = ExecutorService::class, qualifier = "c7remote-service-task-worker-executor")
-  fun serviceTaskWorkerExecutor(): ExecutorService = Executors.newFixedThreadPool(10)
+  fun serviceTaskWorkerExecutor(
+    c7AdapterProperties: C7RemoteAdapterProperties,
+    @Qualifier("c7remote-service-task-worker-executor-queue")
+    linkedBlockingQueue: LinkedBlockingQueue<Runnable>
+  ): ExecutorService =
+    ThreadPoolExecutor(
+      c7AdapterProperties.serviceTasks.workerThreadPoolSize,
+      c7AdapterProperties.serviceTasks.workerThreadPoolSize,
+      0L, TimeUnit.MILLISECONDS,
+      linkedBlockingQueue
+    )
+
+  @Bean("c7remote-service-task-worker-executor-queue")
+  @Qualifier("c7remote-service-task-worker-executor-queue")
+  @ConditionalOnMissingQualifiedBean(beanClass = LinkedBlockingQueue::class, qualifier = "c7remote-service-task-worker-executor-queue")
+  fun serviceTaskWorkerExecutorQueue(c7AdapterProperties: C7RemoteAdapterProperties) = LinkedBlockingQueue<Runnable>(
+    c7AdapterProperties.serviceTasks.workerThreadPoolQueueSize
+  )
+
+  @Bean("c7remote-service-task-worker-executor-queue-remaining-size-supplier")
+  @Qualifier("c7remote-service-task-worker-executor-queue-remaining-size-supplier")
+  @ConditionalOnMissingQualifiedBean(beanClass = Supplier::class, qualifier = "c7remote-service-task-worker-executor-queue-remaining-size-supplier")
+  fun serviceTaskWorkerExecutorQueueRemainingSizeSupplier(
+    @Qualifier("c7remote-service-task-worker-executor-queue")
+    linkedBlockingQueue: LinkedBlockingQueue<Runnable>
+  ): Supplier<Int> = Supplier {
+    linkedBlockingQueue.remainingCapacity()
+  }
 
   /**
    * Creates a default fixed thread pool for 10 threads used for process engine worker executions.
