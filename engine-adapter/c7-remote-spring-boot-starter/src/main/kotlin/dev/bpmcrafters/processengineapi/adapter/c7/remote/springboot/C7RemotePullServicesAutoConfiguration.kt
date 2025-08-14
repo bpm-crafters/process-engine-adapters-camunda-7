@@ -29,6 +29,7 @@ import org.springframework.scheduling.TaskScheduler
 import org.springframework.scheduling.annotation.EnableAsync
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler
 import java.util.concurrent.ExecutorService
+import java.util.concurrent.ThreadPoolExecutor
 import java.util.function.Supplier
 
 private val logger = KotlinLogging.logger {}
@@ -69,10 +70,8 @@ class C7RemotePullServicesAutoConfiguration {
     subscriptionRepository: SubscriptionRepository,
     c7AdapterProperties: C7RemoteAdapterProperties,
     @Qualifier("c7remote-service-task-worker-executor")
-    executorService: ExecutorService,
+    executor: ThreadPoolExecutor,
     valueMapper: ValueMapper,
-    @Qualifier("c7remote-service-task-worker-executor-queue-remaining-size-supplier")
-    remainingQueueSizeSupplier: Supplier<Int>
   ) = PullServiceTaskDelivery(
     subscriptionRepository = subscriptionRepository,
     workerId = c7AdapterProperties.serviceTasks.workerId,
@@ -80,12 +79,11 @@ class C7RemotePullServicesAutoConfiguration {
     lockDurationInSeconds = c7AdapterProperties.serviceTasks.lockTimeInSeconds,
     retryTimeoutInSeconds = c7AdapterProperties.serviceTasks.retryTimeoutInSeconds,
     retries = c7AdapterProperties.serviceTasks.retries,
-    executorService = executorService,
+    executor = executor,
     externalTaskApiClient = externalTaskApiClient,
     processDefinitionMetaDataResolver = processDefinitionMetaDataResolver,
     valueMapper = valueMapper,
     deserializeOnServer = c7AdapterProperties.serviceTasks.deserializeOnServer,
-    remainingQueueSizeSupplier = remainingQueueSizeSupplier,
   )
 
   @Bean("c7remote-service-task-completion-api")

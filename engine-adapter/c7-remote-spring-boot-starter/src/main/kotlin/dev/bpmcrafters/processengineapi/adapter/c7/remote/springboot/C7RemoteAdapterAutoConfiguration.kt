@@ -8,7 +8,6 @@ import dev.bpmcrafters.processengineapi.adapter.c7.remote.process.StartProcessAp
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.TaskSubscriptionApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.completion.FailureRetrySupplier
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.completion.LinearMemoryFailureRetrySupplier
-import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.modification.UserTaskModificationApiImpl
 import dev.bpmcrafters.processengineapi.correlation.CorrelationApi
 import dev.bpmcrafters.processengineapi.correlation.SignalApi
 import dev.bpmcrafters.processengineapi.deploy.DeploymentApi
@@ -16,11 +15,13 @@ import dev.bpmcrafters.processengineapi.impl.task.InMemSubscriptionRepository
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import dev.bpmcrafters.processengineapi.process.StartProcessApi
 import dev.bpmcrafters.processengineapi.task.TaskSubscriptionApi
-import dev.bpmcrafters.processengineapi.task.UserTaskModificationApi
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.toolisticon.spring.condition.ConditionalOnMissingQualifiedBean
 import jakarta.annotation.PostConstruct
-import org.camunda.community.rest.client.api.*
+import org.camunda.community.rest.client.api.DeploymentApiClient
+import org.camunda.community.rest.client.api.MessageApiClient
+import org.camunda.community.rest.client.api.ProcessDefinitionApiClient
+import org.camunda.community.rest.client.api.SignalApiClient
 import org.camunda.community.rest.variables.ValueMapper
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.autoconfigure.AutoConfiguration
@@ -29,7 +30,6 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Conditional
 import java.util.concurrent.*
-import java.util.function.Supplier
 
 private val logger = KotlinLogging.logger {}
 
@@ -95,35 +95,14 @@ class C7RemoteAdapterAutoConfiguration {
    */
   @Bean("c7remote-service-task-worker-executor")
   @Qualifier("c7remote-service-task-worker-executor")
-  @ConditionalOnMissingQualifiedBean(beanClass = ExecutorService::class, qualifier = "c7remote-service-task-worker-executor")
-  fun serviceTaskWorkerExecutor(
-    c7AdapterProperties: C7RemoteAdapterProperties,
-    @Qualifier("c7remote-service-task-worker-executor-queue")
-    linkedBlockingQueue: LinkedBlockingQueue<Runnable>
-  ): ExecutorService =
+  @ConditionalOnMissingQualifiedBean(beanClass = ThreadPoolExecutor::class, qualifier = "c7remote-service-task-worker-executor")
+  fun serviceTaskWorkerExecutor(c7AdapterProperties: C7RemoteAdapterProperties): ThreadPoolExecutor =
     ThreadPoolExecutor(
       c7AdapterProperties.serviceTasks.workerThreadPoolSize,
       c7AdapterProperties.serviceTasks.workerThreadPoolSize,
       0L, TimeUnit.MILLISECONDS,
-      linkedBlockingQueue
+      LinkedBlockingQueue(c7AdapterProperties.serviceTasks.workerThreadPoolQueueCapacity)
     )
-
-  @Bean("c7remote-service-task-worker-executor-queue")
-  @Qualifier("c7remote-service-task-worker-executor-queue")
-  @ConditionalOnMissingQualifiedBean(beanClass = LinkedBlockingQueue::class, qualifier = "c7remote-service-task-worker-executor-queue")
-  fun serviceTaskWorkerExecutorQueue(c7AdapterProperties: C7RemoteAdapterProperties) = LinkedBlockingQueue<Runnable>(
-    c7AdapterProperties.serviceTasks.workerThreadPoolQueueSize
-  )
-
-  @Bean("c7remote-service-task-worker-executor-queue-remaining-size-supplier")
-  @Qualifier("c7remote-service-task-worker-executor-queue-remaining-size-supplier")
-  @ConditionalOnMissingQualifiedBean(beanClass = Supplier::class, qualifier = "c7remote-service-task-worker-executor-queue-remaining-size-supplier")
-  fun serviceTaskWorkerExecutorQueueRemainingSizeSupplier(
-    @Qualifier("c7remote-service-task-worker-executor-queue")
-    linkedBlockingQueue: LinkedBlockingQueue<Runnable>
-  ): Supplier<Int> = Supplier {
-    linkedBlockingQueue.remainingCapacity()
-  }
 
   /**
    * Creates a default fixed thread pool for 10 threads used for process engine worker executions.

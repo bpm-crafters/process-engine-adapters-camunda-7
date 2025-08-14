@@ -96,9 +96,9 @@ class C7RemoteAdapterProperties(
      */
     val workerThreadPoolSize: Int = 10,
     /**
-     * External task executor queue size.
+     * External task executor queue capacity.
      */
-    val workerThreadPoolQueueSize: Int = 50,
+    val workerThreadPoolQueueCapacity: Int = 50,
   )
 
   /**
