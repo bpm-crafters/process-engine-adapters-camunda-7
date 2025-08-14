@@ -28,8 +28,6 @@ internal class PullServiceTaskDeliveryTest {
 
   private val externalTaskApiClient = mock<ExternalTaskApiClient>()
 
-  private val processDefinitionMetaDataResolver = mock<ProcessDefinitionMetaDataResolver>()
-
   private val workerId = "best-worker-in-town"
 
   private val subscriptionRepository = mock<SubscriptionRepository>()
@@ -46,7 +44,7 @@ internal class PullServiceTaskDeliveryTest {
 
   private val taskDelivery = spy(PullServiceTaskDelivery(
     externalTaskApiClient = externalTaskApiClient,
-    processDefinitionMetaDataResolver = processDefinitionMetaDataResolver,
+    processDefinitionMetaDataResolver = mock<ProcessDefinitionMetaDataResolver>(),
     workerId = workerId,
     subscriptionRepository = subscriptionRepository,
     maxTasks = 2,
