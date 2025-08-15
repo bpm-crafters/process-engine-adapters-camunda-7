@@ -107,7 +107,13 @@ internal class PullServiceTaskDeliveryThreadingTest {
     endlesslySupplyLockedExternalTasks()
 
     taskDelivery.refresh() // Tick
+    assertActiveCount(2)
+    assertRemainingCapacity(3)
+
     taskDelivery.refresh() // Tick
+    assertActiveCount(2)
+    assertRemainingCapacity(1)
+
     taskDelivery.refresh() // Tick
     assertActiveCount(2)
     assertRemainingCapacity(0)
