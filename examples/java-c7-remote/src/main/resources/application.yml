@@ -21,6 +21,9 @@ dev:
             worker-id: embedded-worker
             lock-time-in-seconds: 10
             deserialize-on-server: false
+            worker-thread-pool-queue-size: 5
+            worker-thread-pool-size: 2
+            max-task-count: 2
           user-tasks:
             schedule-delivery-fixed-rate-in-seconds: 5
             delivery-strategy: remote_scheduled
@@ -41,6 +44,6 @@ feign:
 
 logging:
   level:
-    dev.bpmcrafters.processengineapi: DEBUG
-    dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.PullUserTaskDelivery: TRACE
+    dev.bpmcrafters.processengineapi: INFO
+    dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.PullUserTaskDelivery: WARN
     dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.PullServiceTaskDelivery: TRACE

@@ -1,8 +1,8 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.initial
 
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.process.ProcessDefinitionMetaDataResolver
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.C7RemoteAdapterProperties
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.initial.C7RemoteInitialPullServiceTasksDeliveryBinding.Companion.ORDER
-import dev.bpmcrafters.processengineapi.adapter.c7.remote.process.ProcessDefinitionMetaDataResolver
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.PullServiceTaskDelivery
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -13,7 +13,7 @@ import org.springframework.context.event.EventListener
 import org.springframework.core.Ordered
 import org.springframework.core.annotation.Order
 import org.springframework.scheduling.annotation.Async
-import java.util.concurrent.ExecutorService
+import java.util.concurrent.ThreadPoolExecutor
 
 private val logger = KotlinLogging.logger {}
 
@@ -27,7 +27,7 @@ open class C7RemoteInitialPullServiceTasksDeliveryBinding(
   externalTaskApiClient: ExternalTaskApiClient,
   subscriptionRepository: SubscriptionRepository,
   c7AdapterProperties: C7RemoteAdapterProperties,
-  executorService: ExecutorService,
+  executor: ThreadPoolExecutor,
   valueMapper: ValueMapper,
   processDefinitionMetaDataResolver: ProcessDefinitionMetaDataResolver
 ) {
@@ -43,7 +43,7 @@ open class C7RemoteInitialPullServiceTasksDeliveryBinding(
     lockDurationInSeconds = c7AdapterProperties.serviceTasks.lockTimeInSeconds,
     retryTimeoutInSeconds = c7AdapterProperties.serviceTasks.retryTimeoutInSeconds,
     retries = c7AdapterProperties.serviceTasks.retries,
-    executorService = executorService,
+    executor = executor,
     valueMapper = valueMapper,
     deserializeOnServer = c7AdapterProperties.serviceTasks.deserializeOnServer,
     processDefinitionMetaDataResolver = processDefinitionMetaDataResolver
