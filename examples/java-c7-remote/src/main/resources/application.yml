@@ -21,7 +21,7 @@ dev:
             worker-id: embedded-worker
             lock-time-in-seconds: 10
             deserialize-on-server: false
-            worker-thread-pool-queue-size: 5
+            worker-thread-pool-queue-capacity: 5
             worker-thread-pool-size: 2
             max-task-count: 2
           user-tasks:
