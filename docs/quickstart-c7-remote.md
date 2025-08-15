@@ -46,6 +46,8 @@ dev:
             schedule-delivery-fixed-rate-in-seconds: 10
             worker-id: embedded-worker
             lock-time-in-seconds: 10
+            worker-thread-pool-size: 10
+            worker-thread-pool-queue-size: 100
           user-tasks:
             delivery-strategy: remote_scheduled
             schedule-delivery-fixed-rate-in-seconds: 10

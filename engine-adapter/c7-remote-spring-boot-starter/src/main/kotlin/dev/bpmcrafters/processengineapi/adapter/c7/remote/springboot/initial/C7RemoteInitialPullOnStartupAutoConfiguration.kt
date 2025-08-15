@@ -20,6 +20,7 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Conditional
 import org.springframework.scheduling.annotation.EnableAsync
 import java.util.concurrent.ExecutorService
+import java.util.concurrent.ThreadPoolExecutor
 
 private val logger = KotlinLogging.logger {}
 
@@ -69,7 +70,7 @@ class C7RemoteInitialPullOnStartupAutoConfiguration {
     subscriptionRepository: SubscriptionRepository,
     c7AdapterProperties: C7RemoteAdapterProperties,
     @Qualifier("c7remote-service-task-worker-executor")
-    executorService: ExecutorService,
+    executor: ThreadPoolExecutor,
     valueMapper: ValueMapper,
     @Qualifier("c7remote-process-definition-meta-data-resolver")
     processDefinitionMetaDataResolver: ProcessDefinitionMetaDataResolver
@@ -77,7 +78,7 @@ class C7RemoteInitialPullOnStartupAutoConfiguration {
     externalTaskApiClient = externalTaskApi,
     subscriptionRepository = subscriptionRepository,
     c7AdapterProperties = c7AdapterProperties,
-    executorService = executorService,
+    executor = executor,
     valueMapper = valueMapper,
     processDefinitionMetaDataResolver = processDefinitionMetaDataResolver
   )

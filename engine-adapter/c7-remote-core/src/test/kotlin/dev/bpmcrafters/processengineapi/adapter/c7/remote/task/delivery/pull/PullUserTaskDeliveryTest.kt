@@ -26,7 +26,7 @@ import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 
-internal class RemotePullUserTaskDeliveryTest {
+internal class PullUserTaskDeliveryTest {
 
   private val keys = mutableMapOf("process-definition-id" to "process-definition-key")
   private val versionTags = mutableMapOf<String, String?>("process-definition-id" to null)
