@@ -1,6 +1,10 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull
 
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.process.ProcessDefinitionMetaDataResolver
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.PullServiceTaskDeliveryMetrics.DropReason.EXPIRED_WHILE_IN_QUEUE
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.PullServiceTaskDeliveryMetrics.DropReason.NO_MATCHING_SUBSCRIPTIONS
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.PullServiceTaskDeliveryMetrics.FetchAndLockSkipReason.NO_SUBSCRIPTIONS
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.PullServiceTaskDeliveryMetrics.FetchAndLockSkipReason.QUEUE_FULL
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import dev.bpmcrafters.processengineapi.impl.task.TaskSubscriptionHandle
 import dev.bpmcrafters.processengineapi.task.TaskInformation
@@ -14,15 +18,18 @@ import org.camunda.community.rest.client.model.*
 import org.camunda.community.rest.variables.ValueMapper
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.mockito.Mockito.clearInvocations
 import org.mockito.Mockito.lenient
 import org.mockito.kotlin.*
 import org.springframework.http.ResponseEntity
+import java.time.Duration
 import java.time.OffsetDateTime
 import java.util.UUID.randomUUID
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.Callable
 import java.util.concurrent.ThreadPoolExecutor
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 internal class PullServiceTaskDeliveryTest {
 
@@ -32,15 +39,23 @@ internal class PullServiceTaskDeliveryTest {
 
   private val subscriptionRepository = mock<SubscriptionRepository>()
 
-  private val executor = mock<ThreadPoolExecutor>()
+  private val queue = mock<BlockingQueue<Runnable>>().apply {
+    lenient().doReturn(3).whenever(this).remainingCapacity()
+  }
 
-  private val queue = mock<BlockingQueue<Runnable>>()
+  private val executor = mock<ThreadPoolExecutor>().apply {
+    lenient().doReturn(this@PullServiceTaskDeliveryTest.queue).whenever(this).queue
+  }
 
   private val valueMapper = mock<ValueMapper>()
+
+  private val metrics = mock<PullServiceTaskDeliveryMetrics>()
 
   private val callableCaptor = argumentCaptor<Callable<Unit>>()
 
   private val taskInformationCaptor = argumentCaptor<TaskInformation>()
+
+  private val durationCaptor = argumentCaptor<Duration>()
 
   private val taskDelivery = spy(PullServiceTaskDelivery(
     externalTaskApiClient = externalTaskApiClient,
@@ -54,12 +69,16 @@ internal class PullServiceTaskDeliveryTest {
     executor = executor,
     valueMapper = valueMapper,
     deserializeOnServer = false,
+    metrics = metrics,
   ))
 
   @BeforeEach
   fun setUp() {
-    lenient().doReturn(queue).whenever(executor).queue
-    lenient().doReturn(3).whenever(queue).remainingCapacity()
+    verify(metrics).registerExecutorThreadsUsedGauge(any())
+    verify(metrics).registerExecutorQueueCapacityGauge(any())
+    verify(executor).queue
+    clearInvocations(executor)
+    verify(metrics).registerStillLockedTasksGauge(any())
   }
 
   @Test
@@ -114,6 +133,7 @@ internal class PullServiceTaskDeliveryTest {
 
     taskDelivery.cleanUpTerminatedTasks()
 
+    assertEquals(0, taskDelivery.stillLockedTasksGauge.get())
     verify(executor).submit(callableCaptor.capture())
     callableCaptor.singleValue
   }
@@ -130,6 +150,7 @@ internal class PullServiceTaskDeliveryTest {
 
     taskDelivery.cleanUpTerminatedTasks()
 
+    assertEquals(1, taskDelivery.stillLockedTasksGauge.get())
     verify(executor, never()).submit(any())
   }
 
@@ -148,6 +169,7 @@ internal class PullServiceTaskDeliveryTest {
 
     taskDelivery.cleanUpTerminatedTasks()
 
+    assertEquals(1, taskDelivery.stillLockedTasksGauge.get())
     verify(executor).queue
     verify(queue).remainingCapacity()
     verify(executor).submit(task2TerminationHandlerCallable)
@@ -168,6 +190,7 @@ internal class PullServiceTaskDeliveryTest {
     val taskInformation = taskInformationCaptor.singleValue
     assertEquals("1", taskInformation.taskId)
     assertEquals(mapOf(REASON to DELETE), taskInformation.meta)
+    verify(metrics).incrementTerminatedTasksCounter(taskSubscriptionHandle.taskDescriptionKey!!)
   }
 
   /**
@@ -175,8 +198,8 @@ internal class PullServiceTaskDeliveryTest {
    */
   @Test
   fun `deliverNewTasks fetches and locks tasks`() {
-    val subscriptions = listOf(mockTaskSubscriptionHandle())
-    doReturn(subscriptions)
+    val subscription = mockTaskSubscriptionHandle()
+    doReturn(listOf(subscription))
       .whenever(subscriptionRepository)
       .getTaskSubscriptions()
     doReturn(ResponseEntity.ok(mutableListOf<ExternalTaskDto>()))
@@ -189,7 +212,7 @@ internal class PullServiceTaskDeliveryTest {
       .fetchAndLock(
         FetchExternalTasksDto(workerId, 2)
           .topics(listOf(
-            FetchExternalTaskTopicDto(subscriptions[0].taskDescriptionKey, 10_000)
+            FetchExternalTaskTopicDto(subscription.taskDescriptionKey, 10_000)
               .deserializeValues(false)
           ))
           .usePriority(true)
@@ -209,6 +232,7 @@ internal class PullServiceTaskDeliveryTest {
 
     taskDelivery.deliverNewTasks()
 
+    verify(metrics).incrementFetchAndLockTasksSkippedCounter(NO_SUBSCRIPTIONS)
     verifyNoInteractions(externalTaskApiClient)
   }
 
@@ -223,51 +247,54 @@ internal class PullServiceTaskDeliveryTest {
 
     taskDelivery.deliverNewTasks()
 
+    verify(metrics).incrementFetchAndLockTasksSkippedCounter(QUEUE_FULL)
     verifyNoInteractions(externalTaskApiClient)
   }
 
   @Test
   fun `deliverNewTasks submits fetched and locked tasks`() {
-    val subscriptions = listOf(mockTaskSubscriptionHandle())
-    doReturn(subscriptions)
+    val subscription = mockTaskSubscriptionHandle()
+    doReturn(listOf(subscription))
       .whenever(subscriptionRepository)
       .getTaskSubscriptions()
-    val tasks = mutableListOf(mockLockedExternalTaskDto("1"))
-    doReturn(ResponseEntity.ok(tasks))
+    val task = mockLockedExternalTaskDto("1")
+    doReturn(ResponseEntity.ok(mutableListOf(task)))
       .whenever(externalTaskApiClient)
       .fetchAndLock(any())
     doReturn(true)
       .whenever(taskDelivery)
-      .matches(tasks[0], subscriptions[0])
+      .matches(task, subscription)
     val taskActionHandlerCallable = Callable {}
     doReturn(taskActionHandlerCallable)
       .whenever(taskDelivery)
-      .createTaskActionHandlerCallable(tasks[0], subscriptions[0])
+      .createTaskActionHandlerCallable(task, subscription)
 
     taskDelivery.deliverNewTasks()
 
     verify(executor).queue
+    verify(metrics).incrementFetchedAndLockedTasksCounter(task.topicName, 1)
     verify(executor).submit(taskActionHandlerCallable)
     verifyNoMoreInteractions(executor)
   }
 
   @Test
   fun `deliverNewTasks drops fetched and locked tasks if it has no matching subscription`() {
-    val subscriptions = listOf(mockTaskSubscriptionHandle())
-    doReturn(subscriptions)
+    val subscription = mockTaskSubscriptionHandle()
+    doReturn(listOf(subscription))
       .whenever(subscriptionRepository)
       .getTaskSubscriptions()
-    val tasks = mutableListOf(mockLockedExternalTaskDto("1"))
-    doReturn(ResponseEntity.ok(tasks))
+    val task = mockLockedExternalTaskDto("1")
+    doReturn(ResponseEntity.ok(mutableListOf(task)))
       .whenever(externalTaskApiClient)
       .fetchAndLock(any())
     doReturn(false)
       .whenever(taskDelivery)
-      .matches(tasks[0], subscriptions[0])
+      .matches(task, subscription)
 
     taskDelivery.deliverNewTasks()
 
     verify(executor).queue
+    verify(metrics).incrementDroppedTasksCounter(task.topicName, NO_MATCHING_SUBSCRIPTIONS)
     verifyNoMoreInteractions(executor)
   }
 
@@ -282,12 +309,13 @@ internal class PullServiceTaskDeliveryTest {
     val callable = taskDelivery.createTaskActionHandlerCallable(lockedTask, activeSubscription)
     callable.call()
 
+    verify(metrics).incrementDroppedTasksCounter(lockedTask.topicName, EXPIRED_WHILE_IN_QUEUE)
     verifyNoInteractions(subscriptionRepository)
   }
 
   @Test
   fun `taskActionHandlerCallable activates subscription for task`() {
-    val lockedTask = mockLockedExternalTaskDto("1")
+    val lockedTask = mockLockedExternalTaskDto("1", OffsetDateTime.now().plusSeconds(7))
     val activeSubscription = mockTaskSubscriptionHandle()
     doNothing()
       .whenever(subscriptionRepository)
@@ -306,10 +334,17 @@ internal class PullServiceTaskDeliveryTest {
     val callable = taskDelivery.createTaskActionHandlerCallable(lockedTask, activeSubscription)
     callable.call()
 
+    verify(metrics).recordTaskQueueTime(eq(lockedTask.topicName), durationCaptor.capture())
+    val queueTime = durationCaptor.singleValue.toMillis()
+    assertTrue(3_000.rangeTo(4_000).contains(queueTime), "Expected queue time $queueTime to be between 3000 and 4000 ms")
     verify(activeSubscription.action).accept(taskInformationCaptor.capture(), eq(variables))
     val taskInformation = taskInformationCaptor.singleValue
     assertEquals("1", taskInformation.taskId)
     assertEquals(mapOf(REASON to CREATE), taskInformation.meta)
+    verify(metrics).incrementCompletedTasksCounter(lockedTask.topicName)
+    verify(metrics).recordTaskExecutionTime(eq(lockedTask.topicName), durationCaptor.capture())
+    val executionTime = durationCaptor.secondValue.toMillis()
+    assertTrue(executionTime >= 0, "Expected execution time to be >= 0")
   }
 
   @Test
@@ -326,6 +361,7 @@ internal class PullServiceTaskDeliveryTest {
     callable.call()
 
     verifyNoInteractions(valueMapper)
+    verify(metrics).incrementFailedTasksCounter(lockedTask.topicName)
     verify(externalTaskApiClient).handleFailure(
       lockedTask.id,
       ExternalTaskFailureDto().apply {
@@ -345,6 +381,7 @@ internal class PullServiceTaskDeliveryTest {
     lockExpirationTime: OffsetDateTime = OffsetDateTime.now().plusMinutes(5)
   ): LockedExternalTaskDto = LockedExternalTaskDto()
     .id(id)
+    .topicName("topical-but-not-tropical")
     .lockExpirationTime(lockExpirationTime)
     .variables(mapOf(
       // ...to have something (most likely) unique for argument matching.

@@ -5,9 +5,12 @@ import dev.bpmcrafters.processengineapi.adapter.c7.remote.correlation.SignalApiI
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.deploy.DeploymentApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.process.ProcessDefinitionMetaDataResolver
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.process.StartProcessApiImpl
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.schedule.DefaultPullServiceTaskDeliveryMetrics
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.schedule.NoOpPullServiceTaskDeliveryMetrics
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.TaskSubscriptionApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.completion.FailureRetrySupplier
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.completion.LinearMemoryFailureRetrySupplier
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.PullServiceTaskDeliveryMetrics
 import dev.bpmcrafters.processengineapi.correlation.CorrelationApi
 import dev.bpmcrafters.processengineapi.correlation.SignalApi
 import dev.bpmcrafters.processengineapi.deploy.DeploymentApi
@@ -16,6 +19,7 @@ import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import dev.bpmcrafters.processengineapi.process.StartProcessApi
 import dev.bpmcrafters.processengineapi.task.TaskSubscriptionApi
 import io.github.oshai.kotlinlogging.KotlinLogging
+import io.micrometer.core.instrument.MeterRegistry
 import io.toolisticon.spring.condition.ConditionalOnMissingQualifiedBean
 import jakarta.annotation.PostConstruct
 import org.camunda.community.rest.client.api.DeploymentApiClient
@@ -25,6 +29,7 @@ import org.camunda.community.rest.client.api.SignalApiClient
 import org.camunda.community.rest.variables.ValueMapper
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.autoconfigure.AutoConfiguration
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
@@ -33,7 +38,7 @@ import java.util.concurrent.*
 
 private val logger = KotlinLogging.logger {}
 
-@AutoConfiguration
+@AutoConfiguration(afterName = ["org.springframework.boot.actuate.autoconfigure.metrics.CompositeMeterRegistryAutoConfiguration"])
 @EnableConfigurationProperties(value = [C7RemoteAdapterProperties::class])
 @Conditional(C7RemoteAdapterEnabledCondition::class)
 class C7RemoteAdapterAutoConfiguration {
@@ -103,6 +108,17 @@ class C7RemoteAdapterAutoConfiguration {
       0L, TimeUnit.MILLISECONDS,
       LinkedBlockingQueue(c7AdapterProperties.serviceTasks.workerThreadPoolQueueCapacity)
     )
+
+  @Bean
+  @ConditionalOnMissingBean
+  @ConditionalOnBean(MeterRegistry::class)
+  fun defaultPullServiceTaskDeliveryMetrics(registry: MeterRegistry): PullServiceTaskDeliveryMetrics =
+    DefaultPullServiceTaskDeliveryMetrics(registry)
+
+  @Bean
+  @ConditionalOnMissingBean(PullServiceTaskDeliveryMetrics::class, MeterRegistry::class)
+  fun noOpPullServiceTaskDeliveryMetrics(): PullServiceTaskDeliveryMetrics =
+    NoOpPullServiceTaskDeliveryMetrics()
 
   /**
    * Creates a default fixed thread pool for 10 threads used for process engine worker executions.

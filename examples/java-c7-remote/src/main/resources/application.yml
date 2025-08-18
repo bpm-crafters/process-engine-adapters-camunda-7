@@ -5,6 +5,12 @@ spring:
   application:
     name: Java Camunda Platform 7 Remote
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+
 springdoc:
   swagger-ui:
     try-it-out-enabled: true

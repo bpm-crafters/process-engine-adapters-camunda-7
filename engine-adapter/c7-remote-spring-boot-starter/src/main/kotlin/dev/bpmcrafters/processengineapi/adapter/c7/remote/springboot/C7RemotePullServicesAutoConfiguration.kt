@@ -1,11 +1,12 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot
 
-import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.completion.FailureRetrySupplier
-import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.completion.FeignServiceTaskCompletionApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.process.CachingProcessDefinitionMetaDataResolver
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.process.ProcessDefinitionMetaDataResolver
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.completion.FailureRetrySupplier
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.completion.FeignServiceTaskCompletionApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.completion.UserTaskCompletionApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.PullServiceTaskDelivery
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.PullServiceTaskDeliveryMetrics
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.PullUserTaskDelivery
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.modification.UserTaskModificationApiImpl
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
@@ -30,7 +31,6 @@ import org.springframework.scheduling.annotation.EnableAsync
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.ThreadPoolExecutor
-import java.util.function.Supplier
 
 private val logger = KotlinLogging.logger {}
 
@@ -72,6 +72,7 @@ class C7RemotePullServicesAutoConfiguration {
     @Qualifier("c7remote-service-task-worker-executor")
     executor: ThreadPoolExecutor,
     valueMapper: ValueMapper,
+    metrics: PullServiceTaskDeliveryMetrics
   ) = PullServiceTaskDelivery(
     subscriptionRepository = subscriptionRepository,
     workerId = c7AdapterProperties.serviceTasks.workerId,
@@ -84,6 +85,7 @@ class C7RemotePullServicesAutoConfiguration {
     processDefinitionMetaDataResolver = processDefinitionMetaDataResolver,
     valueMapper = valueMapper,
     deserializeOnServer = c7AdapterProperties.serviceTasks.deserializeOnServer,
+    metrics = metrics
   )
 
   @Bean("c7remote-service-task-completion-api")
