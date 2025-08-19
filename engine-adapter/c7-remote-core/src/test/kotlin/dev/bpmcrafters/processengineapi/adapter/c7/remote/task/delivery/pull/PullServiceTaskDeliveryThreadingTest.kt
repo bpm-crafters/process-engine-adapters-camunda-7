@@ -28,6 +28,7 @@ import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit.MILLISECONDS
 import java.util.concurrent.TimeUnit.SECONDS
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.function.Supplier
 import kotlin.test.assertEquals
 
 internal class PullServiceTaskDeliveryThreadingTest {
@@ -39,6 +40,12 @@ internal class PullServiceTaskDeliveryThreadingTest {
   private val subscriptionRepository = InMemSubscriptionRepository()
 
   private val executor = ThreadPoolExecutor(2, 2, 0, MILLISECONDS, LinkedBlockingQueue(3))
+
+  private val metrics = mock<PullServiceTaskDeliveryMetrics>()
+
+  lateinit var executorThreadsUsedGauge: Supplier<Int>
+
+  lateinit var executorQueueCapacityGauge: Supplier<Int>
 
   private val taskDelivery = spy(PullServiceTaskDelivery(
     externalTaskApiClient = externalTaskApiClient,
@@ -52,6 +59,7 @@ internal class PullServiceTaskDeliveryThreadingTest {
     executor = executor,
     valueMapper = mock<ValueMapper>(),
     deserializeOnServer = false,
+    metrics = metrics
   ))
 
   private val executingTaskHandlers = LinkedBlockingQueue<TaskHandler>()
@@ -67,6 +75,16 @@ internal class PullServiceTaskDeliveryThreadingTest {
 
   @BeforeEach
   fun setUp() {
+    executorThreadsUsedGauge = argumentCaptor<Supplier<Int>>().let {
+      verify(metrics).registerExecutorThreadsUsedGauge(it.capture())
+      it.singleValue
+    }
+
+    executorQueueCapacityGauge = argumentCaptor<Supplier<Int>>().let {
+      verify(metrics).registerExecutorQueueCapacityGauge(it.capture())
+      it.singleValue
+    }
+
     subscriptionRepository.createTaskSubscription(TaskSubscriptionHandle(
       TaskType.EXTERNAL,
       null,
@@ -150,12 +168,14 @@ internal class PullServiceTaskDeliveryThreadingTest {
   fun assertActiveCount(expected: Int) {
     await atMost Duration.ofSeconds(5) untilAsserted {
       assertEquals(expected, executor.activeCount)
+      assertEquals(expected, executorThreadsUsedGauge.get())
     }
   }
 
   fun assertRemainingCapacity(expected: Int) {
     await atMost Duration.ofSeconds(5) untilAsserted {
       assertEquals(expected, executor.queue.remainingCapacity())
+      assertEquals(expected, executorQueueCapacityGauge.get())
     }
   }
 

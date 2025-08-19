@@ -5,6 +5,7 @@ import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.C7RemoteAda
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.C7RemoteAdapterProperties.Companion.DEFAULT_PREFIX
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.client.OfficialClientServiceTaskAutoConfiguration
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.process.ProcessDefinitionMetaDataResolver
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.PullServiceTaskDeliveryMetrics
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import io.github.oshai.kotlinlogging.KotlinLogging
 import jakarta.annotation.PostConstruct
@@ -73,13 +74,15 @@ class C7RemoteInitialPullOnStartupAutoConfiguration {
     executor: ThreadPoolExecutor,
     valueMapper: ValueMapper,
     @Qualifier("c7remote-process-definition-meta-data-resolver")
-    processDefinitionMetaDataResolver: ProcessDefinitionMetaDataResolver
+    processDefinitionMetaDataResolver: ProcessDefinitionMetaDataResolver,
+    metrics: PullServiceTaskDeliveryMetrics,
   ) = C7RemoteInitialPullServiceTasksDeliveryBinding(
     externalTaskApiClient = externalTaskApi,
     subscriptionRepository = subscriptionRepository,
     c7AdapterProperties = c7AdapterProperties,
     executor = executor,
     valueMapper = valueMapper,
-    processDefinitionMetaDataResolver = processDefinitionMetaDataResolver
+    processDefinitionMetaDataResolver = processDefinitionMetaDataResolver,
+    metrics = metrics,
   )
 }

@@ -4,6 +4,7 @@ import dev.bpmcrafters.processengineapi.adapter.c7.remote.process.ProcessDefinit
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.C7RemoteAdapterProperties
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.initial.C7RemoteInitialPullServiceTasksDeliveryBinding.Companion.ORDER
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.PullServiceTaskDelivery
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.PullServiceTaskDeliveryMetrics
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.camunda.community.rest.client.api.ExternalTaskApiClient
@@ -29,7 +30,8 @@ open class C7RemoteInitialPullServiceTasksDeliveryBinding(
   c7AdapterProperties: C7RemoteAdapterProperties,
   executor: ThreadPoolExecutor,
   valueMapper: ValueMapper,
-  processDefinitionMetaDataResolver: ProcessDefinitionMetaDataResolver
+  processDefinitionMetaDataResolver: ProcessDefinitionMetaDataResolver,
+  metrics: PullServiceTaskDeliveryMetrics
 ) {
   companion object {
     const val ORDER = Ordered.HIGHEST_PRECEDENCE + 1000
@@ -46,7 +48,8 @@ open class C7RemoteInitialPullServiceTasksDeliveryBinding(
     executor = executor,
     valueMapper = valueMapper,
     deserializeOnServer = c7AdapterProperties.serviceTasks.deserializeOnServer,
-    processDefinitionMetaDataResolver = processDefinitionMetaDataResolver
+    processDefinitionMetaDataResolver = processDefinitionMetaDataResolver,
+    metrics = metrics
   )
 
   @EventListener
