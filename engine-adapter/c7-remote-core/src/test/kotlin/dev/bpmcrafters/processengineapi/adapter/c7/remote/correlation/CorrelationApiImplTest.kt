@@ -40,7 +40,7 @@ class CorrelationApiImplTest {
   private lateinit var correlationApi: CorrelationApiImpl
 
   @Test
-  fun `correlate message by correlation variable`() {
+  fun `correlate message by local correlation variable`() {
 
     whenever(messageApiClient.deliverMessage(any())).thenReturn(
       ResponseEntity.ok(
@@ -64,6 +64,36 @@ class CorrelationApiImplTest {
         .messageName("messageName")
         .tenantId("tenantId")
         .localCorrelationKeys(valueMapper.mapValues(mapOf("myCorrelation" to "varValue")))
+        .processVariables(valueMapper.mapValues(mapOf("some" to 1L)))
+        .resultEnabled(true)
+    )
+  }
+
+  @Test
+  fun `correlate message by global correlation variable`() {
+
+    whenever(messageApiClient.deliverMessage(any())).thenReturn(
+      ResponseEntity.ok(
+        listOf(
+          MessageCorrelationResultWithVariableDto()
+        )
+      )
+    )
+
+    correlationApi.correlateMessage(
+      CorrelateMessageCmd(
+        messageName = "messageName",
+        payloadSupplier = { mapOf("some" to 1L) },
+        correlation = { Correlation.withKey("varValue").withVariable("myCorrelation") },
+        restrictions = mapOf(CommonRestrictions.TENANT_ID to "tenantId", CorrelationApiImpl.Restrictions.USE_GLOBAL_CORRELATION_KEY to "true")
+      )
+    ).get()
+
+    verify(messageApiClient).deliverMessage(
+      CorrelationMessageDto()
+        .messageName("messageName")
+        .tenantId("tenantId")
+        .correlationKeys(valueMapper.mapValues(mapOf("myCorrelation" to "varValue")))
         .processVariables(valueMapper.mapValues(mapOf("some" to 1L)))
         .resultEnabled(true)
     )
