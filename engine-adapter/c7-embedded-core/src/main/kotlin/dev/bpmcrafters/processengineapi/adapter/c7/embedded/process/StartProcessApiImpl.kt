@@ -3,11 +3,11 @@ package dev.bpmcrafters.processengineapi.adapter.c7.embedded.process
 import dev.bpmcrafters.processengineapi.CommonRestrictions
 import dev.bpmcrafters.processengineapi.MetaInfo
 import dev.bpmcrafters.processengineapi.MetaInfoAware
+import dev.bpmcrafters.processengineapi.adapter.c7.embedded.correlation.applyTenantRestrictions
 import dev.bpmcrafters.processengineapi.process.*
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.camunda.bpm.engine.RepositoryService
 import org.camunda.bpm.engine.RuntimeService
-import org.camunda.bpm.engine.runtime.MessageCorrelationBuilder
 import org.camunda.bpm.engine.runtime.ProcessInstance
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Future
@@ -63,7 +63,7 @@ class StartProcessApiImpl(
             correlationBuilder = correlationBuilder.processInstanceBusinessKey(payload[CommonRestrictions.BUSINESS_KEY]?.toString())
           }
           correlationBuilder
-            .applyRestrictions(ensureSupported(cmd.restrictions))
+            .applyTenantRestrictions(ensureSupported(cmd.restrictions))
             .setVariables(payload)
             .correlateStartMessage()
             .toProcessInformation()
@@ -81,22 +81,6 @@ class StartProcessApiImpl(
     CommonRestrictions.TENANT_ID,
     CommonRestrictions.WITHOUT_TENANT_ID,
   )
-}
-
-fun MessageCorrelationBuilder.applyRestrictions(restrictions: Map<String, String>) = this.apply {
-  restrictions
-    .forEach { (key, value) ->
-      when (key) {
-        CommonRestrictions.TENANT_ID -> this.tenantId(value).apply {
-          require(restrictions.containsKey(CommonRestrictions.WITHOUT_TENANT_ID)) { "Illegal restriction combination. ${CommonRestrictions.WITHOUT_TENANT_ID} " +
-            "and ${CommonRestrictions.WITHOUT_TENANT_ID} can't be provided in the same time because they are mutually exclusive." }
-        }
-        CommonRestrictions.WITHOUT_TENANT_ID -> this.withoutTenantId().apply {
-          require(restrictions.containsKey(CommonRestrictions.TENANT_ID)) { "Illegal restriction combination. ${CommonRestrictions.WITHOUT_TENANT_ID} " +
-            "and ${CommonRestrictions.WITHOUT_TENANT_ID} can't be provided in the same time because they are mutually exclusive." }
-        }
-      }
-    }
 }
 
 fun ProcessInstance.toProcessInformation() = ProcessInformation(

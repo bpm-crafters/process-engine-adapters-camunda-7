@@ -4,6 +4,17 @@ title: Process Engine Adapter C7 Embedded
 
 # Decisions and supported features
 
+## Message Correlation
+
+Correlation API implementation support the following restrictions:
+
+| Key                       | Value                  | Description                                                                                                   |
+|---------------------------|------------------------|---------------------------------------------------------------------------------------------------------------|
+| `tenantId`                | The id of the tenant   | Correlates messages for process instances with given tenant id.                                               |
+| `withoutTenantId`         | none                   | If restriction is present, correlate only with process instances without tenant id.                           |
+| `useGlobalCorrelationKey` | `true` or `false`      | If set to false (default if not set), correlate using local variables, use global process variable otherwise. |
+
+
 ## Task Information
 
 Currently, the Process Engine Adapter C7 Remote supports the following values in task information meta block, mapped from the Camunda C7 engine:
