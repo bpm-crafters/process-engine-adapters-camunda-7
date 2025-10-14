@@ -1,15 +1,13 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.remote.task.modification
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.TestFixtures
 import dev.bpmcrafters.processengineapi.task.*
 import org.camunda.community.rest.client.api.TaskApiClient
 import org.camunda.community.rest.client.model.IdentityLinkDto
 import org.camunda.community.rest.client.model.PatchVariablesDto
 import org.camunda.community.rest.client.model.UserIdDto
 import org.camunda.community.rest.client.model.VariableValueDto
-import org.camunda.community.rest.variables.SpinValueMapper
 import org.camunda.community.rest.variables.ValueMapper
-import org.camunda.community.rest.variables.ValueTypeResolverImpl
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -20,11 +18,7 @@ import java.util.*
 
 internal class UserTaskModificationApiImplTest {
   private val taskApiClient: TaskApiClient = mock()
-  private val valueMapper: ValueMapper = ValueMapper(
-    objectMapper = jacksonObjectMapper(),
-    valueTypeResolver = ValueTypeResolverImpl(),
-    customValueMapper = listOf(SpinValueMapper(ValueTypeResolverImpl()))
-  )
+  private val valueMapper: ValueMapper = TestFixtures.valueMapper()
   private val api: UserTaskModificationApi = UserTaskModificationApiImpl(taskApiClient, valueMapper)
   private lateinit var taskId: String
 
@@ -51,7 +45,7 @@ internal class UserTaskModificationApiImplTest {
   fun `react on wrong modify command`() {
     assertThrows<UnsupportedOperationException> {
       api.update(
-        object: ModifyTaskCmd {
+        object : ModifyTaskCmd {
           override val taskId: String
             get() = this@UserTaskModificationApiImplTest.taskId
         }
@@ -263,8 +257,10 @@ internal class UserTaskModificationApiImplTest {
     api.update(
       ChangePayloadModifyTaskCmd.UpdatePayloadTaskCmd(taskId = taskId, payload = mapOf("key1" to "world"))
     ).get()
-    verify(taskApiClient).modifyTaskLocalVariables(taskId, PatchVariablesDto()
-      .modifications(valueMapper.mapValues(mapOf("key1" to "world"))) )
+    verify(taskApiClient).modifyTaskLocalVariables(
+      taskId, PatchVariablesDto()
+        .modifications(valueMapper.mapValues(mapOf("key1" to "world")))
+    )
     verifyNoMoreInteractions(taskApiClient)
   }
 
