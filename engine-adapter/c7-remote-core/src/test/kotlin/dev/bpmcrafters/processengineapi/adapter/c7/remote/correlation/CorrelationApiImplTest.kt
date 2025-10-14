@@ -1,16 +1,14 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.remote.correlation
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import dev.bpmcrafters.processengineapi.CommonRestrictions
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.TestFixtures
 import dev.bpmcrafters.processengineapi.correlation.CorrelateMessageCmd
 import dev.bpmcrafters.processengineapi.correlation.Correlation
 import org.assertj.core.api.Assertions.assertThat
 import org.camunda.community.rest.client.api.MessageApiClient
 import org.camunda.community.rest.client.model.CorrelationMessageDto
 import org.camunda.community.rest.client.model.MessageCorrelationResultWithVariableDto
-import org.camunda.community.rest.variables.SpinValueMapper
 import org.camunda.community.rest.variables.ValueMapper
-import org.camunda.community.rest.variables.ValueTypeResolverImpl
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
@@ -30,11 +28,7 @@ class CorrelationApiImplTest {
   private val messageApiClient: MessageApiClient = mock()
 
   @Spy
-  private val valueMapper: ValueMapper = ValueMapper(
-    objectMapper = jacksonObjectMapper(),
-    valueTypeResolver = ValueTypeResolverImpl(),
-    customValueMapper = listOf(SpinValueMapper(ValueTypeResolverImpl()))
-  )
+  private val valueMapper: ValueMapper = TestFixtures.valueMapper()
 
   @InjectMocks
   private lateinit var correlationApi: CorrelationApiImpl

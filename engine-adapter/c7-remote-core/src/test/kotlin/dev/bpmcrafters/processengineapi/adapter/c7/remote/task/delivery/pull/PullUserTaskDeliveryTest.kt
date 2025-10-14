@@ -1,5 +1,6 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull
 
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.TestFixtures
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.process.CachingProcessDefinitionMetaDataResolver
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.TaskSubscriptionApiImpl
 import dev.bpmcrafters.processengineapi.impl.task.InMemSubscriptionRepository
@@ -12,9 +13,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.camunda.community.rest.client.api.TaskApiClient
 import org.camunda.community.rest.client.model.IdentityLinkDto
 import org.camunda.community.rest.client.model.TaskWithAttachmentAndCommentDto
-import org.camunda.community.rest.variables.SpinValueMapper
-import org.camunda.community.rest.variables.ValueMapper
-import org.camunda.community.rest.variables.ValueTypeResolverImpl
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
@@ -39,7 +37,6 @@ internal class PullUserTaskDeliveryTest {
     randomTask()
   }
 
-
   private val embeddedPullUserTaskDelivery = PullUserTaskDelivery(
     subscriptionRepository = subscriptionRepository,
     processDefinitionMetaDataResolver = CachingProcessDefinitionMetaDataResolver(
@@ -49,7 +46,7 @@ internal class PullUserTaskDeliveryTest {
     ),
     executorService = Executors.newFixedThreadPool(3),
     taskApiClient = taskApiClient,
-    valueMapper = ValueMapper(customValueMapper = listOf(SpinValueMapper(ValueTypeResolverImpl()))),
+    valueMapper = TestFixtures.valueMapper(),
     deserializeOnServer = false
   )
 

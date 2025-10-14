@@ -1,16 +1,13 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.remote.process
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import dev.bpmcrafters.processengineapi.CommonRestrictions
-import dev.bpmcrafters.processengineapi.process.StartProcessByDefinitionCmd
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.TestFixtures
 import dev.bpmcrafters.processengineapi.process.StartProcessByMessageCmd
 import org.assertj.core.api.Assertions.assertThat
 import org.camunda.community.rest.client.api.MessageApiClient
 import org.camunda.community.rest.client.api.ProcessDefinitionApiClient
 import org.camunda.community.rest.client.model.*
-import org.camunda.community.rest.variables.SpinValueMapper
 import org.camunda.community.rest.variables.ValueMapper
-import org.camunda.community.rest.variables.ValueTypeResolverImpl
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -30,11 +27,7 @@ class StartProcessApiImplByMessageTest {
   private val messageApiClient: MessageApiClient = mock()
 
   @Spy
-  private val valueMapper: ValueMapper = ValueMapper(
-    objectMapper = jacksonObjectMapper(),
-    valueTypeResolver = ValueTypeResolverImpl(),
-    customValueMapper = listOf(SpinValueMapper(ValueTypeResolverImpl()))
-  )
+  private val valueMapper: ValueMapper = TestFixtures.valueMapper()
 
   @Spy
   private val processDefinitionMetaDataResolver = CachingProcessDefinitionMetaDataResolver(
