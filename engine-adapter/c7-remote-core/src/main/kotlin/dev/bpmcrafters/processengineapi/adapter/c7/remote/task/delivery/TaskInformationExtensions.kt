@@ -22,7 +22,8 @@ fun LockedExternalTaskDto.toTaskInformation(pdMetaDataResolver: ProcessDefinitio
       CommonRestrictions.PROCESS_INSTANCE_ID to this.processInstanceId,
       CommonRestrictions.TENANT_ID to this.tenantId,
       "topicName" to this.topicName,
-      "creationDate" to this.createTime.toDateString()
+      "creationDate" to this.createTime.toDateString(),
+      TaskInformation.RETRIES to (this.retries?.toString() ?: ""),
     ).enrichWithProcessDefinitionMetadata(this.processDefinitionId, pdMetaDataResolver)
   )
 

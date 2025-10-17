@@ -2,6 +2,7 @@ package dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.subscri
 
 import dev.bpmcrafters.processengineapi.CommonRestrictions
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.toDateString
+import dev.bpmcrafters.processengineapi.task.TaskInformation
 import org.assertj.core.api.Assertions.assertThat
 import org.camunda.bpm.client.task.ExternalTask
 import org.camunda.bpm.client.task.impl.ExternalTaskImpl
@@ -13,6 +14,7 @@ internal class ExternalTaskExtensionsTest {
   @Test
   fun `should map ExternalTask for official client`() {
     val now = Date.from(Instant.now())
+    val retryCount = 5
 
     val externalTask: ExternalTask = ExternalTaskImpl().apply {
       processDefinitionId = "processDefinitionId"
@@ -23,6 +25,7 @@ internal class ExternalTaskExtensionsTest {
       activityId = "activityId"
       activityInstanceId = "activityInstanceId"
       createTime = now
+      retries = retryCount
     }
 
     val taskInformation = externalTask.toTaskInformation()
@@ -34,6 +37,7 @@ internal class ExternalTaskExtensionsTest {
     assertThat(taskInformation.meta[CommonRestrictions.TENANT_ID]).isEqualTo("tenantId")
     assertThat(taskInformation.meta["topicName"]).isEqualTo("topicName")
     assertThat(taskInformation.meta["creationDate"]).isEqualTo(now.toDateString())
+    assertThat(taskInformation.meta[TaskInformation.RETRIES]).isEqualTo(retryCount.toString())
 
   }
 

@@ -3,6 +3,7 @@ package dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery
 import dev.bpmcrafters.processengineapi.CommonRestrictions
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.process.CachingProcessDefinitionMetaDataResolver
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.process.ProcessDefinitionMetaDataResolver
+import dev.bpmcrafters.processengineapi.task.TaskInformation
 import org.assertj.core.api.Assertions.assertThat
 import org.camunda.community.rest.client.api.ProcessDefinitionApiClient
 import org.camunda.community.rest.client.model.IdentityLinkDto
@@ -63,6 +64,7 @@ class TaskInformationExtensionsKtTest {
   @Test
   fun `should map LockedExternalTask`() {
     val now = OffsetDateTime.now()
+    val retryCount = 3
 
     val lockedTask = LockedExternalTaskDto()
       .processDefinitionId("processDefinitionId")
@@ -73,6 +75,7 @@ class TaskInformationExtensionsKtTest {
       .activityId("activityId")
       .activityInstanceId("activityInstanceId")
       .createTime(now)
+      .retries(retryCount)
 
     val taskInformation = lockedTask.toTaskInformation(processDefinitionMetaDataResolver)
 
@@ -83,6 +86,7 @@ class TaskInformationExtensionsKtTest {
     assertThat(taskInformation.meta[CommonRestrictions.TENANT_ID]).isEqualTo("tenantId")
     assertThat(taskInformation.meta["topicName"]).isEqualTo("topicName")
     assertThat(taskInformation.meta["creationDate"]).isEqualTo(now.toDateString())
+    assertThat(taskInformation.meta[TaskInformation.RETRIES]).isEqualTo(retryCount.toString())
   }
 
   @Test
