@@ -16,13 +16,18 @@ import org.camunda.bpm.engine.RepositoryService
 import org.camunda.bpm.engine.TaskService
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
+import org.springframework.boot.autoconfigure.condition.ConditionalOnThreading
+import org.springframework.boot.autoconfigure.thread.Threading
+import org.springframework.boot.task.SimpleAsyncTaskSchedulerBuilder
+import org.springframework.boot.task.ThreadPoolTaskSchedulerBuilder
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Conditional
 import org.springframework.context.annotation.Configuration
+import org.springframework.core.annotation.Order
 import org.springframework.scheduling.TaskScheduler
 import org.springframework.scheduling.annotation.EnableAsync
 import org.springframework.scheduling.annotation.EnableScheduling
+import org.springframework.scheduling.concurrent.SimpleAsyncTaskScheduler
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler
 import java.util.concurrent.ExecutorService
 
@@ -42,12 +47,27 @@ class C7EmbeddedSchedulingAutoConfiguration {
 
   @Bean("c7embedded-task-scheduler")
   @Qualifier("c7embedded-task-scheduler")
-  @ConditionalOnMissingBean
+  @Order(200)
+  @ConditionalOnMissingQualifiedBean(beanClass = TaskScheduler::class, qualifier = "c7embedded-task-scheduler")
   fun taskScheduler(): TaskScheduler {
     val threadPoolTaskScheduler = ThreadPoolTaskScheduler()
     threadPoolTaskScheduler.poolSize = 2 // we have two schedulers, one for user tasks one for service tasks
     threadPoolTaskScheduler.threadNamePrefix = "C7EMBEDDED-SCHEDULER-"
     return threadPoolTaskScheduler
+  }
+
+  @Bean("taskScheduler")
+  @Order(100)
+  @ConditionalOnThreading(Threading.VIRTUAL)
+  fun taskSchedulerVirtualThreads(builder: SimpleAsyncTaskSchedulerBuilder): SimpleAsyncTaskScheduler {
+    return builder.build()
+  }
+
+  @Bean("taskScheduler")
+  @Order(100)
+  @ConditionalOnThreading(Threading.PLATFORM)
+  fun taskSchedulerPlatformThreads(threadPoolTaskSchedulerBuilder: ThreadPoolTaskSchedulerBuilder): ThreadPoolTaskScheduler {
+    return threadPoolTaskSchedulerBuilder.build()
   }
 
   @Bean("c7embedded-service-task-delivery")
