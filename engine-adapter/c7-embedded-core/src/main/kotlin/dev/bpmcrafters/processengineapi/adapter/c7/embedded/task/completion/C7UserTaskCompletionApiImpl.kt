@@ -9,7 +9,6 @@ import dev.bpmcrafters.processengineapi.task.UserTaskCompletionApi
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.camunda.bpm.engine.TaskService
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.Future
 
 private val logger = KotlinLogging.logger {}
 
@@ -22,7 +21,7 @@ class C7UserTaskCompletionApiImpl(
   private val subscriptionRepository: SubscriptionRepository
 ) : UserTaskCompletionApi {
 
-  override fun completeTask(cmd: CompleteTaskCmd): Future<Empty> {
+  override fun completeTask(cmd: CompleteTaskCmd): CompletableFuture<Empty> {
     logger.debug { "PROCESS-ENGINE-C7-EMBEDDED-011: completing user task ${cmd.taskId}." }
     taskService.complete(
       cmd.taskId,
@@ -35,7 +34,7 @@ class C7UserTaskCompletionApiImpl(
     return CompletableFuture.completedFuture(Empty)
   }
 
-  override fun completeTaskByError(cmd: CompleteTaskByErrorCmd): Future<Empty> {
+  override fun completeTaskByError(cmd: CompleteTaskByErrorCmd): CompletableFuture<Empty> {
     logger.debug { "PROCESS-ENGINE-C7-EMBEDDED-013: throwing error on user task ${cmd.taskId}." }
     taskService.handleBpmnError(
       cmd.taskId,

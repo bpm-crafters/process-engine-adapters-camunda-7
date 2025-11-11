@@ -25,7 +25,7 @@ class FeignServiceTaskCompletionApiImpl(
   private val valueMapper: ValueMapper
 ) : ServiceTaskCompletionApi {
 
-  override fun completeTask(cmd: CompleteTaskCmd): Future<Empty> {
+  override fun completeTask(cmd: CompleteTaskCmd): CompletableFuture<Empty> {
     logger.debug { "PROCESS-ENGINE-C7-REMOTE-006: completing service task ${cmd.taskId}." }
     externalTaskApiClient.completeExternalTaskResource(
       cmd.taskId,
@@ -42,7 +42,7 @@ class FeignServiceTaskCompletionApiImpl(
     return CompletableFuture.completedFuture(Empty)
   }
 
-  override fun completeTaskByError(cmd: CompleteTaskByErrorCmd): Future<Empty> {
+  override fun completeTaskByError(cmd: CompleteTaskByErrorCmd): CompletableFuture<Empty> {
     logger.debug { "PROCESS-ENGINE-C7-REMOTE-008: throwing error ${cmd.errorCode} in service task ${cmd.taskId}." }
     externalTaskApiClient.handleExternalTaskBpmnError(
       cmd.taskId,
@@ -60,7 +60,7 @@ class FeignServiceTaskCompletionApiImpl(
     return CompletableFuture.completedFuture(Empty)
   }
 
-  override fun failTask(cmd: FailTaskCmd): Future<Empty> {
+  override fun failTask(cmd: FailTaskCmd): CompletableFuture<Empty> {
     logger.debug { "PROCESS-ENGINE-C7-REMOTE-010: failing service task ${cmd.taskId}." }
     val (retries, retryTimeoutInSeconds) = failureRetrySupplier.apply(cmd.taskId)
     externalTaskApiClient.handleFailure(

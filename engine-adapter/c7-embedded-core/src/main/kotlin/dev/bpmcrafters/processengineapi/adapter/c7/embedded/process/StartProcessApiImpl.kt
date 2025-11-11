@@ -10,7 +10,6 @@ import org.camunda.bpm.engine.RepositoryService
 import org.camunda.bpm.engine.RuntimeService
 import org.camunda.bpm.engine.runtime.ProcessInstance
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.Future
 
 private val logger = KotlinLogging.logger {}
 
@@ -22,7 +21,7 @@ class StartProcessApiImpl(
   private val repositoryService: RepositoryService,
 ) : StartProcessApi {
 
-  override fun startProcess(cmd: StartProcessCommand): Future<ProcessInformation> {
+  override fun startProcess(cmd: StartProcessCommand): CompletableFuture<ProcessInformation> {
     return when (cmd) {
       is StartProcessByDefinitionCmd ->
         CompletableFuture.supplyAsync {
