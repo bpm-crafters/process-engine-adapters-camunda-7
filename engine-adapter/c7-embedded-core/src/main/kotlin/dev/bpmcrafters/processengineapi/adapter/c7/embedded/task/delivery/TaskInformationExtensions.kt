@@ -92,6 +92,7 @@ fun LockedExternalTask.toTaskInformation(): TaskInformation =
       CommonRestrictions.TENANT_ID to this.tenantId,
       "topicName" to this.topicName,
       "creationDate" to this.createTime.toDateString(),
+      TaskInformation.RETRIES to (this.retries?.toString() ?: ""),
     )
   )
 
@@ -107,6 +108,7 @@ fun ExternalTaskEntity.toTaskInformation(): TaskInformation {
       CommonRestrictions.ACTIVITY_ID to this.activityId,
       "topicName" to this.topicName,
       "creationDate" to this.createTime.toDateString(),
+      TaskInformation.RETRIES to (this.retries?.toString() ?: ""),
     )
   )
 }

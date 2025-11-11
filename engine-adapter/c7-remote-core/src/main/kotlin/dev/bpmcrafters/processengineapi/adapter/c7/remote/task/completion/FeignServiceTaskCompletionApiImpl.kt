@@ -9,6 +9,7 @@ import org.camunda.community.rest.client.model.CompleteExternalTaskDto
 import org.camunda.community.rest.client.model.ExternalTaskBpmnError
 import org.camunda.community.rest.client.model.ExternalTaskFailureDto
 import org.camunda.community.rest.variables.ValueMapper
+import java.time.temporal.ChronoUnit
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Future
 
@@ -25,7 +26,7 @@ class FeignServiceTaskCompletionApiImpl(
   private val valueMapper: ValueMapper
 ) : ServiceTaskCompletionApi {
 
-  override fun completeTask(cmd: CompleteTaskCmd): Future<Empty> {
+  override fun completeTask(cmd: CompleteTaskCmd): CompletableFuture<Empty> {
     logger.debug { "PROCESS-ENGINE-C7-REMOTE-006: completing service task ${cmd.taskId}." }
     externalTaskApiClient.completeExternalTaskResource(
       cmd.taskId,
@@ -42,7 +43,7 @@ class FeignServiceTaskCompletionApiImpl(
     return CompletableFuture.completedFuture(Empty)
   }
 
-  override fun completeTaskByError(cmd: CompleteTaskByErrorCmd): Future<Empty> {
+  override fun completeTaskByError(cmd: CompleteTaskByErrorCmd): CompletableFuture<Empty> {
     logger.debug { "PROCESS-ENGINE-C7-REMOTE-008: throwing error ${cmd.errorCode} in service task ${cmd.taskId}." }
     externalTaskApiClient.handleExternalTaskBpmnError(
       cmd.taskId,
@@ -60,15 +61,15 @@ class FeignServiceTaskCompletionApiImpl(
     return CompletableFuture.completedFuture(Empty)
   }
 
-  override fun failTask(cmd: FailTaskCmd): Future<Empty> {
+  override fun failTask(cmd: FailTaskCmd): CompletableFuture<Empty> {
     logger.debug { "PROCESS-ENGINE-C7-REMOTE-010: failing service task ${cmd.taskId}." }
     val (retries, retryTimeoutInSeconds) = failureRetrySupplier.apply(cmd.taskId)
     externalTaskApiClient.handleFailure(
       cmd.taskId,
       ExternalTaskFailureDto().apply {
         this.workerId = this@FeignServiceTaskCompletionApiImpl.workerId
-        this.retries = retries
-        this.retryTimeout = retryTimeoutInSeconds
+        this.retries = cmd.retryCount ?: retries
+        this.retryTimeout = cmd.retryBackoff?.get(ChronoUnit.SECONDS) ?: retryTimeoutInSeconds
         this.errorDetails = cmd.errorDetails
         this.errorMessage = cmd.reason
       }

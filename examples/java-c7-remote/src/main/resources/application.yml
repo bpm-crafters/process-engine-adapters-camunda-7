@@ -51,5 +51,4 @@ feign:
 logging:
   level:
     dev.bpmcrafters.processengineapi: INFO
-    dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.PullUserTaskDelivery: WARN
-    dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.PullServiceTaskDelivery: TRACE
+    dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot: TRACE

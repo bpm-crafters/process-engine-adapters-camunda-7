@@ -15,6 +15,7 @@ fun ExternalTask.toTaskInformation(): TaskInformation = TaskInformation(
     CommonRestrictions.PROCESS_DEFINITION_VERSION_TAG to this.processDefinitionVersionTag,
     CommonRestrictions.TENANT_ID to this.tenantId,
     "topicName" to this.topicName,
-    "creationDate" to this.createTime.toDateString()
+    "creationDate" to this.createTime.toDateString(),
+    TaskInformation.RETRIES to (this.retries?.toString() ?: ""),
   )
 )

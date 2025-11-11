@@ -25,7 +25,7 @@ class UserTaskCompletionApiImpl(
   private val valueMapper: ValueMapper
 ) : UserTaskCompletionApi {
 
-  override fun completeTask(cmd: CompleteTaskCmd): Future<Empty> {
+  override fun completeTask(cmd: CompleteTaskCmd): CompletableFuture<Empty> {
     logger.debug { "PROCESS-ENGINE-C7-REMOTE-011: completing user task ${cmd.taskId}." }
     taskApiClient.complete(
       cmd.taskId,
@@ -40,7 +40,7 @@ class UserTaskCompletionApiImpl(
     return CompletableFuture.completedFuture(Empty)
   }
 
-  override fun completeTaskByError(cmd: CompleteTaskByErrorCmd): Future<Empty> {
+  override fun completeTaskByError(cmd: CompleteTaskByErrorCmd): CompletableFuture<Empty> {
     logger.debug { "PROCESS-ENGINE-C7-REMOTE-013: throwing error on user task ${cmd.taskId}." }
     taskApiClient.handleBpmnError(
       cmd.taskId,

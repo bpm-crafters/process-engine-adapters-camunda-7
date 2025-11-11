@@ -22,7 +22,7 @@ class StartProcessApiImpl(
   private val valueMapper: ValueMapper,
 ) : StartProcessApi {
 
-  override fun startProcess(cmd: StartProcessCommand): Future<ProcessInformation> {
+  override fun startProcess(cmd: StartProcessCommand): CompletableFuture<ProcessInformation> {
     return when (cmd) {
       is StartProcessByDefinitionCmd ->
         CompletableFuture.supplyAsync {
