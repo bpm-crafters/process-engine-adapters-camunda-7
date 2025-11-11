@@ -19,7 +19,7 @@ class UserTaskModificationApiImpl(
   private val taskApiClient: TaskApiClient,
   private val valueMapper: ValueMapper,
 ) : UserTaskModificationApi {
-  override fun update(cmd: ModifyTaskCmd): Future<Empty> {
+  override fun update(cmd: ModifyTaskCmd): CompletableFuture<Empty> {
     logger.debug { "PROCESS-ENGINE-C7-REMOTE-051: modifying user task ${cmd.taskId}." }
     if (cmd is CompositeModifyTaskCmd) {
       cmd.commands.forEach {

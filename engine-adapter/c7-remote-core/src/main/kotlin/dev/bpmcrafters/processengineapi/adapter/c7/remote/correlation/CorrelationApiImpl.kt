@@ -25,7 +25,7 @@ class CorrelationApiImpl(
     const val USE_GLOBAL_CORRELATION_KEY = "useGlobalCorrelationKey"
   }
 
-  override fun correlateMessage(cmd: CorrelateMessageCmd): Future<Empty> {
+  override fun correlateMessage(cmd: CorrelateMessageCmd): CompletableFuture<Empty> {
     return CompletableFuture.supplyAsync {
       val correlation = cmd.correlation.get()
       val globalCorrelation = cmd.restrictions.containsKey(USE_GLOBAL_CORRELATION_KEY)

@@ -7,7 +7,6 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.camunda.bpm.engine.ExternalTaskService
 import java.time.temporal.ChronoUnit
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.Future
 
 private val logger = KotlinLogging.logger {}
 
@@ -15,13 +14,13 @@ private val logger = KotlinLogging.logger {}
  * Strategy for completing external tasks using Camunda externalTaskService Java API.
  */
 class C7ServiceTaskCompletionApiImpl(
-    private val workerId: String,
-    private val externalTaskService: ExternalTaskService,
-    private val subscriptionRepository: SubscriptionRepository,
-    private val failureRetrySupplier: FailureRetrySupplier
+  private val workerId: String,
+  private val externalTaskService: ExternalTaskService,
+  private val subscriptionRepository: SubscriptionRepository,
+  private val failureRetrySupplier: FailureRetrySupplier
 ) : ServiceTaskCompletionApi {
 
-  override fun completeTask(cmd: CompleteTaskCmd): Future<Empty> {
+  override fun completeTask(cmd: CompleteTaskCmd): CompletableFuture<Empty> {
 
     logger.debug { "PROCESS-ENGINE-C7-EMBEDDED-006: completing service task ${cmd.taskId}." }
     externalTaskService.complete(
@@ -36,7 +35,7 @@ class C7ServiceTaskCompletionApiImpl(
     return CompletableFuture.completedFuture(Empty)
   }
 
-  override fun completeTaskByError(cmd: CompleteTaskByErrorCmd): Future<Empty> {
+  override fun completeTaskByError(cmd: CompleteTaskByErrorCmd): CompletableFuture<Empty> {
     logger.debug { "PROCESS-ENGINE-C7-EMBEDDED-008: throwing error ${cmd.errorCode} in service task ${cmd.taskId}." }
     externalTaskService.handleBpmnError(
       cmd.taskId,
@@ -52,7 +51,7 @@ class C7ServiceTaskCompletionApiImpl(
     return CompletableFuture.completedFuture(Empty)
   }
 
-  override fun failTask(cmd: FailTaskCmd): Future<Empty> {
+  override fun failTask(cmd: FailTaskCmd): CompletableFuture<Empty> {
     logger.debug { "PROCESS-ENGINE-C7-EMBEDDED-010: failing service task ${cmd.taskId}." }
     val (retries, retryTimeoutInSeconds) = failureRetrySupplier.apply(cmd.taskId)
     externalTaskService.handleFailure(
