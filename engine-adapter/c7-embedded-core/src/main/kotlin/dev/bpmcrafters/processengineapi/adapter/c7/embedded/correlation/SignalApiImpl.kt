@@ -10,7 +10,6 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.camunda.bpm.engine.RuntimeService
 import org.camunda.bpm.engine.runtime.SignalEventReceivedBuilder
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.Future
 
 private val logger = KotlinLogging.logger {}
 
@@ -21,7 +20,7 @@ class SignalApiImpl(
   private val runtimeService: RuntimeService
 ) : SignalApi {
 
-  override fun sendSignal(cmd: SendSignalCmd): Future<Empty> {
+  override fun sendSignal(cmd: SendSignalCmd): CompletableFuture<Empty> {
     logger.debug { "PROCESS-ENGINE-C7-EMBEDDED-002: sending signal ${cmd.signalName}." }
     return CompletableFuture.supplyAsync {
       runtimeService
@@ -44,13 +43,19 @@ class SignalApiImpl(
       .forEach { (key, value) ->
         when (key) {
           CommonRestrictions.TENANT_ID -> this.tenantId(value).apply {
-            require(restrictions.containsKey(CommonRestrictions.WITHOUT_TENANT_ID)) { "Illegal restriction combination. ${CommonRestrictions.WITHOUT_TENANT_ID} " +
-              "and ${CommonRestrictions.WITHOUT_TENANT_ID} can't be provided in the same time because they are mutually exclusive." }
+            require(restrictions.containsKey(CommonRestrictions.WITHOUT_TENANT_ID)) {
+              "Illegal restriction combination. ${CommonRestrictions.WITHOUT_TENANT_ID} " +
+                "and ${CommonRestrictions.WITHOUT_TENANT_ID} can't be provided in the same time because they are mutually exclusive."
+            }
           }
+
           CommonRestrictions.WITHOUT_TENANT_ID -> this.withoutTenantId().apply {
-            require(restrictions.containsKey(CommonRestrictions.TENANT_ID)) { "Illegal restriction combination. ${CommonRestrictions.WITHOUT_TENANT_ID} " +
-              "and ${CommonRestrictions.WITHOUT_TENANT_ID} can't be provided in the same time because they are mutually exclusive." }
+            require(restrictions.containsKey(CommonRestrictions.TENANT_ID)) {
+              "Illegal restriction combination. ${CommonRestrictions.WITHOUT_TENANT_ID} " +
+                "and ${CommonRestrictions.WITHOUT_TENANT_ID} can't be provided in the same time because they are mutually exclusive."
+            }
           }
+
           CommonRestrictions.EXECUTION_ID -> this.executionId(value)
         }
       }

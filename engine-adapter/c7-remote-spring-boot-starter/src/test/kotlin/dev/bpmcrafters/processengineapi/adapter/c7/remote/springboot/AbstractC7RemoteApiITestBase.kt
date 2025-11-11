@@ -33,7 +33,7 @@ abstract class AbstractC7RemoteApiITestBase : JGivenSpringBaseIntegrationTest() 
 
     @JvmStatic
     @Container
-    val camundaContainer = Camunda7RunTestContainer("run-7.23.0")
+    val camundaContainer = Camunda7RunTestContainer("run-7.24.0")
 
     @JvmStatic
     @DynamicPropertySource

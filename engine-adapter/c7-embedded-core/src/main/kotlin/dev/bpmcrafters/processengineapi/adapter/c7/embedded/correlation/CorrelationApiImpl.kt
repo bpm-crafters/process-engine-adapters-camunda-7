@@ -10,7 +10,6 @@ import dev.bpmcrafters.processengineapi.correlation.CorrelationApi
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.camunda.bpm.engine.RuntimeService
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.Future
 
 private val logger = KotlinLogging.logger {}
 
@@ -25,7 +24,7 @@ class CorrelationApiImpl(
     const val USE_GLOBAL_CORRELATION_KEY = "useGlobalCorrelationKey"
   }
 
-  override fun correlateMessage(cmd: CorrelateMessageCmd): Future<Empty> {
+  override fun correlateMessage(cmd: CorrelateMessageCmd): CompletableFuture<Empty> {
     return CompletableFuture.supplyAsync {
       val correlation = cmd.correlation.get()
       val globalCorrelation = cmd.restrictions.containsKey(USE_GLOBAL_CORRELATION_KEY)

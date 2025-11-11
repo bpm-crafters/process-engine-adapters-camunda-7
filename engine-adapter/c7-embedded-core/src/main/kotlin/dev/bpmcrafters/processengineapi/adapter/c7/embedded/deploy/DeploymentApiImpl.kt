@@ -9,7 +9,6 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.camunda.bpm.engine.RepositoryService
 import org.camunda.bpm.engine.repository.Deployment
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.Future
 
 private val logger = KotlinLogging.logger {}
 
@@ -20,7 +19,7 @@ class DeploymentApiImpl(
   private val repositoryService: RepositoryService
 ) : DeploymentApi {
 
-  override fun deploy(cmd: DeployBundleCommand): Future<DeploymentInformation> {
+  override fun deploy(cmd: DeployBundleCommand): CompletableFuture<DeploymentInformation> {
     require(cmd.resources.isNotEmpty()) { "Resources must not be empty, at least one resource must be provided." }
     logger.debug { "PROCESS-ENGINE-C7-EMBEDDED-003: executing a bundle deployment with ${cmd.resources.size} resources." }
     return CompletableFuture.supplyAsync {

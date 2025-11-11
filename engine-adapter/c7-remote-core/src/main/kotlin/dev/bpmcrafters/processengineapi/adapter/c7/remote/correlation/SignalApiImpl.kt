@@ -20,7 +20,7 @@ class SignalApiImpl(
   private val valueMapper: ValueMapper
 ) : SignalApi {
 
-  override fun sendSignal(cmd: SendSignalCmd): Future<Empty> {
+  override fun sendSignal(cmd: SendSignalCmd): CompletableFuture<Empty> {
     logger.debug { "PROCESS-ENGINE-C7-REMOTE-002: Sending signal ${cmd.signalName}." }
     return CompletableFuture.supplyAsync {
 

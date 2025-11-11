@@ -17,7 +17,7 @@ private val logger = KotlinLogging.logger {}
 class C7UserTaskModificationApiImpl(
   private val taskService: TaskService,
 ) : UserTaskModificationApi {
-  override fun update(cmd: ModifyTaskCmd): Future<Empty> {
+  override fun update(cmd: ModifyTaskCmd): CompletableFuture<Empty> {
     logger.debug { "PROCESS-ENGINE-C7-EMBEDDED-051: modifying user task ${cmd.taskId}." }
     if (cmd is CompositeModifyTaskCmd) {
       cmd.commands.forEach {
