@@ -9,6 +9,7 @@ import org.camunda.community.rest.client.model.CompleteExternalTaskDto
 import org.camunda.community.rest.client.model.ExternalTaskBpmnError
 import org.camunda.community.rest.client.model.ExternalTaskFailureDto
 import org.camunda.community.rest.variables.ValueMapper
+import java.time.temporal.ChronoUnit
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Future
 
@@ -67,8 +68,8 @@ class FeignServiceTaskCompletionApiImpl(
       cmd.taskId,
       ExternalTaskFailureDto().apply {
         this.workerId = this@FeignServiceTaskCompletionApiImpl.workerId
-        this.retries = retries
-        this.retryTimeout = retryTimeoutInSeconds
+        this.retries = cmd.retryCount ?: retries
+        this.retryTimeout = cmd.retryBackoff?.get(ChronoUnit.SECONDS) ?: retryTimeoutInSeconds
         this.errorDetails = cmd.errorDetails
         this.errorMessage = cmd.reason
       }

@@ -7,6 +7,8 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.Map;
 
+import static java.util.Optional.ofNullable;
+
 
 /**
  * Abstract example implementation of synchronous task handler.
@@ -52,7 +54,10 @@ public abstract class AbstractSynchronousTaskHandler {
             externalTaskCompletionApi.failTask(new FailTaskCmd(
                 taskInfo.getTaskId(),
                 e.getMessage(),
-                null
+              null,
+                ofNullable(taskInfo.getMetaValueAsInt(TaskInformation.RETRIES))
+                  .map(count -> count - 1).orElse(null),
+              null
               )
             );
           }

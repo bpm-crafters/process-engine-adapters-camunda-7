@@ -4,6 +4,7 @@ import dev.bpmcrafters.processengineapi.Empty
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import dev.bpmcrafters.processengineapi.task.*
 import io.github.oshai.kotlinlogging.KotlinLogging
+import java.time.temporal.ChronoUnit
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Future
 import org.camunda.bpm.client.task.ExternalTaskService as ClientExternalTaskService
@@ -64,8 +65,8 @@ class OfficialClientServiceTaskCompletionApiImpl(
         cmd.taskId,
         cmd.reason,
         cmd.errorDetails,
-        retries,
-        retryTimeoutInSeconds
+        cmd.retryCount ?: retries,
+        cmd.retryBackoff?.get(ChronoUnit.SECONDS) ?: retryTimeoutInSeconds
       )
     subscriptionRepository.deactivateSubscriptionForTask(cmd.taskId)?.apply {
       termination.accept(

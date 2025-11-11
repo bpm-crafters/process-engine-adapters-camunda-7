@@ -5,6 +5,7 @@ import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import dev.bpmcrafters.processengineapi.task.*
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.camunda.bpm.engine.ExternalTaskService
+import java.time.temporal.ChronoUnit
 import java.util.concurrent.CompletableFuture
 
 private val logger = KotlinLogging.logger {}
@@ -58,8 +59,8 @@ class C7ServiceTaskCompletionApiImpl(
       workerId,
       cmd.reason,
       cmd.errorDetails,
-      retries,
-      retryTimeoutInSeconds
+      cmd.retryCount ?: retries,
+      cmd.retryBackoff?.get(ChronoUnit.SECONDS) ?: retryTimeoutInSeconds
     )
     subscriptionRepository.deactivateSubscriptionForTask(cmd.taskId)?.apply {
       termination.accept(TaskInformation(cmd.taskId, emptyMap()).withReason(TaskInformation.COMPLETE))
