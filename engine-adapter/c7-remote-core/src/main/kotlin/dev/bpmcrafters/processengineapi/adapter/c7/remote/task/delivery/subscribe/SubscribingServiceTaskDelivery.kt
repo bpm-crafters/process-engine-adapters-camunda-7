@@ -50,13 +50,13 @@ class SubscribingServiceTaskDelivery(
                     subscription.action.accept(externalTask.toTaskInformation().withReason(TaskInformation.CREATE), variables)
                     logger.debug { "PROCESS-ENGINE-C7-REMOTE-032: successfully delivered service task ${externalTask.id}." }
                   } catch (e: Exception) {
-                    val jobRetries: Int = externalTask.retries ?: retries
+                    val jobRetries: Int = externalTask.retries?.minus(1) ?: retries
                     logger.error { "PROCESS-ENGINE-C7-REMOTE-033: failing delivering task ${externalTask.id}: ${e.message}" }
                     externalTaskService.handleFailure(
                       externalTask.id,
                       "Error delivering external task",
                       e.message,
-                      jobRetries - 1,
+                      jobRetries,
                       retryTimeoutInSeconds * 1000 // millis
                     )
                     subscriptionRepository.deactivateSubscriptionForTask(taskId = externalTask.id)

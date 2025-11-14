@@ -71,9 +71,9 @@ class EmbeddedPullServiceTaskDelivery(
                   // remove from already delivered
                   deliveredTaskIds.remove(lockedTask.id)
                 } catch (e: Exception) {
-                  val jobRetries: Int = lockedTask.retries ?: retries
+                  val jobRetries: Int = lockedTask.retries?.minus(1) ?: retries
                   logger.error { "PROCESS-ENGINE-C7-EMBEDDED-033: failing delivering task ${lockedTask.id}: ${e.message}" }
-                  externalTaskService.handleFailure(lockedTask.id, workerId, e.message, jobRetries - 1, retryTimeoutInSeconds * 1000)
+                  externalTaskService.handleFailure(lockedTask.id, workerId, e.message, jobRetries, retryTimeoutInSeconds * 1000)
                   subscriptionRepository.deactivateSubscriptionForTask(taskId = lockedTask.id)
                   logger.error { "PROCESS-ENGINE-C7-EMBEDDED-034: successfully failed delivering task ${lockedTask.id}: ${e.message}" }
                 }
