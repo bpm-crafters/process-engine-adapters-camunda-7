@@ -383,6 +383,7 @@ internal class PullServiceTaskDeliveryTest {
     .id(id)
     .topicName("topical-but-not-tropical")
     .lockExpirationTime(lockExpirationTime)
+    .retries(1)
     .variables(mapOf(
       // ...to have something (most likely) unique for argument matching.
       "variable" to VariableValueDto().value(randomUUID().toString()))
