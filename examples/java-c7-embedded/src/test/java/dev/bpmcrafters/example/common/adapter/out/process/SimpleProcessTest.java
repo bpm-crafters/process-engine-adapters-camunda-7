@@ -47,6 +47,20 @@ public class SimpleProcessTest extends DualScenarioTest<SimpleProcessStages.Acti
   }
 
   @Test
+  public void should_start_process_and_use_retries_if_service_task_fails() {
+    given()
+      .simple_process_started("test", 123);
+
+    when()
+      .service_execute_action_is_failed(1)
+      .and()
+      .service_execute_action_is_failed(0);
+
+    then()
+      .process_has_incidents();
+  }
+
+  @Test
   public void should_start_process_and_handle_service_task_error() {
     given()
       .simple_process_started("test", 123);
