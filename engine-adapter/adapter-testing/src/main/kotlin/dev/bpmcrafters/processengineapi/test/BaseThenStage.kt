@@ -2,7 +2,6 @@ package dev.bpmcrafters.processengineapi.test
 
 import com.tngtech.jgiven.Stage
 import com.tngtech.jgiven.annotation.ExpectedScenarioState
-import io.github.oshai.kotlinlogging.KotlinLogging
 import io.toolisticon.testing.jgiven.JGivenKotlinStage
 import io.toolisticon.testing.jgiven.step
 import org.assertj.core.api.Assertions.assertThat

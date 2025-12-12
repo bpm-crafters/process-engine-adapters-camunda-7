@@ -13,9 +13,7 @@ import org.mockito.InjectMocks
 import org.mockito.Mockito.mock
 import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.verify
-import org.mockito.kotlin.verifyNoInteractions
 import org.mockito.kotlin.verifyNoMoreInteractions
-import java.util.concurrent.ExecutionException
 
 @ExtendWith(MockitoExtension::class)
 class CorrelationApiImplTest {

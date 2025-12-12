@@ -12,7 +12,6 @@ import org.camunda.community.rest.client.api.MessageApiClient
 import org.camunda.community.rest.client.model.CorrelationMessageDto
 import org.camunda.community.rest.variables.ValueMapper
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.Future
 
 private val logger = KotlinLogging.logger {}
 

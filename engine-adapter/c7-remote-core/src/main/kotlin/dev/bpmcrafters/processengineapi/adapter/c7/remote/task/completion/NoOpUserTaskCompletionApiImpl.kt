@@ -5,7 +5,6 @@ import dev.bpmcrafters.processengineapi.task.CompleteTaskByErrorCmd
 import dev.bpmcrafters.processengineapi.task.CompleteTaskCmd
 import dev.bpmcrafters.processengineapi.task.UserTaskCompletionApi
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.Future
 
 class NoOpUserTaskCompletionApiImpl : UserTaskCompletionApi {
 

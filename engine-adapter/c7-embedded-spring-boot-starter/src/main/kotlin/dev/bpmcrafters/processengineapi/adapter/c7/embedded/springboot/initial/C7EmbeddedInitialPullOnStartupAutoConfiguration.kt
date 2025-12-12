@@ -6,7 +6,6 @@ import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import io.github.oshai.kotlinlogging.KotlinLogging
 import jakarta.annotation.PostConstruct
 import org.camunda.bpm.engine.ExternalTaskService
-import org.camunda.bpm.engine.RepositoryService
 import org.camunda.bpm.engine.TaskService
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.autoconfigure.AutoConfigureAfter

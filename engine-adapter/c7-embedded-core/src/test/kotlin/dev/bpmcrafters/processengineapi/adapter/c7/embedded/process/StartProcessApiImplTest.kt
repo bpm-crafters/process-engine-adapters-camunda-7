@@ -3,10 +3,8 @@ package dev.bpmcrafters.processengineapi.adapter.c7.embedded.process
 import dev.bpmcrafters.processengineapi.CommonRestrictions
 import dev.bpmcrafters.processengineapi.process.StartProcessByDefinitionCmd
 import dev.bpmcrafters.processengineapi.process.StartProcessByMessageCmd
-import org.camunda.bpm.engine.ProcessEngine
 import org.camunda.bpm.engine.RepositoryService
 import org.camunda.bpm.engine.RuntimeService
-import org.camunda.bpm.engine.repository.ProcessDefinitionQuery
 import org.camunda.bpm.engine.runtime.MessageCorrelationBuilder
 import org.camunda.bpm.engine.runtime.ProcessInstance
 import org.camunda.community.mockito.QueryMocks
@@ -14,7 +12,6 @@ import org.camunda.community.mockito.process.ProcessDefinitionFake
 import org.camunda.community.mockito.process.ProcessInstanceFake
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
-import org.mockito.Answers
 import org.mockito.InjectMocks
 import org.mockito.Mock
 import org.mockito.Mockito.*

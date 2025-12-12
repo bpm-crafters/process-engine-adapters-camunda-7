@@ -6,7 +6,6 @@ import dev.bpmcrafters.processengineapi.task.CompleteTaskCmd
 import dev.bpmcrafters.processengineapi.task.FailTaskCmd
 import dev.bpmcrafters.processengineapi.task.ServiceTaskCompletionApi
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.Future
 
 class NoOpServiceTaskCompletionApiImpl : ServiceTaskCompletionApi {
   override fun completeTask(cmd: CompleteTaskCmd): CompletableFuture<Empty> {

@@ -30,6 +30,7 @@ class StartProcessApiImplByMessageTest {
   private val valueMapper: ValueMapper = TestFixtures.valueMapper()
 
   @Spy
+  @Suppress("unused")
   private val processDefinitionMetaDataResolver = CachingProcessDefinitionMetaDataResolver(
     processDefinitionApiClient
   )
