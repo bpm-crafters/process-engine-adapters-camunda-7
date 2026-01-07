@@ -20,8 +20,8 @@ abstract class AbstractC7EmbeddedApiITest(override val processTestHelper: Proces
 
     val processEngine: ProcessEngine = object : StandaloneInMemProcessEngineConfiguration() {
       init {
-        history = ProcessEngineConfiguration.HISTORY_AUDIT
-        databaseSchemaUpdate = ProcessEngineConfiguration.DB_SCHEMA_UPDATE_TRUE
+        history = HISTORY_AUDIT
+        databaseSchemaUpdate = DB_SCHEMA_UPDATE_TRUE
         jobExecutorActivate = false
         expressionManager = MockExpressionManager()
       }

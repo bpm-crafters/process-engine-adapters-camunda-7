@@ -9,7 +9,6 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.camunda.community.rest.client.api.DeploymentApiClient
 import org.camunda.community.rest.client.model.DeploymentWithDefinitionsDto
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.Future
 
 private val logger = KotlinLogging.logger {}
 

@@ -11,7 +11,6 @@ import org.camunda.community.rest.client.model.ExternalTaskFailureDto
 import org.camunda.community.rest.variables.ValueMapper
 import java.time.temporal.ChronoUnit
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.Future
 
 private val logger = KotlinLogging.logger {}
 

@@ -7,7 +7,6 @@ import dev.bpmcrafters.processengineapi.task.ChangePayloadModifyTaskCmd.*
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.camunda.bpm.engine.TaskService
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.Future
 
 private val logger = KotlinLogging.logger {}
 

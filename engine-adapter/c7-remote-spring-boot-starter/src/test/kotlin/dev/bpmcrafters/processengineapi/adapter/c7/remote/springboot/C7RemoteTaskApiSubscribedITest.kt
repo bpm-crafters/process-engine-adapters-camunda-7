@@ -1,11 +1,9 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot
 
-import io.toolisticon.testing.jgiven.AND
 import io.toolisticon.testing.jgiven.GIVEN
 import io.toolisticon.testing.jgiven.THEN
 import io.toolisticon.testing.jgiven.WHEN
 import org.junit.jupiter.api.Test
-import org.springframework.test.annotation.DirtiesContext
 import org.springframework.test.context.ActiveProfiles
 
 /**

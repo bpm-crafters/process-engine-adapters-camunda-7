@@ -117,7 +117,6 @@ class TaskInformationExtensionsKtTest {
 
   @Test
   fun `should map null date to empty string for LockedExternalTaskDto`() {
-    val now = OffsetDateTime.now()
 
     val lockedTask = LockedExternalTaskDto()
       .processDefinitionId("processDefinitionId")
@@ -128,7 +127,6 @@ class TaskInformationExtensionsKtTest {
       .activityId("activityId")
       .activityInstanceId("activityInstanceId")
       .createTime(null)
-
 
     val taskInformation = lockedTask.toTaskInformation(processDefinitionMetaDataResolver)
 
@@ -141,6 +139,5 @@ class TaskInformationExtensionsKtTest {
     identityLink.groupId = groupId
     return identityLink
   }
-
 
 }

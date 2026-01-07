@@ -23,7 +23,7 @@ The library contains of the following Maven modules:
 
 ## Usage
 
-If you want to start usage, please add the BOM to your Maven project and add corresponding adapter implementation:
+If you want to start usage, please add the BOM to your Maven project and add the corresponding adapter implementation:
 
 ```xml
 <dependency>
