@@ -60,6 +60,13 @@ public class SimpleProcessStages {
         .external_task_is_completed_with_error(Expressions.JOB_TYPE_EXECUTE_ACTION_EXTERNAL, Expressions.ERROR_ACTION_ERROR, Variables.createVariables());
     }
 
+    @As("service task execute action failed")
+    public ActionStage service_execute_action_is_failed(int retries) {
+      return external_task_exists(Expressions.JOB_TYPE_EXECUTE_ACTION_EXTERNAL, Elements.SERVICE_TASK_DO_ACTION_1)
+        .and()
+        .external_task_is_failed(Expressions.JOB_TYPE_EXECUTE_ACTION_EXTERNAL, Expressions.FAILURE_REASON, retries);
+    }
+
     @As("user task perform task completed with $value")
     public ActionStage user_task_perform_task_is_completed(String value) {
       process_waits_in(Elements.USER_TASK_PERFORM_TASK);
