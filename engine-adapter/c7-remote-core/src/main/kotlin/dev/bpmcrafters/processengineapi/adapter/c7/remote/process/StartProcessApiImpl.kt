@@ -41,7 +41,7 @@ class StartProcessApiImpl(
             StartProcessInstanceDto()
               .apply {
                 if (payload.containsKey(CommonRestrictions.BUSINESS_KEY)) {
-                  this.businessKey = payload.getValue(CommonRestrictions.BUSINESS_KEY).toString()
+                  this.businessKey = payload[CommonRestrictions.BUSINESS_KEY]?.toString()
                 }
                 this.variables = valueMapper.mapValues(payload)
               }
@@ -65,7 +65,7 @@ class StartProcessApiImpl(
               )
               .apply {
                 if (payload.containsKey(CommonRestrictions.BUSINESS_KEY)) {
-                  this.businessKey = payload[CommonRestrictions.BUSINESS_KEY].toString()
+                  this.businessKey = payload[CommonRestrictions.BUSINESS_KEY]?.toString()
                 }
               }
           )

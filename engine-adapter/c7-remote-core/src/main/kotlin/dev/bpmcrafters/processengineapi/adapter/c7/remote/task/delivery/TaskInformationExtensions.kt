@@ -91,7 +91,7 @@ fun Set<IdentityLinkDto>.toGroupsString() = this.mapNotNull { it.groupId }.sorte
 fun Set<IdentityLinkDto>.toUsersString() = this.mapNotNull { it.userId }.sorted().joinToString(",")
 
 
-fun <T : Any> Map<String, T>.filterBySubscription(subscription: TaskSubscriptionHandle): Map<String, T> =
+fun <T : Any?> Map<String, T>.filterBySubscription(subscription: TaskSubscriptionHandle): Map<String, T> =
   if (subscription.payloadDescription != null) {
     if (subscription.payloadDescription!!.isEmpty()) {
       mapOf()
