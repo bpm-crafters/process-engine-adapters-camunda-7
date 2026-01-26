@@ -23,7 +23,7 @@
     <process-engine-api.version>1.4</process-engine-api.version>
     <camunda-platform-7-rest-client.version>7.24.0</camunda-platform-7-rest-client.version>
     <!-- TEST -->
-    <mockito.version>6.1.0</mockito.version>
+    <mockito.version>6.2.3</mockito.version>
     <assertj.version>3.27.6</assertj.version>
     <junit5.version>5.13.3</junit5.version>
     <jgiven.version>2.0.2</jgiven.version>
