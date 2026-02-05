@@ -25,9 +25,9 @@
 
     <!-- Feign REST Client -->
     <dependency>
-      <groupId>org.camunda.community.rest</groupId>
-      <artifactId>camunda-platform-7-rest-client-spring-boot-starter-feign</artifactId>
-      <version>${camunda-platform-7-rest-client.version}</version>
+      <groupId>io.holunda.c7</groupId>
+      <artifactId>c7-rest-client-spring-boot-starter-feign</artifactId>
+      <version>${c7.version}</version>
     </dependency>
 
     <!-- Official Camunda Client -->
