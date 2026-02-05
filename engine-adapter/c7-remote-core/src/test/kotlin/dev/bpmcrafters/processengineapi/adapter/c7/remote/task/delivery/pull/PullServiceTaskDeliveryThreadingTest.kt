@@ -65,7 +65,7 @@ internal class PullServiceTaskDeliveryThreadingTest {
   private val executingTaskHandlers = LinkedBlockingQueue<TaskHandler>()
 
   private inner class TestTaskHandlerImpl : TaskHandler {
-    override fun accept(taskInformation: TaskInformation, variables: Map<String, Any>) {
+    override fun accept(taskInformation: TaskInformation, variables: Map<String, Any?>) {
       synchronized(this) {
         executingTaskHandlers.offer(this)
         wait()

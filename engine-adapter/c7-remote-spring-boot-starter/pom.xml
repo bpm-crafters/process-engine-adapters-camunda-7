@@ -46,9 +46,9 @@
 
     <!-- Use for Camunda REST API by provided Feign Client -->
     <dependency>
-      <groupId>org.camunda.community.rest</groupId>
-      <artifactId>camunda-platform-7-rest-client-spring-boot-starter-feign</artifactId>
-      <version>${camunda-platform-7-rest-client.version}</version>
+      <groupId>io.holunda.c7</groupId>
+      <artifactId>c7-rest-client-spring-boot-starter-feign</artifactId>
+      <version>${c7.version}</version>
       <scope>provided</scope>
     </dependency>
 
@@ -73,9 +73,6 @@
               <goal>kapt</goal>
             </goals>
             <configuration>
-              <sourceDirs>
-                <sourceDir>src/main/kotlin</sourceDir>
-              </sourceDirs>
               <annotationProcessorPaths>
                 <annotationProcessorPath>
                   <groupId>org.springframework.boot</groupId>
