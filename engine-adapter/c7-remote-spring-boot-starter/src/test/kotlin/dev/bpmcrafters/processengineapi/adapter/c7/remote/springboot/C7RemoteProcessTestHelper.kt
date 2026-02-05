@@ -5,6 +5,7 @@ import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.ServiceT
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.UserTaskDelivery
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.RefreshableDelivery
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.subscribe.SubscribingServiceTaskDelivery
+import dev.bpmcrafters.processengineapi.decision.EvaluateDecisionApi
 import dev.bpmcrafters.processengineapi.impl.task.InMemSubscriptionRepository
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import dev.bpmcrafters.processengineapi.process.ProcessInformation
@@ -23,14 +24,15 @@ class C7RemoteProcessTestHelper(
   private val userTaskCompletionApi: UserTaskCompletionApi,
   private val serviceTaskCompletionApi: ServiceTaskCompletionApi,
   private val subscriptionRepository: SubscriptionRepository,
-  private val processInstanceApiClient: ProcessInstanceApiClient
+  private val processInstanceApiClient: ProcessInstanceApiClient,
+  private val evaluateDecisionApi: EvaluateDecisionApi,
 ) : ProcessTestHelper {
 
   override fun getStartProcessApi(): StartProcessApi = startProcessApi
   override fun getTaskSubscriptionApi(): TaskSubscriptionApi = taskSubscriptionApi
   override fun getUserTaskCompletionApi(): UserTaskCompletionApi = userTaskCompletionApi
   override fun getServiceTaskCompletionApi(): ServiceTaskCompletionApi = serviceTaskCompletionApi
-
+  override fun getEvaluateDecisionApi(): EvaluateDecisionApi = evaluateDecisionApi
   override fun triggerPullingUserTaskDeliveryManually() = userTaskDelivery.refresh()
 
   override fun subscribeForUserTasks() {

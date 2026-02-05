@@ -18,12 +18,12 @@ class EvaluateDecisionApiImpl(
 ) : EvaluateDecisionApi {
 
   override fun evaluateDecision(command: DecisionEvaluationCommand): CompletableFuture<DecisionEvaluationResult> {
-    when (command) {
+    return when (command) {
       is DecisionByRefEvaluationCommand -> {
         logger.debug {
           "PROCESS-ENGINE-C7-EMBEDDED-061: Evaluating decision by reference ${command.decisionRef}"
         }
-        return CompletableFuture.supplyAsync {
+        CompletableFuture.supplyAsync {
           val result = decisionService
             .evaluateDecisionByKey(command.decisionRef)
             .applyRestrictions(ensureSupported(command.restrictionSupplier.get()))
