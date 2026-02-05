@@ -32,6 +32,7 @@ import org.camunda.bpm.engine.history.HistoricActivityInstance
 import org.camunda.bpm.engine.runtime.ProcessInstance
 import org.camunda.bpm.engine.test.assertions.bpmn.BpmnAwareTests
 import org.camunda.bpm.engine.variable.VariableMap
+import java.time.Duration
 import java.util.*
 import java.util.concurrent.Executors
 import kotlin.collections.set
@@ -224,7 +225,7 @@ abstract class AbstractC7EmbeddedStage<SUBTYPE : AbstractC7EmbeddedStage<SUBTYPE
     return self()
   }
 
-  @As("external task of type \$jobType is completed with error \$errorMessage")
+  @As("external task of type \$topicName is completed with error \$errorMessage")
   open fun external_task_is_completed_with_error(@Quoted topicName: String, errorMessage: String, variables: VariableMap): SUBTYPE {
     Objects.requireNonNull(
       topicToExternalTaskId[topicName], "No active external service task found, consider to assert using external_task_exists"
@@ -233,6 +234,19 @@ abstract class AbstractC7EmbeddedStage<SUBTYPE : AbstractC7EmbeddedStage<SUBTYPE
       CompleteTaskByErrorCmd(
         topicToExternalTaskId.getValue(topicName), errorMessage
       ) { variables }).get()
+    return self()
+  }
+
+  @As("external task of type \$topicName has failed with reason \$reason")
+  open fun external_task_is_failed(@Quoted topicName: String, reason: String, retryCount: Int): SUBTYPE {
+    Objects.requireNonNull(
+      topicToExternalTaskId[topicName], "No active external service task found, consider to assert using external_task_exists"
+    )
+    serviceTaskCompletionApi.failTask(
+      FailTaskCmd(
+        topicToExternalTaskId.getValue(topicName), reason, null,
+        retryCount, Duration.ofSeconds(3)
+      )).get()
     return self()
   }
 
@@ -372,6 +386,12 @@ abstract class AbstractC7EmbeddedStage<SUBTYPE : AbstractC7EmbeddedStage<SUBTYPE
 
   open fun process_is_stopped(): SUBTYPE {
     processEngineServices.runtimeService.deleteProcessInstance(this.processInstanceId, "Stopped", false, true)
+    return self()
+  }
+
+  open fun process_has_incidents(): SUBTYPE {
+    Assertions.assertThat(processEngineServices.runtimeService.createIncidentQuery().processInstanceId(processInstanceId).count())
+      .isPositive
     return self()
   }
 

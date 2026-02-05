@@ -18,7 +18,7 @@ class EvaluateDecisionApiImpl(
 ) : EvaluateDecisionApi {
 
   override fun evaluateDecision(command: DecisionEvaluationCommand): CompletableFuture<DecisionEvaluationResult> {
-    return when (command) {
+    when (command) {
       is DecisionByRefEvaluationCommand -> {
         logger.debug {
           "PROCESS-ENGINE-C7-EMBEDDED-061: Evaluating decision by reference ${command.decisionRef}"
@@ -36,6 +36,7 @@ class EvaluateDecisionApiImpl(
           }
         }
       }
+
       else -> throw UnsupportedOperationException("Evaluate Decision command of type ${command::class.qualifiedName} is not implemented yet")
     }
   }
@@ -44,10 +45,6 @@ class EvaluateDecisionApiImpl(
     CommonRestrictions.TENANT_ID,
     CommonRestrictions.WITHOUT_TENANT_ID,
   )
-
-  override fun meta(instance: MetaInfoAware): MetaInfo {
-    TODO("Not yet implemented")
-  }
 
   fun DecisionsEvaluationBuilder.applyRestrictions(restrictions: Map<String, String>): DecisionsEvaluationBuilder = this.apply {
     restrictions
@@ -120,6 +117,11 @@ class EvaluateDecisionApiImpl(
 
     override fun meta(): Map<String, String> = mapOf("single-result" to "false", "result-count" to "0")
 
+  }
+
+
+  override fun meta(instance: MetaInfoAware): MetaInfo {
+    TODO("Not yet implemented")
   }
 }
 

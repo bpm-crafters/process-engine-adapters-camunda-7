@@ -34,6 +34,7 @@ public class SimpleProcessWorkflowConst {
     public static final String MESSAGE_1 = "message1";
 
     public static final String ERROR_ACTION_ERROR = "action_error";
+    public static final String FAILURE_REASON = "failure_reason";
 
     public static final String SIGNAL_1 = "signal1";
 
