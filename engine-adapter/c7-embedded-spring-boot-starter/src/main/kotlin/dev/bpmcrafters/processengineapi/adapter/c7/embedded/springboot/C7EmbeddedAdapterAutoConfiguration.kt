@@ -2,6 +2,7 @@ package dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot
 
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.correlation.CorrelationApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.correlation.SignalApiImpl
+import dev.bpmcrafters.processengineapi.adapter.c7.embedded.decision.EvaluateDecisionApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.deploy.DeploymentApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.process.CachingProcessDefinitionMetaDataResolver
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.process.ProcessDefinitionMetaDataResolver
@@ -17,6 +18,7 @@ import dev.bpmcrafters.processengineapi.impl.task.InMemSubscriptionRepository
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import dev.bpmcrafters.processengineapi.correlation.CorrelationApi
 import dev.bpmcrafters.processengineapi.correlation.SignalApi
+import dev.bpmcrafters.processengineapi.decision.EvaluateDecisionApi
 import dev.bpmcrafters.processengineapi.deploy.DeploymentApi
 import dev.bpmcrafters.processengineapi.process.StartProcessApi
 import dev.bpmcrafters.processengineapi.task.ServiceTaskCompletionApi
@@ -25,6 +27,7 @@ import dev.bpmcrafters.processengineapi.task.UserTaskCompletionApi
 import dev.bpmcrafters.processengineapi.task.UserTaskModificationApi
 import io.github.oshai.kotlinlogging.KotlinLogging
 import jakarta.annotation.PostConstruct
+import org.camunda.bpm.engine.DecisionService
 import org.camunda.bpm.engine.ExternalTaskService
 import org.camunda.bpm.engine.RepositoryService
 import org.camunda.bpm.engine.RuntimeService
@@ -85,6 +88,12 @@ class C7EmbeddedAdapterAutoConfiguration {
   @Qualifier("c7embedded-user-task-modification-api")
   fun userTaskModificationApi(taskService: TaskService): UserTaskModificationApi = C7UserTaskModificationApiImpl(
     taskService = taskService
+  )
+
+  @Bean("c7embedded-evaluate-decision-api")
+  @Qualifier("c7embedded-evaluate-decision-api")
+  fun evaluateDecisionApi(decisionService: DecisionService): EvaluateDecisionApi = EvaluateDecisionApiImpl(
+    decisionService = decisionService
   )
 
   @Bean
