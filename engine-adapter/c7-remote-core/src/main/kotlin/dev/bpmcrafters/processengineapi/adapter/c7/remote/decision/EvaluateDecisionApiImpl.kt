@@ -45,7 +45,7 @@ class EvaluateDecisionApiImpl(
             null
           }
 
-          val result = if (tenantId == null) {
+          val result = if (tenantId != null) {
             decisionDefinitionApiClient
               .evaluateDecisionByKeyAndTenant(
                 command.decisionRef,
