@@ -67,59 +67,6 @@ class EvaluateDecisionApiImpl(
       }
   }
 
-  /**
-   * Delegating result.
-   */
-  data class DelegatingDmnDecisionResult(
-    val dmnDecisionResult: DmnDecisionResult
-  ) : DecisionEvaluationResult {
-    override fun asSingle(): DecisionEvaluationOutput {
-      return DelegatingDmnDecisionEvaluationOutput(dmnDecisionResult.singleResult)
-    }
-
-    override fun asList(): List<DecisionEvaluationOutput> {
-      return dmnDecisionResult.map { DelegatingDmnDecisionEvaluationOutput(it) }
-    }
-
-    override fun meta(): Map<String, String> = mapOf(
-      "single-result" to if (dmnDecisionResult.resultList.size == 1) {
-        "true"
-      } else {
-        "false"
-      },
-      "result-count" to "${dmnDecisionResult.resultList.size}"
-    )
-  }
-
-  /**
-   * Delegating output.
-   */
-  data class DelegatingDmnDecisionEvaluationOutput(
-    val entries: DmnDecisionResultEntries,
-  ) : DecisionEvaluationOutput {
-
-    override fun <T : Any> asType(type: Class<T>): T? {
-      return entries.getFirstEntry<T>()
-    }
-
-    override fun asMap(): Map<String, Any?>? {
-      return entries.entryMap
-    }
-  }
-
-  /**
-   * No output.
-   */
-  object NoDecisionResult : DecisionEvaluationResult {
-    override fun asSingle(): DecisionEvaluationOutput = throw IllegalStateException("No decision result")
-
-    override fun asList(): List<DecisionEvaluationOutput> = listOf()
-
-    override fun meta(): Map<String, String> = mapOf("single-result" to "false", "result-count" to "0")
-
-  }
-
-
   override fun meta(instance: MetaInfoAware): MetaInfo {
     TODO("Not yet implemented")
   }

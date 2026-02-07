@@ -35,7 +35,7 @@ internal class EvaluateDecisionApiImplTest {
         )
       )
     ).get()
-    assertThat(result).isInstanceOf(EvaluateDecisionApiImpl.NoDecisionResult::class.java)
+    assertThat(result).isInstanceOf(NoDecisionResult::class.java)
   }
 
   @Test
@@ -82,7 +82,7 @@ internal class EvaluateDecisionApiImplTest {
         )
       )
     ).get()
-    assertThat(result).isInstanceOf(EvaluateDecisionApiImpl.DelegatingDmnDecisionResult::class.java)
+    assertThat(result).isInstanceOf(DelegatingDmnDecisionResult::class.java)
     assertThat(result.meta().containsKey("result-count")).isTrue()
     assertThat(result.meta()["result-count"]).isEqualTo("1")
     assertThat(result.meta().containsKey("result-count")).isTrue()

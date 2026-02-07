@@ -1,11 +1,11 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.remote.decision
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import dev.bpmcrafters.processengineapi.CommonRestrictions
 import dev.bpmcrafters.processengineapi.MetaInfo
 import dev.bpmcrafters.processengineapi.MetaInfoAware
 import dev.bpmcrafters.processengineapi.decision.*
 import io.github.oshai.kotlinlogging.KotlinLogging
-import org.camunda.bpm.engine.variable.VariableMap
 import org.camunda.community.rest.client.api.DecisionDefinitionApiClient
 import org.camunda.community.rest.client.model.EvaluateDecisionDto
 import org.camunda.community.rest.client.model.VariableValueDto
@@ -17,6 +17,7 @@ private val logger = KotlinLogging.logger {}
 class EvaluateDecisionApiImpl(
   private val decisionDefinitionApiClient: DecisionDefinitionApiClient,
   private val valueMapper: ValueMapper,
+  private val objectMapper: ObjectMapper
 ) : EvaluateDecisionApi {
 
   override fun evaluateDecision(command: DecisionEvaluationCommand): CompletableFuture<DecisionEvaluationResult> {
@@ -45,18 +46,19 @@ class EvaluateDecisionApiImpl(
             null
           }
 
+          var variables = valueMapper.mapValues(command.payloadSupplier.get())
           val result = if (tenantId != null) {
             decisionDefinitionApiClient
               .evaluateDecisionByKeyAndTenant(
                 command.decisionRef,
                 tenantId,
-                EvaluateDecisionDto().variables(valueMapper.mapValues(command.payloadSupplier.get()))
+                EvaluateDecisionDto().variables(variables)
               )
           } else {
             decisionDefinitionApiClient
               .evaluateDecisionByKey(
                 command.decisionRef,
-                EvaluateDecisionDto().variables(valueMapper.mapValues(command.payloadSupplier.get()))
+                EvaluateDecisionDto().variables(variables)
               )
           }
           requireNotNull(result.body) { "Could not evaluate decision ${command.decisionRef}, resulting status was ${result.statusCode}" }.toResult()
@@ -72,7 +74,7 @@ class EvaluateDecisionApiImpl(
     return if (this.isEmpty()) {
       NoDecisionResult
     } else {
-      DelegatingDmnDecisionResult(this.map { valueMapper.mapDtos(it) })
+      DelegatingDmnDecisionResult(this.map { valueMapper.mapDtos(it) }, objectMapper)
     }
   }
 
@@ -81,56 +83,6 @@ class EvaluateDecisionApiImpl(
       CommonRestrictions.TENANT_ID,
       CommonRestrictions.WITHOUT_TENANT_ID,
     )
-  }
-
-  data class DelegatingDmnDecisionResult(
-    val dmnDecisionResult: List<VariableMap>
-  ) : DecisionEvaluationResult {
-    override fun asSingle(): DecisionEvaluationOutput {
-      return VariableMapDmnDecisionEvaluationOutput(dmnDecisionResult.single())
-    }
-
-    override fun asList(): List<DecisionEvaluationOutput> {
-      return dmnDecisionResult.map { VariableMapDmnDecisionEvaluationOutput(it) }
-    }
-
-    override fun meta(): Map<String, String> = mapOf(
-      "single-result" to if (dmnDecisionResult.size == 1) {
-        "true"
-      } else {
-        "false"
-      },
-      "result-count" to "${dmnDecisionResult.size}"
-    )
-  }
-
-
-  /**
-   * Delegating output.
-   */
-  data class VariableMapDmnDecisionEvaluationOutput(
-    val entries: VariableMap,
-  ) : DecisionEvaluationOutput {
-
-    override fun <T : Any> asType(type: Class<T>): T? {
-      return entries.get("") as T?
-    }
-
-    override fun asMap(): Map<String, Any?>? {
-      return entries
-    }
-  }
-
-  /**
-   * No output.
-   */
-  object NoDecisionResult : DecisionEvaluationResult {
-    override fun asSingle(): DecisionEvaluationOutput = throw IllegalStateException("No decision result")
-
-    override fun asList(): List<DecisionEvaluationOutput> = listOf()
-
-    override fun meta(): Map<String, String> = mapOf("single-result" to "false", "result-count" to "0")
-
   }
 
   override fun meta(instance: MetaInfoAware): MetaInfo {

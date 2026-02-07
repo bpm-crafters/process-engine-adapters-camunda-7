@@ -1,5 +1,6 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.correlation.CorrelationApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.correlation.SignalApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.decision.EvaluateDecisionApiImpl
@@ -89,9 +90,11 @@ class C7RemoteAdapterAutoConfiguration {
 
   @Bean("c7remote-evaluate-decision-api")
   @Qualifier("c7remote-evaluate-decision-api")
-  fun evaluateDecisionApi(decisionDefinitionApiClient: DecisionDefinitionApiClient, valueMapper: ValueMapper): EvaluateDecisionApi = EvaluateDecisionApiImpl(
+  fun evaluateDecisionApi(decisionDefinitionApiClient: DecisionDefinitionApiClient, valueMapper: ValueMapper,
+                          objectMapper: ObjectMapper): EvaluateDecisionApi = EvaluateDecisionApiImpl(
     decisionDefinitionApiClient = decisionDefinitionApiClient,
-    valueMapper = valueMapper
+    valueMapper = valueMapper,
+    objectMapper = objectMapper
   )
 
   /**

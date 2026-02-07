@@ -1,5 +1,6 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.remote.decision
 
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import dev.bpmcrafters.processengineapi.CommonRestrictions
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.TestFixtures
 import dev.bpmcrafters.processengineapi.decision.DecisionByRefEvaluationCommand
@@ -18,7 +19,7 @@ import java.util.concurrent.ExecutionException
 internal class EvaluateDecisionApiImplTest {
   val valueMapper = TestFixtures.valueMapper()
   val decisionClient: DecisionDefinitionApiClient = mock()
-  val testSubject = EvaluateDecisionApiImpl(decisionClient, valueMapper)
+  val testSubject = EvaluateDecisionApiImpl(decisionClient, valueMapper, jacksonObjectMapper())
 
   @BeforeEach
   fun setUp() {
@@ -39,7 +40,7 @@ internal class EvaluateDecisionApiImplTest {
         )
       )
     ).get()
-    assertThat(result).isInstanceOf(EvaluateDecisionApiImpl.NoDecisionResult::class.java)
+    assertThat(result).isInstanceOf(NoDecisionResult::class.java)
   }
 
   @Test
@@ -83,7 +84,7 @@ internal class EvaluateDecisionApiImplTest {
         )
       )
     ).get()
-    assertThat(result).isInstanceOf(EvaluateDecisionApiImpl.DelegatingDmnDecisionResult::class.java)
+    assertThat(result).isInstanceOf(DelegatingDmnDecisionResult::class.java)
     assertThat(result.meta().containsKey("result-count")).isTrue()
     assertThat(result.meta()["result-count"]).isEqualTo("1")
     assertThat(result.meta().containsKey("result-count")).isTrue()

@@ -3,6 +3,8 @@ package dev.bpmcrafters.processengineapi.test
 import com.tngtech.jgiven.Stage
 import com.tngtech.jgiven.annotation.ExpectedScenarioState
 import com.tngtech.jgiven.annotation.ProvidedScenarioState
+import dev.bpmcrafters.processengineapi.decision.DecisionByRefEvaluationCommand
+import dev.bpmcrafters.processengineapi.decision.DecisionEvaluationResult
 import dev.bpmcrafters.processengineapi.process.StartProcessByDefinitionCmd
 import dev.bpmcrafters.processengineapi.process.StartProcessByMessageCmd
 import dev.bpmcrafters.processengineapi.task.*
@@ -30,6 +32,13 @@ class BaseGivenWhenStage : Stage<BaseGivenWhenStage>() {
 
   @ProvidedScenarioState
   lateinit var taskSubscription: TaskSubscription
+
+  @ProvidedScenarioState
+  var decisionResult: DecisionEvaluationResult? = null
+
+  @ProvidedScenarioState
+  var throwableCaught: Throwable? = null
+
 
   fun `start process by definition`(definitionKey: String) = step {
     instanceId = processTestHelper.getStartProcessApi().startProcess(
@@ -132,6 +141,19 @@ class BaseGivenWhenStage : Stage<BaseGivenWhenStage>() {
       taskSubscription
     )
   ).get()
+
+  fun `evaluate decision by ref key with payload`(decisionDefinitionId: String, payload: Map<String, Any>) = step {
+    processTestHelper.getEvaluateDecisionApi().evaluateDecision(
+      DecisionByRefEvaluationCommand(
+        decisionRef = decisionDefinitionId,
+        payload =  payload,
+        restrictions = mapOf(),
+      )
+    ).handle { res, ex ->
+      this.throwableCaught = ex
+      this.decisionResult = res
+    }.get()
+  }
 
 
 }

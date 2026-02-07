@@ -1,0 +1,274 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/" xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/" xmlns:modeler="http://camunda.org/schema/modeler/1.0" xmlns:biodi="http://bpmn.io/schema/dmn/biodi/2.0" xmlns:di="http://www.omg.org/spec/DMN/20180521/DI/" xmlns:camunda="http://camunda.org/schema/1.0/dmn" id="MainDecision" name="DRD" namespace="http://camunda.org/schema/1.0/dmn" exporter="Camunda Modeler" exporterVersion="5.33.1" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.22.0">
+  <decision id="CollectSOutputDecision" name="Collect SOutput Decision" camunda:historyTimeToLive="P1D">
+    <informationRequirement id="InformationRequirement_18m1ev5">
+      <requiredDecision href="#ClientTypeDecision" />
+    </informationRequirement>
+    <decisionTable id="DecisionTable_0ab2hnw" hitPolicy="COLLECT">
+      <input id="Input_1">
+        <inputExpression id="InputExpression_1" typeRef="string">
+          <text>type</text>
+        </inputExpression>
+      </input>
+      <input id="InputClause_1ntxofp">
+        <inputExpression id="LiteralExpression_0byi396" typeRef="double">
+          <text>amount</text>
+        </inputExpression>
+      </input>
+      <output id="Output_1" name="decision" typeRef="string" />
+      <rule id="DecisionRule_19vs6wt">
+        <inputEntry id="UnaryTests_1xavr77">
+          <text>"VIP"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0bab3pb">
+          <text>&lt; 100000</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_1ttmb3l">
+          <text>"ALLOW"</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_0h0uaxg">
+        <inputEntry id="UnaryTests_063atff">
+          <text>"VIP"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1asnmpt">
+          <text>&gt;= 100000</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_0ymlewx">
+          <text>"DECLINE"</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_1q2xv52">
+        <inputEntry id="UnaryTests_1a5pr0i">
+          <text>"REGULAR"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0yijc5p">
+          <text>&lt; 10000</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_1n4efkf">
+          <text>"ALLOW"</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_04wvxsx">
+        <inputEntry id="UnaryTests_1gaakc4">
+          <text>"REGULAR"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_08xjexj">
+          <text>&gt;= 10000</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_1bltbxa">
+          <text>"DECLINE"</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_0z7k8r9">
+        <inputEntry id="UnaryTests_083w0vw">
+          <text>"VIP"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1t6og7j">
+          <text>&lt; 10000</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_07ls3np">
+          <text>"NO-PIN"</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <decision id="ClientTypeDecision" name="ClientType Decision" camunda:historyTimeToLive="P1D">
+    <variable id="InformationItem_0f71bqw" name="type" typeRef="string" />
+    <literalExpression id="LiteralExpression_01eny4w">
+      <text>if (id &lt; 100) then "VIP" else "REGULAR"</text>
+    </literalExpression>
+  </decision>
+  <decision id="CollectMOutputDecision" name="Collect MOutput Decision" camunda:historyTimeToLive="P1D">
+    <informationRequirement id="InformationRequirement_03554ws">
+      <requiredDecision href="#ClientTypeDecision" />
+    </informationRequirement>
+    <decisionTable id="DecisionTable_0iunvjg" hitPolicy="COLLECT">
+      <input id="InputClause_1xg2eq9">
+        <inputExpression id="LiteralExpression_03ct5kd" typeRef="string">
+          <text>type</text>
+        </inputExpression>
+      </input>
+      <input id="InputClause_13atmp0" biodi:width="192">
+        <inputExpression id="LiteralExpression_0cg6g3o" typeRef="double">
+          <text>amount</text>
+        </inputExpression>
+      </input>
+      <output id="OutputClause_01rlb56" name="score" typeRef="double" biodi:width="192" />
+      <output id="OutputClause_1ffwgq5" name="message" typeRef="string" />
+      <rule id="DecisionRule_0vief62">
+        <inputEntry id="UnaryTests_04q1vq0">
+          <text>"VIP"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1emw7cz">
+          <text>&lt; 10000</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_0a0i8yf">
+          <text>23.5</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_03hoju8">
+          <text>"no-PIN"</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_1vikjm3">
+        <inputEntry id="UnaryTests_0l0xnqz">
+          <text>"VIP"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1qgu743">
+          <text>&lt; 100000</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_1a8c0lk">
+          <text>43</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_0uklt0n">
+          <text>"OK"</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_1458wo7">
+        <inputEntry id="UnaryTests_06bmske">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_01t13g4">
+          <text></text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_074fsh7">
+          <text></text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_1fyg8xk">
+          <text></text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <decision id="SingleSOutputDecision" name="Single SOutput Decision" camunda:historyTimeToLive="P1D">
+    <variable id="InformationItem_02of2ew" name="Single SOutput Decision" typeRef="integer" />
+    <informationRequirement id="InformationRequirement_1eomj97">
+      <requiredDecision href="#ClientTypeDecision" />
+    </informationRequirement>
+    <literalExpression id="LiteralExpression_0cszcg4">
+      <text>if type = "VIP" then 10 else null</text>
+    </literalExpression>
+  </decision>
+  <decision id="FailedDecision" name="Failed Decision" camunda:historyTimeToLive="P1D">
+    <informationRequirement id="InformationRequirement_0vtt6v6">
+      <requiredDecision href="#ClientTypeDecision" />
+    </informationRequirement>
+    <decisionTable id="DecisionTable_0rvejcg" hitPolicy="COLLECT" aggregation="MAX">
+      <input id="InputClause_0zsexip">
+        <inputExpression id="LiteralExpression_1xaw8hs" typeRef="string">
+          <text>type</text>
+        </inputExpression>
+      </input>
+      <output id="OutputClause_1e1nsia" typeRef="integer" />
+      <rule id="DecisionRule_1x24wm7">
+        <inputEntry id="UnaryTests_0p981b4">
+          <text>"VIP"</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_1krrfxz">
+          <text>"VIG"</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <decision id="CollectionMOutputDecision" name="Collection MOutput Decision" camunda:historyTimeToLive="P1D">
+    <informationRequirement id="InformationRequirement_0hfjas8">
+      <requiredDecision href="#ClientTypeDecision" />
+    </informationRequirement>
+    <decisionTable id="DecisionTable_07it4o7" hitPolicy="COLLECT">
+      <input id="InputClause_11s3axd">
+        <inputExpression id="LiteralExpression_1g2evtp" typeRef="string">
+          <text>type</text>
+        </inputExpression>
+      </input>
+      <output id="OutputClause_1sa0089" name="some" typeRef="integer" biodi:width="192" />
+      <rule id="DecisionRule_0grkdgo">
+        <inputEntry id="UnaryTests_1297z3j">
+          <text>"VIP"</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_10xpm1k">
+          <text>[1,2]</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <decision id="SingleMOutptutDecision" name="Single MOutptut Decision" camunda:historyTimeToLive="P1D">
+    <informationRequirement id="InformationRequirement_1g0limj">
+      <requiredDecision href="#ClientTypeDecision" />
+    </informationRequirement>
+    <decisionTable id="DecisionTable_1tdwwor">
+      <input id="InputClause_1kl4vdq">
+        <inputExpression id="LiteralExpression_079rb87" typeRef="string">
+          <text>type</text>
+        </inputExpression>
+      </input>
+      <output id="OutputClause_07n7xb9" name="price" typeRef="integer" />
+      <output id="OutputClause_1xxjz5t" name="note" typeRef="string" />
+      <rule id="DecisionRule_0wv2l37">
+        <inputEntry id="UnaryTests_0cnyzl3">
+          <text>"VIP"</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_0kyxbe8">
+          <text>100</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_1v53yen">
+          <text>"something"</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <dmndi:DMNDI>
+    <dmndi:DMNDiagram>
+      <dmndi:DMNShape dmnElementRef="CollectSOutputDecision">
+        <dc:Bounds height="80" width="180" x="360" y="260" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="DMNShape_1nf12al" dmnElementRef="ClientTypeDecision">
+        <dc:Bounds height="80" width="180" x="660" y="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNEdge id="DMNEdge_0w6wlp3" dmnElementRef="InformationRequirement_18m1ev5">
+        <di:waypoint x="750" y="160" />
+        <di:waypoint x="450" y="240" />
+        <di:waypoint x="450" y="260" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNShape id="DMNShape_0i9egsj" dmnElementRef="CollectMOutputDecision">
+        <dc:Bounds height="80" width="180" x="560" y="260" />
+      </dmndi:DMNShape>
+      <dmndi:DMNEdge id="DMNEdge_15hd1xb" dmnElementRef="InformationRequirement_03554ws">
+        <di:waypoint x="750" y="160" />
+        <di:waypoint x="650" y="240" />
+        <di:waypoint x="650" y="260" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="DMNEdge_0nelt3q" dmnElementRef="InformationRequirement_1eomj97">
+        <di:waypoint x="750" y="160" />
+        <di:waypoint x="850" y="240" />
+        <di:waypoint x="850" y="260" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNShape id="DMNShape_12jy611" dmnElementRef="SingleSOutputDecision">
+        <dc:Bounds height="80" width="180" x="760" y="260" />
+      </dmndi:DMNShape>
+      <dmndi:DMNEdge id="DMNEdge_1oxvr5p" dmnElementRef="InformationRequirement_0vtt6v6">
+        <di:waypoint x="750" y="160" />
+        <di:waypoint x="1050" y="240" />
+        <di:waypoint x="1050" y="260" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNShape id="DMNShape_0nvcd6p" dmnElementRef="FailedDecision">
+        <dc:Bounds height="80" width="180" x="960" y="260" />
+      </dmndi:DMNShape>
+      <dmndi:DMNEdge id="DMNEdge_0hqoo95" dmnElementRef="InformationRequirement_0hfjas8">
+        <di:waypoint x="750" y="160" />
+        <di:waypoint x="1250" y="240" />
+        <di:waypoint x="1250" y="260" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNShape id="DMNShape_1uczpif" dmnElementRef="CollectionMOutputDecision">
+        <dc:Bounds height="80" width="180" x="1160" y="260" />
+      </dmndi:DMNShape>
+      <dmndi:DMNEdge id="DMNEdge_1gxy9o1" dmnElementRef="InformationRequirement_1g0limj">
+        <di:waypoint x="750" y="160" />
+        <di:waypoint x="250" y="240" />
+        <di:waypoint x="250" y="260" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNShape id="DMNShape_0jfziy6" dmnElementRef="SingleMOutptutDecision">
+        <dc:Bounds height="80" width="180" x="160" y="260" />
+      </dmndi:DMNShape>
+    </dmndi:DMNDiagram>
+  </dmndi:DMNDI>
+</definitions>
