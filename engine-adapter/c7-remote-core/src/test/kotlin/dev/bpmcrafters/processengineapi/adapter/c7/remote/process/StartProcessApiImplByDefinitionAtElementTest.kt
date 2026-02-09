@@ -3,7 +3,6 @@ package dev.bpmcrafters.processengineapi.adapter.c7.remote.process
 import dev.bpmcrafters.processengineapi.CommonRestrictions
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.TestFixtures
 import dev.bpmcrafters.processengineapi.process.StartProcessByDefinitionAtElementCmd
-import org.assertj.core.api.Assertions.assertThat
 import org.camunda.community.rest.client.api.MessageApiClient
 import org.camunda.community.rest.client.api.ProcessDefinitionApiClient
 import org.camunda.community.rest.client.model.ProcessDefinitionDto
@@ -19,7 +18,6 @@ import org.mockito.InjectMocks
 import org.mockito.Mockito.*
 import org.mockito.Spy
 import org.mockito.junit.jupiter.MockitoExtension
-import org.mockito.kotlin.argumentCaptor
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import org.springframework.http.ResponseEntity
