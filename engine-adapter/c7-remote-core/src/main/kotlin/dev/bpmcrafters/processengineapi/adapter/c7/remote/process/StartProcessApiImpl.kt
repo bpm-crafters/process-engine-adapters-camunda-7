@@ -29,12 +29,7 @@ class StartProcessApiImpl(
           ensureSupported(cmd.restrictions)
           val payload = cmd.payloadSupplier.get()
           val tenantId = cmd.restrictions[CommonRestrictions.TENANT_ID]
-          val processDefinitionId = requireNotNull(
-            processDefinitionMetaDataResolver.getProcessDefinitionId(
-              processDefinitionKey = cmd.definitionKey,
-              tenantId = tenantId
-            )
-          ) { "Could not find process definition id for key ${cmd.definitionKey} and tenant $tenantId." }
+          val processDefinitionId = getProcessDefinitionId(cmd.definitionKey, tenantId)
 
           val instance = processDefinitionApiClient.startProcessInstance(
             processDefinitionId,
@@ -80,6 +75,27 @@ class StartProcessApiImpl(
           }
         }
 
+      is StartProcessByDefinitionAtElementCmd ->
+        CompletableFuture.supplyAsync {
+          logger.debug { "PROCESS-ENGINE-C7-REMOTE-006: starting a new process instance by definition ${cmd.definitionKey} at element ${cmd.elementId}" }
+          val payload = cmd.payloadSupplier.get()
+          val tenantId = cmd.restrictions[CommonRestrictions.TENANT_ID]
+          val processDefinitionId = getProcessDefinitionId(cmd.definitionKey, tenantId)
+
+          val startInstructionDto = ProcessInstanceModificationInstructionDto()
+          startInstructionDto.type = ProcessInstanceModificationInstructionDto.TypeEnum.START_BEFORE_ACTIVITY
+          startInstructionDto.activityId = cmd.elementId
+
+          val startProcessInstanceDto = StartProcessInstanceDto()
+          startProcessInstanceDto.businessKey = payload[CommonRestrictions.BUSINESS_KEY]?.toString()
+          startProcessInstanceDto.variables = valueMapper.mapValues(payload)
+          startProcessInstanceDto.startInstructions(listOf(startInstructionDto))
+
+          val instance = processDefinitionApiClient.startProcessInstance(processDefinitionId, startProcessInstanceDto)
+          val processInformation = instance.body?.toProcessInformation()
+          requireNotNull(processInformation) { "Could not start process instance ${cmd.definitionKey}, resulting status was ${instance.statusCode}" }
+        }
+
       else -> throw IllegalArgumentException("Unsupported start command $cmd")
     }
   }
@@ -91,6 +107,12 @@ class StartProcessApiImpl(
   override fun meta(instance: MetaInfoAware): MetaInfo {
     TODO()
   }
+
+  private fun getProcessDefinitionId(processKey: String, tenantId: String?): String {
+    val definitionId = processDefinitionMetaDataResolver.getProcessDefinitionId(processDefinitionKey = processKey, tenantId = tenantId)
+    return requireNotNull(definitionId) { "Could not find process definition id for key $processKey and tenant $tenantId." }
+  }
+
 }
 
 fun MessageCorrelationResultWithVariableDto.toProcessInformation() = ProcessInformation(

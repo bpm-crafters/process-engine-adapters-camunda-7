@@ -68,6 +68,23 @@ class StartProcessApiImpl(
             .toProcessInformation()
         }
 
+      is StartProcessByDefinitionAtElementCmd ->
+        CompletableFuture.supplyAsync {
+          logger.debug { "PROCESS-ENGINE-C7-EMBEDDED-006: starting a new process instance by definition ${cmd.definitionKey} at element ${cmd.elementId}" }
+          val startProcessCommand = StartProcessByDefinitionCmd(
+            definitionKey = cmd.definitionKey,
+            payloadSupplier = cmd.payloadSupplier,
+            restrictions = cmd.restrictions,
+          )
+          val instance = this.startProcess(startProcessCommand).get()
+          val processDefinitionId = instance.meta[CommonRestrictions.PROCESS_DEFINITION_KEY] as String
+          runtimeService.createModification(processDefinitionId)
+            .processInstanceIds(instance.instanceId)
+            .startBeforeActivity(cmd.elementId)
+            .execute()
+          instance
+        }
+
       else -> throw IllegalArgumentException("Unsupported start command $cmd")
     }
   }

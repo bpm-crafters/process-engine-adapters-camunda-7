@@ -44,4 +44,13 @@ class C7RemoteStartProcessApiITest : AbstractC7RemoteApiITestBase() {
       .`we should have a running process`()
   }
 
+  @Test
+  fun `should start process at element`() {
+    WHEN
+      .`start process by definition at element`(KEY, "service-do-action2")
+
+    THEN
+      .`we should have a running process`()
+  }
+
 }
