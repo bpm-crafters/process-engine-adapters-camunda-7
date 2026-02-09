@@ -23,8 +23,6 @@ import org.camunda.community.rest.variables.ValueMapper
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.autoconfigure.AutoConfiguration
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
-import org.springframework.boot.autoconfigure.condition.ConditionalOnThreading
-import org.springframework.boot.autoconfigure.thread.Threading
 import org.springframework.boot.task.SimpleAsyncTaskSchedulerBuilder
 import org.springframework.boot.task.ThreadPoolTaskSchedulerBuilder
 import org.springframework.context.annotation.Bean
@@ -68,14 +66,14 @@ class C7RemotePullServicesAutoConfiguration {
 
   @Bean("taskScheduler")
   @Order(100)
-  @ConditionalOnThreading(Threading.VIRTUAL)
+  @Conditional(VirtualThreadingCondition::class)
   fun taskSchedulerVirtualThreads(builder: SimpleAsyncTaskSchedulerBuilder): SimpleAsyncTaskScheduler {
     return builder.build()
   }
 
   @Bean("taskScheduler")
   @Order(100)
-  @ConditionalOnThreading(Threading.PLATFORM)
+  @Conditional(PlatformThreadingCondition::class)
   fun taskSchedulerPlatformThreads(threadPoolTaskSchedulerBuilder: ThreadPoolTaskSchedulerBuilder): ThreadPoolTaskScheduler {
     return threadPoolTaskSchedulerBuilder.build()
   }

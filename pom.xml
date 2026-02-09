@@ -21,7 +21,7 @@
     <!-- COMMON GLOBAL -->
     <spring-boot.version>3.5.10</spring-boot.version>
     <process-engine-api.version>1.5</process-engine-api.version>
-    <c7.version>2025.12.2</c7.version>
+    <c7.version>2026.02.1</c7.version>
     <!-- TEST -->
     <mockito.version>6.2.3</mockito.version>
     <assertj.version>3.27.7</assertj.version>
