@@ -17,7 +17,13 @@ import dev.bpmcrafters.processengineapi.task.TaskInformation.Companion.CREATE
 import dev.bpmcrafters.processengineapi.task.TaskType
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.camunda.community.rest.client.api.ExternalTaskApiClient
-import org.camunda.community.rest.client.model.*
+import org.camunda.community.rest.client.model.ExternalTaskFailureDto
+import org.camunda.community.rest.client.model.ExternalTaskQueryDto
+import org.camunda.community.rest.client.model.ExternalTaskQueryDtoSortingInner
+import org.camunda.community.rest.client.model.FetchExternalTaskTopicDto
+import org.camunda.community.rest.client.model.FetchExternalTasksDto
+import org.camunda.community.rest.client.model.FetchExternalTasksDtoSortingInner
+import org.camunda.community.rest.client.model.LockedExternalTaskDto
 import org.camunda.community.rest.variables.ValueMapper
 import java.time.Duration
 import java.time.OffsetDateTime
@@ -58,8 +64,8 @@ class PullServiceTaskDelivery(
    * Delivers all tasks found in the external service to corresponding subscriptions.
    */
   override fun refresh() {
-      cleanUpTerminatedTasks()
-      deliverNewTasks()
+    cleanUpTerminatedTasks()
+    deliverNewTasks()
   }
 
   internal fun deliverNewTasks() {
@@ -83,11 +89,13 @@ class PullServiceTaskDelivery(
         FetchExternalTasksDto(workerId, tasksToFetch)
           .forSubscriptions(subscriptions)
           .usePriority(true)
-          .sorting(mutableListOf(
-            FetchExternalTasksDtoSortingInner()
-              .sortBy(FetchExternalTasksDtoSortingInner.SortByEnum.CREATE_TIME)
-              .sortOrder(FetchExternalTasksDtoSortingInner.SortOrderEnum.ASC)
-          ))
+          .sorting(
+            mutableListOf(
+              FetchExternalTasksDtoSortingInner()
+                .sortBy(FetchExternalTasksDtoSortingInner.SortByEnum.CREATE_TIME)
+                .sortOrder(FetchExternalTasksDtoSortingInner.SortOrderEnum.ASC)
+            )
+          )
       )
 
     val lockedTasks =
@@ -162,10 +170,12 @@ class PullServiceTaskDelivery(
       ExternalTaskQueryDto()
         .workerId(workerId)
         .locked(true)
-        .sorting(listOf(
-          ExternalTaskQueryDtoSortingInner()
-            .sortBy(ExternalTaskQueryDtoSortingInner.SortByEnum.CREATE_TIME)
-            .sortOrder(ExternalTaskQueryDtoSortingInner.SortOrderEnum.ASC))
+        .sorting(
+          listOf(
+            ExternalTaskQueryDtoSortingInner()
+              .sortBy(ExternalTaskQueryDtoSortingInner.SortByEnum.CREATE_TIME)
+              .sortOrder(ExternalTaskQueryDtoSortingInner.SortOrderEnum.ASC)
+          )
         )
     )
     val stillLockedTaskIds =
@@ -210,12 +220,10 @@ class PullServiceTaskDelivery(
     subscriptions
       .map { it.taskDescriptionKey to it.restrictions }
       .distinctBy { it.first }
-      .forEach { (topic, _) ->
+      .forEach { (topic, restrictions) ->
+        val lockDurationInMilliseconds = getLockDurationForSubscription(restrictions)
         this.addTopicsItem(
-          FetchExternalTaskTopicDto(
-            topic,
-            lockDurationInSeconds * 1000 // convert to ms
-          ).apply {
+          FetchExternalTaskTopicDto(topic, lockDurationInMilliseconds).apply {
             this.deserializeValues = this@PullServiceTaskDelivery.deserializeOnServer
 
             /*
@@ -238,6 +246,13 @@ class PullServiceTaskDelivery(
         )
       }
     return this
+  }
+
+  private fun getLockDurationForSubscription(
+    restrictions: Map<String, String>,
+  ): Long {
+    val customLockDuration = restrictions["workerLockDurationInMilliseconds"]
+    return customLockDuration?.toLong() ?: (lockDurationInSeconds * 1000)
   }
 
   internal fun matches(task: LockedExternalTaskDto, subscription: TaskSubscriptionHandle): Boolean =
