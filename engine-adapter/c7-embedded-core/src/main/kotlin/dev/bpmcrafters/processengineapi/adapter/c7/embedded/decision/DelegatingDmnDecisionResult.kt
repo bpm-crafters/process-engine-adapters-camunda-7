@@ -1,5 +1,6 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.embedded.decision
 
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import dev.bpmcrafters.processengineapi.decision.DecisionEvaluationOutput
 import dev.bpmcrafters.processengineapi.decision.DecisionEvaluationResult
 import org.camunda.bpm.dmn.engine.DmnDecisionResult
@@ -11,11 +12,11 @@ data class DelegatingDmnDecisionResult(
   val dmnDecisionResult: DmnDecisionResult
 ) : DecisionEvaluationResult {
   override fun asSingle(): DecisionEvaluationOutput {
-    return DelegatingDmnDecisionEvaluationOutput(dmnDecisionResult.singleResult)
+    return DelegatingDmnDecisionEvaluationOutput(jacksonObjectMapper(), dmnDecisionResult.singleResult)
   }
 
   override fun asList(): List<DecisionEvaluationOutput> {
-    return dmnDecisionResult.map { DelegatingDmnDecisionEvaluationOutput(it) }
+    return dmnDecisionResult.map { DelegatingDmnDecisionEvaluationOutput(jacksonObjectMapper(), it) }
   }
 
   override fun meta(): Map<String, String> = mapOf(

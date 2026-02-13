@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/" xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/" xmlns:modeler="http://camunda.org/schema/modeler/1.0" xmlns:biodi="http://bpmn.io/schema/dmn/biodi/2.0" xmlns:di="http://www.omg.org/spec/DMN/20180521/DI/" id="MainDecision" name="DRD" namespace="http://camunda.org/schema/1.0/dmn" exporter="Camunda Modeler" exporterVersion="5.33.1" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.22.0">
-  <decision id="CollectSOutputDecision" name="Collect SOutput Decision">
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/" xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/" xmlns:modeler="http://camunda.org/schema/modeler/1.0" xmlns:biodi="http://bpmn.io/schema/dmn/biodi/2.0" xmlns:di="http://www.omg.org/spec/DMN/20180521/DI/" xmlns:camunda="http://camunda.org/schema/1.0/dmn" id="MainDecision" name="DRD" namespace="http://camunda.org/schema/1.0/dmn" exporter="Camunda Modeler" exporterVersion="5.39.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.22.0">
+  <decision id="CollectSOutputDecision" name="Collect SOutput Decision" camunda:historyTimeToLive="P1D">
     <informationRequirement id="InformationRequirement_18m1ev5">
       <requiredDecision href="#ClientTypeDecision" />
     </informationRequirement>
@@ -73,13 +73,13 @@
       </rule>
     </decisionTable>
   </decision>
-  <decision id="ClientTypeDecision" name="ClientType Decision">
+  <decision id="ClientTypeDecision" name="ClientType Decision" camunda:historyTimeToLive="P1D">
     <variable id="InformationItem_0f71bqw" name="type" typeRef="string" />
     <literalExpression id="LiteralExpression_01eny4w">
       <text>if (id &lt; 100) then "VIP" else "REGULAR"</text>
     </literalExpression>
   </decision>
-  <decision id="CollectMOutputDecision" name="Collect MOutput Decision">
+  <decision id="CollectMOutputDecision" name="Collect MOutput Decision" camunda:historyTimeToLive="P1D">
     <informationRequirement id="InformationRequirement_03554ws">
       <requiredDecision href="#ClientTypeDecision" />
     </informationRequirement>
@@ -126,7 +126,7 @@
       </rule>
     </decisionTable>
   </decision>
-  <decision id="SingleSOutputDecision" name="Single SOutput Decision">
+  <decision id="SingleSOutputDecision" name="Single SOutput Decision" camunda:historyTimeToLive="P1D">
     <variable id="InformationItem_02of2ew" name="Single SOutput Decision" typeRef="integer" />
     <informationRequirement id="InformationRequirement_1eomj97">
       <requiredDecision href="#ClientTypeDecision" />
@@ -135,7 +135,7 @@
       <text>if type = "VIP" then 10 else null</text>
     </literalExpression>
   </decision>
-  <decision id="FailedDecision" name="Failed Decision">
+  <decision id="FailedDecision" name="Failed Decision" camunda:historyTimeToLive="P1D">
     <informationRequirement id="InformationRequirement_0vtt6v6">
       <requiredDecision href="#ClientTypeDecision" />
     </informationRequirement>
@@ -156,7 +156,7 @@
       </rule>
     </decisionTable>
   </decision>
-  <decision id="CollectionMOutputDecision" name="Collection MOutput Decision">
+  <decision id="CollectionMOutputDecision" name="Collection MOutput Decision" camunda:historyTimeToLive="P1D">
     <informationRequirement id="InformationRequirement_0hfjas8">
       <requiredDecision href="#ClientTypeDecision" />
     </informationRequirement>
@@ -177,7 +177,7 @@
       </rule>
     </decisionTable>
   </decision>
-  <decision id="SingleMOutptutDecision" name="Single MOutptut Decision">
+  <decision id="SingleMOutptutDecision" name="Single MOutptut Decision" camunda:historyTimeToLive="P1D">
     <informationRequirement id="InformationRequirement_1g0limj">
       <requiredDecision href="#ClientTypeDecision" />
     </informationRequirement>

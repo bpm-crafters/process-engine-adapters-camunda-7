@@ -13,10 +13,20 @@ data class VariableMapDmnDecisionEvaluationOutput(
 ) : DecisionEvaluationOutput {
 
   override fun <T : Any> asType(type: Class<T>): T? {
-    return objectMapper.convertValue(entries, type)
+    try {
+      if (entries.keys.size == 1) {
+        if (entries.values.first() == null) {
+          return null
+        }
+        return objectMapper.convertValue(entries.values.first(), type)
+      }
+      return objectMapper.convertValue(entries, type)
+    } catch (e: Exception) {
+      throw IllegalStateException("Can't deserialize into ${type.name} decision output: ${asMap()}", e)
+    }
   }
 
-  override fun asMap(): Map<String, Any?>? {
+  override fun asMap(): Map<String, Any?> {
     return entries
   }
 }

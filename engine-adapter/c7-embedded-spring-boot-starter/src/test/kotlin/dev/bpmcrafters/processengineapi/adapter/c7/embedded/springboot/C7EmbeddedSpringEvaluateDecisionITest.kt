@@ -89,7 +89,6 @@ class C7EmbeddedSpringEvaluateDecisionITest(
       .`should interpretation fail`(Exception::class)
   }
 
-  @Disabled("fails on Camunda 7, works on Camunda 8")
   @Test
   fun `should fail if expected multi-hit decision gives single-hit result`() {
     GIVEN
