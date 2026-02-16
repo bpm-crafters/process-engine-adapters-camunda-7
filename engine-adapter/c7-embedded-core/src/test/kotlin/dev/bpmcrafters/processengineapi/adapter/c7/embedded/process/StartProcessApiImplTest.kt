@@ -1,11 +1,13 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.embedded.process
 
 import dev.bpmcrafters.processengineapi.CommonRestrictions
+import dev.bpmcrafters.processengineapi.process.StartProcessByDefinitionAtElementCmd
 import dev.bpmcrafters.processengineapi.process.StartProcessByDefinitionCmd
 import dev.bpmcrafters.processengineapi.process.StartProcessByMessageCmd
 import org.camunda.bpm.engine.RepositoryService
 import org.camunda.bpm.engine.RuntimeService
 import org.camunda.bpm.engine.runtime.MessageCorrelationBuilder
+import org.camunda.bpm.engine.runtime.ModificationBuilder
 import org.camunda.bpm.engine.runtime.ProcessInstance
 import org.camunda.community.mockito.QueryMocks
 import org.camunda.community.mockito.process.ProcessDefinitionFake
@@ -24,6 +26,7 @@ class StartProcessApiImplTest {
 
   @Mock
   private lateinit var repositoryService: RepositoryService
+
   @Mock
   private lateinit var runtimeService: RuntimeService
 
@@ -135,11 +138,51 @@ class StartProcessApiImplTest {
     verify(correlationBuilder, times(0)).processInstanceBusinessKey(any())
   }
 
+  @Test
+  fun `should start process at element without payload`() {
+
+    // given
+    val businessKey = "myBusinessKey"
+    val modificationBuilder = modifyProcessInstanceBuilderMock()
+    val processDefinitionId = "simple-process:1:123"
+    val processInstance = ProcessInstanceFake.builder().id("instance-123")
+      .processDefinitionId(processDefinitionId)
+      .build()
+
+    whenever(runtimeService.startProcessInstanceByKey(anyString(), anyOrNull(), anyMap())).thenReturn(processInstance)
+    whenever(runtimeService.createModification(processDefinitionId)).thenReturn(modificationBuilder)
+
+    val cmd = StartProcessByDefinitionAtElementCmd(
+      definitionKey = "simple-process",
+      elementId = "user-perform-task",
+      payloadSupplier = { mapOf(CommonRestrictions.BUSINESS_KEY to businessKey) }
+    )
+
+    // when
+    startProcessApi.startProcess(cmd).get()
+
+    // then
+    verify(runtimeService).startProcessInstanceByKey("simple-process", businessKey, mapOf("businessKey" to businessKey))
+    verify(runtimeService).createModification(processDefinitionId)
+    verify(modificationBuilder).startBeforeActivity("user-perform-task")
+    verify(modificationBuilder).execute()
+  }
+
   private fun messageCorrelationMock(): MessageCorrelationBuilder {
     val builder: MessageCorrelationBuilder = mock()
     lenient().whenever(builder.processInstanceBusinessKey(any())).thenReturn(builder)
     whenever(builder.setVariables(anyMap())).thenReturn(builder)
     whenever(builder.correlateStartMessage()).thenReturn(ProcessInstanceFake.builder().id("someId").build())
+
+    return builder
+  }
+
+  private fun modifyProcessInstanceBuilderMock(): ModificationBuilder {
+    val builder = mock<ModificationBuilder>()
+
+    whenever(builder.processInstanceIds(any<String>())).thenReturn(builder)
+    whenever(builder.startBeforeActivity(any())).thenReturn(builder)
+    doNothing().`when`(builder).execute()
 
     return builder
   }
