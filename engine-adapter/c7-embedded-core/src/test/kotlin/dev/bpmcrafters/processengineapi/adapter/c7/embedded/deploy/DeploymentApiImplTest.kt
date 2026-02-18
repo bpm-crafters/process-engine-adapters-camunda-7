@@ -1,5 +1,6 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.embedded.deploy
 
+import dev.bpmcrafters.processengineapi.adapter.c7.embedded.shared.EngineCommandExecutor
 import dev.bpmcrafters.processengineapi.deploy.DeployBundleCommand
 import dev.bpmcrafters.processengineapi.deploy.NamedResource
 import org.assertj.core.api.Assertions.assertThat
@@ -17,7 +18,10 @@ import java.util.*
 class DeploymentApiImplTest {
 
   private val repositoryService: RepositoryService = mock()
-  private val deploymentApiImpl = DeploymentApiImpl(repositoryService)
+  private val deploymentApiImpl = DeploymentApiImpl(
+    repositoryService = repositoryService,
+    commandExecutor = EngineCommandExecutor { it.run() }
+  )
 
   @Test
   fun `empty tenant id was not set`() {

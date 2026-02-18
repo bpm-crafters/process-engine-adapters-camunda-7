@@ -3,27 +3,26 @@ package dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.correlation.CorrelationApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.correlation.SignalApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.deploy.DeploymentApiImpl
-import dev.bpmcrafters.processengineapi.adapter.c7.embedded.process.CachingProcessDefinitionMetaDataResolver
-import dev.bpmcrafters.processengineapi.adapter.c7.embedded.process.ProcessDefinitionMetaDataResolver
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.process.StartProcessApiImpl
+import dev.bpmcrafters.processengineapi.adapter.c7.embedded.shared.EngineCommandExecutor
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.completion.C7ServiceTaskCompletionApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.completion.C7UserTaskCompletionApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.completion.FailureRetrySupplier
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.completion.LinearMemoryFailureRetrySupplier
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.modification.C7UserTaskModificationApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.subscription.C7TaskSubscriptionApiImpl
-import io.toolisticon.spring.condition.ConditionalOnMissingQualifiedBean
-import dev.bpmcrafters.processengineapi.impl.task.InMemSubscriptionRepository
-import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import dev.bpmcrafters.processengineapi.correlation.CorrelationApi
 import dev.bpmcrafters.processengineapi.correlation.SignalApi
 import dev.bpmcrafters.processengineapi.deploy.DeploymentApi
+import dev.bpmcrafters.processengineapi.impl.task.InMemSubscriptionRepository
+import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import dev.bpmcrafters.processengineapi.process.StartProcessApi
 import dev.bpmcrafters.processengineapi.task.ServiceTaskCompletionApi
 import dev.bpmcrafters.processengineapi.task.TaskSubscriptionApi
 import dev.bpmcrafters.processengineapi.task.UserTaskCompletionApi
 import dev.bpmcrafters.processengineapi.task.UserTaskModificationApi
 import io.github.oshai.kotlinlogging.KotlinLogging
+import io.toolisticon.spring.condition.ConditionalOnMissingQualifiedBean
 import jakarta.annotation.PostConstruct
 import org.camunda.bpm.engine.ExternalTaskService
 import org.camunda.bpm.engine.RepositoryService
@@ -50,11 +49,20 @@ class C7EmbeddedAdapterAutoConfiguration {
     logger.debug { "PROCESS-ENGINE-C7-EMBEDDED-200: Configuration of services applied." }
   }
 
+  @Bean
+  @ConditionalOnMissingBean
+  fun engineCommandExecutor(): EngineCommandExecutor = EngineCommandExecutor()
+
   @Bean("c7embedded-start-process-api")
   @Qualifier("c7embedded-start-process-api")
-  fun startProcessApi(runtimeService: RuntimeService, repositoryService: RepositoryService): StartProcessApi = StartProcessApiImpl(
+  fun startProcessApi(
+    runtimeService: RuntimeService,
+    repositoryService: RepositoryService,
+    commandExecutor: EngineCommandExecutor,
+  ): StartProcessApi = StartProcessApiImpl(
     runtimeService = runtimeService,
-    repositoryService = repositoryService
+    repositoryService = repositoryService,
+    commandExecutor = commandExecutor,
   )
 
   @Bean("c7embedded-task-subscription-api")
@@ -65,20 +73,32 @@ class C7EmbeddedAdapterAutoConfiguration {
 
   @Bean("c7embedded-correlation-api")
   @Qualifier("c7embedded-correlation-api")
-  fun correlationApi(runtimeService: RuntimeService): CorrelationApi = CorrelationApiImpl(
-    runtimeService = runtimeService
+  fun correlationApi(
+    runtimeService: RuntimeService,
+    commandExecutor: EngineCommandExecutor,
+  ): CorrelationApi = CorrelationApiImpl(
+    runtimeService = runtimeService,
+    commandExecutor = commandExecutor,
   )
 
   @Bean("c7embedded-signal-api")
   @Qualifier("c7embedded-signal-api")
-  fun signalApi(runtimeService: RuntimeService): SignalApi = SignalApiImpl(
-    runtimeService = runtimeService
+  fun signalApi(
+    runtimeService: RuntimeService,
+    commandExecutor: EngineCommandExecutor,
+  ): SignalApi = SignalApiImpl(
+    runtimeService = runtimeService,
+    commandExecutor = commandExecutor,
   )
 
   @Bean("c7embedded-deployment-api")
   @Qualifier("c7embedded-deployment-api")
-  fun deploymentApi(repositoryService: RepositoryService): DeploymentApi = DeploymentApiImpl(
-    repositoryService = repositoryService
+  fun deploymentApi(
+    repositoryService: RepositoryService,
+    commandExecutor: EngineCommandExecutor,
+  ): DeploymentApi = DeploymentApiImpl(
+    repositoryService = repositoryService,
+    commandExecutor = commandExecutor,
   )
 
   @Bean("c7embedded-user-task-modification-api")

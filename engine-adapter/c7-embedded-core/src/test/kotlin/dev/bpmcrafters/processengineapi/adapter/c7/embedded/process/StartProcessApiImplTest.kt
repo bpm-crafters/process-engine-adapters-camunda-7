@@ -1,6 +1,7 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.embedded.process
 
 import dev.bpmcrafters.processengineapi.CommonRestrictions
+import dev.bpmcrafters.processengineapi.adapter.c7.embedded.shared.EngineCommandExecutor
 import dev.bpmcrafters.processengineapi.process.StartProcessByDefinitionAtElementCmd
 import dev.bpmcrafters.processengineapi.process.StartProcessByDefinitionCmd
 import dev.bpmcrafters.processengineapi.process.StartProcessByMessageCmd
@@ -12,9 +13,9 @@ import org.camunda.bpm.engine.runtime.ProcessInstance
 import org.camunda.community.mockito.QueryMocks
 import org.camunda.community.mockito.process.ProcessDefinitionFake
 import org.camunda.community.mockito.process.ProcessInstanceFake
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
-import org.mockito.InjectMocks
 import org.mockito.Mock
 import org.mockito.Mockito.*
 import org.mockito.junit.jupiter.MockitoExtension
@@ -30,8 +31,16 @@ class StartProcessApiImplTest {
   @Mock
   private lateinit var runtimeService: RuntimeService
 
-  @InjectMocks
   private lateinit var startProcessApi: StartProcessApiImpl
+
+  @BeforeEach
+  fun setUp() {
+    startProcessApi = StartProcessApiImpl(
+      runtimeService = runtimeService,
+      repositoryService = repositoryService,
+      commandExecutor = EngineCommandExecutor { it.run() }
+    )
+  }
 
   @Test
   fun `should start process via definition without payload`() {

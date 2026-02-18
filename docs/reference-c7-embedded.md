@@ -51,3 +51,33 @@ the real type, you want to access if reading the field. For this purpose, `TaskI
 | tenantId             | String         | Tenant Id                                                                  | my_tenant                     |
 | topicName            | String         | Topic name (from BPMN) for external task                                   | topic_approve                 |
 | creationDate         | OffsetDateTime | Time stamp of task creation formatted as ISO-8601 in UTC                   | 2025-05-01T10:00:00.000Z      |
+
+## Engine Command Executor
+
+`EngineCommandExecutor` is an embedded-adapter-specific class that controls how the four core API calls
+(`correlateMessage`, `sendSignal`, `startProcess`, `deploy`) are dispatched to the embedded Camunda 7 engine.
+
+By default, all engine calls are submitted asynchronously to `ForkJoinPool.commonPool()`. This means they run on a
+**different thread** from the caller and do **not** participate in the caller's `@Transactional` context — a rollback
+on the calling thread will **not** roll back the engine operation.
+
+### Customizing execution
+
+Provide a Spring bean of type `EngineCommandExecutor` to override the default. The
+auto-configured default is annotated with `@ConditionalOnMissingBean`, so your bean takes precedence automatically.
+
+**Same-thread (synchronous) execution** — engine calls run on the calling thread and honour `@Transactional`:
+
+```kotlin
+@Bean
+fun engineCommandExecutor(): EngineCommandExecutor =
+  EngineCommandExecutor(Executor { it.run() })
+```
+
+**Virtual-thread execution** — lightweight concurrency without pinning platform threads:
+
+```kotlin
+@Bean
+fun engineCommandExecutor(): EngineCommandExecutor =
+  EngineCommandExecutor(Executors.newVirtualThreadPerTaskExecutor())
+```
