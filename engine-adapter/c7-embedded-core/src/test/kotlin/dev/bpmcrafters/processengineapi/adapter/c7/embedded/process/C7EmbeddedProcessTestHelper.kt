@@ -1,5 +1,6 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.embedded.process
 
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.decision.EvaluateDecisionApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.completion.C7ServiceTaskCompletionApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.completion.C7UserTaskCompletionApiImpl
@@ -58,6 +59,7 @@ class C7EmbeddedProcessTestHelper(private val processEngine: ProcessEngine) : Pr
 
   override fun getEvaluateDecisionApi(): EvaluateDecisionApi = EvaluateDecisionApiImpl(
     decisionService = processEngine.decisionService,
+    objectMapper = jacksonObjectMapper(),
   )
 
   override fun getServiceTaskCompletionApi(): ServiceTaskCompletionApi = C7ServiceTaskCompletionApiImpl(

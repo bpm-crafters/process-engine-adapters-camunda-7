@@ -1,11 +1,10 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.correlation.CorrelationApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.correlation.SignalApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.decision.EvaluateDecisionApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.deploy.DeploymentApiImpl
-import dev.bpmcrafters.processengineapi.adapter.c7.embedded.process.CachingProcessDefinitionMetaDataResolver
-import dev.bpmcrafters.processengineapi.adapter.c7.embedded.process.ProcessDefinitionMetaDataResolver
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.process.StartProcessApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.completion.C7ServiceTaskCompletionApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.completion.C7UserTaskCompletionApiImpl
@@ -13,25 +12,21 @@ import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.completion.Fail
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.completion.LinearMemoryFailureRetrySupplier
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.modification.C7UserTaskModificationApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.subscription.C7TaskSubscriptionApiImpl
-import io.toolisticon.spring.condition.ConditionalOnMissingQualifiedBean
-import dev.bpmcrafters.processengineapi.impl.task.InMemSubscriptionRepository
-import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import dev.bpmcrafters.processengineapi.correlation.CorrelationApi
 import dev.bpmcrafters.processengineapi.correlation.SignalApi
 import dev.bpmcrafters.processengineapi.decision.EvaluateDecisionApi
 import dev.bpmcrafters.processengineapi.deploy.DeploymentApi
+import dev.bpmcrafters.processengineapi.impl.task.InMemSubscriptionRepository
+import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import dev.bpmcrafters.processengineapi.process.StartProcessApi
 import dev.bpmcrafters.processengineapi.task.ServiceTaskCompletionApi
 import dev.bpmcrafters.processengineapi.task.TaskSubscriptionApi
 import dev.bpmcrafters.processengineapi.task.UserTaskCompletionApi
 import dev.bpmcrafters.processengineapi.task.UserTaskModificationApi
 import io.github.oshai.kotlinlogging.KotlinLogging
+import io.toolisticon.spring.condition.ConditionalOnMissingQualifiedBean
 import jakarta.annotation.PostConstruct
-import org.camunda.bpm.engine.DecisionService
-import org.camunda.bpm.engine.ExternalTaskService
-import org.camunda.bpm.engine.RepositoryService
-import org.camunda.bpm.engine.RuntimeService
-import org.camunda.bpm.engine.TaskService
+import org.camunda.bpm.engine.*
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.context.properties.EnableConfigurationProperties
@@ -92,8 +87,9 @@ class C7EmbeddedAdapterAutoConfiguration {
 
   @Bean("c7embedded-evaluate-decision-api")
   @Qualifier("c7embedded-evaluate-decision-api")
-  fun evaluateDecisionApi(decisionService: DecisionService): EvaluateDecisionApi = EvaluateDecisionApiImpl(
-    decisionService = decisionService
+  fun evaluateDecisionApi(decisionService: DecisionService, objectMapper: ObjectMapper): EvaluateDecisionApi = EvaluateDecisionApiImpl(
+    decisionService = decisionService,
+    objectMapper = objectMapper
   )
 
   @Bean

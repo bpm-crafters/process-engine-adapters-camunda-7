@@ -1,5 +1,6 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.embedded.decision
 
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import dev.bpmcrafters.processengineapi.CommonRestrictions
 import dev.bpmcrafters.processengineapi.decision.DecisionByRefEvaluationCommand
 import org.assertj.core.api.Assertions.assertThat
@@ -19,7 +20,7 @@ import java.util.concurrent.ExecutionException
 internal class EvaluateDecisionApiImplTest {
   val decisionService: DecisionService = mock()
   val fluentBuilder: DecisionsEvaluationBuilder = mock(DecisionsEvaluationBuilder::class.java, Answers.RETURNS_DEEP_STUBS)
-  val testSubject = EvaluateDecisionApiImpl(decisionService)
+  val testSubject = EvaluateDecisionApiImpl(decisionService, jacksonObjectMapper())
 
   @Test
   fun `should retrieve empty result`() {
