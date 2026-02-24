@@ -5,6 +5,7 @@ import dev.bpmcrafters.processengineapi.Empty
 import dev.bpmcrafters.processengineapi.MetaInfo
 import dev.bpmcrafters.processengineapi.MetaInfoAware
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.correlation.CorrelationApiImpl.Restrictions.USE_GLOBAL_CORRELATION_KEY
+import dev.bpmcrafters.processengineapi.adapter.c7.embedded.shared.EngineCommandExecutor
 import dev.bpmcrafters.processengineapi.correlation.CorrelateMessageCmd
 import dev.bpmcrafters.processengineapi.correlation.CorrelationApi
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -18,6 +19,7 @@ private val logger = KotlinLogging.logger {}
  */
 class CorrelationApiImpl(
   private val runtimeService: RuntimeService,
+  private val commandExecutor: EngineCommandExecutor,
 ) : CorrelationApi {
 
   object Restrictions {
@@ -25,7 +27,7 @@ class CorrelationApiImpl(
   }
 
   override fun correlateMessage(cmd: CorrelateMessageCmd): CompletableFuture<Empty> {
-    return CompletableFuture.supplyAsync {
+    return commandExecutor.execute {
       val correlation = cmd.correlation.get()
       val globalCorrelation = cmd.restrictions.containsKey(USE_GLOBAL_CORRELATION_KEY)
         && cmd.restrictions.getValue(USE_GLOBAL_CORRELATION_KEY).toBoolean()
