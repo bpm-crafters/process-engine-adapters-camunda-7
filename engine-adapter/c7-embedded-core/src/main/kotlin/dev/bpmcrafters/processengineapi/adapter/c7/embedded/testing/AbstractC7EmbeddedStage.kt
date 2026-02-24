@@ -6,6 +6,7 @@ import dev.bpmcrafters.processengineapi.CommonRestrictions
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.correlation.CorrelationApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.correlation.SignalApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.deploy.DeploymentApiImpl
+import dev.bpmcrafters.processengineapi.adapter.c7.embedded.shared.EngineCommandExecutor
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.process.CachingProcessDefinitionMetaDataResolver
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.process.StartProcessApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.completion.C7ServiceTaskCompletionApiImpl
@@ -120,12 +121,17 @@ abstract class AbstractC7EmbeddedStage<SUBTYPE : AbstractC7EmbeddedStage<SUBTYPE
     this.workerId = self().javaClass.simpleName
 
     val subscriptionRepository = InMemSubscriptionRepository()
+    val commandExecutor = EngineCommandExecutor { it.run() }
 
     startProcessApi = StartProcessApiImpl(
       runtimeService = processEngineServices.runtimeService,
       repositoryService = processEngineServices.repositoryService,
+      commandExecutor = commandExecutor,
     )
-    deploymentApi = DeploymentApiImpl(processEngineServices.repositoryService)
+    deploymentApi = DeploymentApiImpl(
+      repositoryService = processEngineServices.repositoryService,
+      commandExecutor = commandExecutor,
+    )
     userTaskCompletionApi = C7UserTaskCompletionApiImpl(processEngineServices.taskService, subscriptionRepository)
     serviceTaskCompletionApi = C7ServiceTaskCompletionApiImpl(
       workerId, processEngineServices.externalTaskService, subscriptionRepository, LinearMemoryFailureRetrySupplier(3, 3L)
@@ -152,8 +158,14 @@ abstract class AbstractC7EmbeddedStage<SUBTYPE : AbstractC7EmbeddedStage<SUBTYPE
       taskSubscriptionApi, restrictions, null, null
     )
 
-    signalApi = SignalApiImpl(processEngineServices.runtimeService)
-    correlationApi = CorrelationApiImpl(processEngineServices.runtimeService)
+    signalApi = SignalApiImpl(
+      runtimeService = processEngineServices.runtimeService,
+      commandExecutor = commandExecutor,
+    )
+    correlationApi = CorrelationApiImpl(
+      runtimeService = processEngineServices.runtimeService,
+      commandExecutor = commandExecutor,
+    )
 
     initialize()
 

@@ -6,6 +6,7 @@ import dev.bpmcrafters.processengineapi.adapter.c7.embedded.correlation.SignalAp
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.decision.EvaluateDecisionApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.deploy.DeploymentApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.process.StartProcessApiImpl
+import dev.bpmcrafters.processengineapi.adapter.c7.embedded.shared.EngineCommandExecutor
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.completion.C7ServiceTaskCompletionApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.completion.C7UserTaskCompletionApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.completion.FailureRetrySupplier
@@ -48,11 +49,20 @@ class C7EmbeddedAdapterAutoConfiguration {
     logger.debug { "PROCESS-ENGINE-C7-EMBEDDED-200: Configuration of services applied." }
   }
 
+  @Bean
+  @ConditionalOnMissingBean
+  fun engineCommandExecutor(): EngineCommandExecutor = EngineCommandExecutor()
+
   @Bean("c7embedded-start-process-api")
   @Qualifier("c7embedded-start-process-api")
-  fun startProcessApi(runtimeService: RuntimeService, repositoryService: RepositoryService): StartProcessApi = StartProcessApiImpl(
+  fun startProcessApi(
+    runtimeService: RuntimeService,
+    repositoryService: RepositoryService,
+    commandExecutor: EngineCommandExecutor,
+  ): StartProcessApi = StartProcessApiImpl(
     runtimeService = runtimeService,
-    repositoryService = repositoryService
+    repositoryService = repositoryService,
+    commandExecutor = commandExecutor,
   )
 
   @Bean("c7embedded-task-subscription-api")
@@ -63,20 +73,32 @@ class C7EmbeddedAdapterAutoConfiguration {
 
   @Bean("c7embedded-correlation-api")
   @Qualifier("c7embedded-correlation-api")
-  fun correlationApi(runtimeService: RuntimeService): CorrelationApi = CorrelationApiImpl(
-    runtimeService = runtimeService
+  fun correlationApi(
+    runtimeService: RuntimeService,
+    commandExecutor: EngineCommandExecutor,
+  ): CorrelationApi = CorrelationApiImpl(
+    runtimeService = runtimeService,
+    commandExecutor = commandExecutor,
   )
 
   @Bean("c7embedded-signal-api")
   @Qualifier("c7embedded-signal-api")
-  fun signalApi(runtimeService: RuntimeService): SignalApi = SignalApiImpl(
-    runtimeService = runtimeService
+  fun signalApi(
+    runtimeService: RuntimeService,
+    commandExecutor: EngineCommandExecutor,
+  ): SignalApi = SignalApiImpl(
+    runtimeService = runtimeService,
+    commandExecutor = commandExecutor,
   )
 
   @Bean("c7embedded-deployment-api")
   @Qualifier("c7embedded-deployment-api")
-  fun deploymentApi(repositoryService: RepositoryService): DeploymentApi = DeploymentApiImpl(
-    repositoryService = repositoryService
+  fun deploymentApi(
+    repositoryService: RepositoryService,
+    commandExecutor: EngineCommandExecutor,
+  ): DeploymentApi = DeploymentApiImpl(
+    repositoryService = repositoryService,
+    commandExecutor = commandExecutor,
   )
 
   @Bean("c7embedded-user-task-modification-api")

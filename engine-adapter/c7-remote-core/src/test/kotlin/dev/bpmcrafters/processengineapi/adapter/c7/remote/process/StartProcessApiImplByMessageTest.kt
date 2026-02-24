@@ -106,5 +106,4 @@ class StartProcessApiImplByMessageTest {
     assertThat(exception.cause!!.message).isEqualTo("Only $expected are supported but businessKey were found.")
   }
 
-
 }

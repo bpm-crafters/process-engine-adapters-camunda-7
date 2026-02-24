@@ -2,6 +2,7 @@ package dev.bpmcrafters.processengineapi.adapter.c7.embedded.process
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.decision.EvaluateDecisionApiImpl
+import dev.bpmcrafters.processengineapi.adapter.c7.embedded.shared.EngineCommandExecutor
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.completion.C7ServiceTaskCompletionApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.completion.C7UserTaskCompletionApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.completion.LinearMemoryFailureRetrySupplier
@@ -46,6 +47,7 @@ class C7EmbeddedProcessTestHelper(private val processEngine: ProcessEngine) : Pr
   override fun getStartProcessApi(): StartProcessApi = StartProcessApiImpl(
     runtimeService = processEngine.runtimeService,
     repositoryService = processEngine.repositoryService,
+    commandExecutor = EngineCommandExecutor { it.run() },
   )
 
   override fun getTaskSubscriptionApi(): TaskSubscriptionApi = C7TaskSubscriptionApiImpl(
