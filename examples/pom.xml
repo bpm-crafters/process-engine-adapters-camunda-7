@@ -26,6 +26,7 @@
     <module>java-common-fixture</module>
     <module>java-c7-embedded</module>
     <module>java-c7-remote</module>
+    <module>java-c7-remote-sb4</module>
   </modules>
 
   <dependencyManagement>
