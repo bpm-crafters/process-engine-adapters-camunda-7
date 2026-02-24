@@ -132,13 +132,23 @@ abstract class AbstractC7EmbeddedStage<SUBTYPE : AbstractC7EmbeddedStage<SUBTYPE
       repositoryService = processEngineServices.repositoryService,
       commandExecutor = commandExecutor,
     )
-    userTaskCompletionApi = C7UserTaskCompletionApiImpl(processEngineServices.taskService, subscriptionRepository)
+    userTaskCompletionApi = C7UserTaskCompletionApiImpl(
+      taskService = processEngineServices.taskService,
+      subscriptionRepository = subscriptionRepository,
+      commandExecutor = commandExecutor
+    )
     serviceTaskCompletionApi = C7ServiceTaskCompletionApiImpl(
-      workerId, processEngineServices.externalTaskService, subscriptionRepository, LinearMemoryFailureRetrySupplier(3, 3L)
+      workerId = workerId,
+      externalTaskService = processEngineServices.externalTaskService,
+      subscriptionRepository = subscriptionRepository,
+      failureRetrySupplier = LinearMemoryFailureRetrySupplier(3, 3L),
+      commandExecutor = commandExecutor
     )
     embeddedPullUserTaskDelivery = EmbeddedPullUserTaskDelivery(
       taskService = processEngineServices.taskService,
-      processDefinitionMetaDataResolver = CachingProcessDefinitionMetaDataResolver(repositoryService = processEngineServices.repositoryService),
+      processDefinitionMetaDataResolver = CachingProcessDefinitionMetaDataResolver(
+        repositoryService = processEngineServices.repositoryService
+      ),
       subscriptionRepository = subscriptionRepository,
       executorService = Executors.newFixedThreadPool(1)
     )
@@ -148,10 +158,13 @@ abstract class AbstractC7EmbeddedStage<SUBTYPE : AbstractC7EmbeddedStage<SUBTYPE
     )
 
     taskSubscriptionApi = C7TaskSubscriptionApiImpl(
-      subscriptionRepository
+      subscriptionRepository = subscriptionRepository
     )
 
-    userTaskModificationApi = C7UserTaskModificationApiImpl(processEngineServices.taskService)
+    userTaskModificationApi = C7UserTaskModificationApiImpl(
+      taskService = processEngineServices.taskService,
+      commandExecutor = commandExecutor,
+    )
 
     this.userTaskSupport = UserTaskSupport()
     userTaskSupport.subscribe(

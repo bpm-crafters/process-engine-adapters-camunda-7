@@ -105,8 +105,8 @@ internal class PullServiceTaskDeliveryThreadingTest {
         val activeSubscription = invocation.getArgument<TaskSubscriptionHandle>(1)
         Callable {
           activeSubscription.action.accept(
-            TaskInformation(taskId = lockedTask.id, meta = emptyMap()).withReason(CREATE),
-            lockedTask.variables
+            TaskInformation(taskId = lockedTask.id!!, meta = emptyMap()).withReason(CREATE),
+            lockedTask.variables!!
           )
         }
       }

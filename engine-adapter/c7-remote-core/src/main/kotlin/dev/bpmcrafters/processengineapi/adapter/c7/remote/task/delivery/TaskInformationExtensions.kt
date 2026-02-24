@@ -14,7 +14,7 @@ import java.util.*
 
 fun LockedExternalTaskDto.toTaskInformation(pdMetaDataResolver: ProcessDefinitionMetaDataResolver): TaskInformation =
   TaskInformation(
-    taskId = this.id,
+    taskId = this.id!!,
     meta = mapOf(
       CommonRestrictions.ACTIVITY_ID to this.activityId,
       CommonRestrictions.PROCESS_DEFINITION_ID to this.processDefinitionId,
@@ -24,12 +24,12 @@ fun LockedExternalTaskDto.toTaskInformation(pdMetaDataResolver: ProcessDefinitio
       "topicName" to this.topicName,
       "creationDate" to this.createTime.toDateString(),
       TaskInformation.RETRIES to (this.retries?.toString() ?: ""),
-    ).enrichWithProcessDefinitionMetadata(this.processDefinitionId, pdMetaDataResolver)
+    ).enrichWithProcessDefinitionMetadata(this.processDefinitionId!!, pdMetaDataResolver)
   )
 
 fun TaskWithAttachmentAndCommentDto.toTaskInformation(candidates: Set<IdentityLinkDto>, pdMetaDataResolver: ProcessDefinitionMetaDataResolver) =
   TaskInformation(
-    taskId = this.id,
+    taskId = this.id!!,
     meta = mapOf(
       CommonRestrictions.ACTIVITY_ID to this.taskDefinitionKey,
       CommonRestrictions.TENANT_ID to this.tenantId,
@@ -45,7 +45,7 @@ fun TaskWithAttachmentAndCommentDto.toTaskInformation(candidates: Set<IdentityLi
       "candidateUsers" to candidates.toUsersString(),
       "candidateGroups" to candidates.toGroupsString(),
       "lastUpdatedDate" to this.lastUpdated.toDateString()
-    ).enrichWithProcessDefinitionMetadata(this.processDefinitionId, pdMetaDataResolver)
+    ).enrichWithProcessDefinitionMetadata(this.processDefinitionId!!, pdMetaDataResolver)
   )
 
 fun Map<String, String>.enrichWithProcessDefinitionMetadata(processDefinitionId: String, pdMetaDataResolver: ProcessDefinitionMetaDataResolver) =

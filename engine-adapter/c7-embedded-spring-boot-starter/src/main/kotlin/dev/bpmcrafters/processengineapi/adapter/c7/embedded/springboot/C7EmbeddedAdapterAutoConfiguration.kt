@@ -103,15 +103,24 @@ class C7EmbeddedAdapterAutoConfiguration {
 
   @Bean("c7embedded-user-task-modification-api")
   @Qualifier("c7embedded-user-task-modification-api")
-  fun userTaskModificationApi(taskService: TaskService): UserTaskModificationApi = C7UserTaskModificationApiImpl(
-    taskService = taskService
+  fun userTaskModificationApi(
+    taskService: TaskService,
+    commandExecutor: EngineCommandExecutor,
+  ): UserTaskModificationApi = C7UserTaskModificationApiImpl(
+    taskService = taskService,
+    commandExecutor = commandExecutor,
   )
 
   @Bean("c7embedded-evaluate-decision-api")
   @Qualifier("c7embedded-evaluate-decision-api")
-  fun evaluateDecisionApi(decisionService: DecisionService, objectMapper: ObjectMapper): EvaluateDecisionApi = EvaluateDecisionApiImpl(
+  fun evaluateDecisionApi(
+    decisionService: DecisionService,
+    objectMapper: ObjectMapper,
+    commandExecutor: EngineCommandExecutor
+  ): EvaluateDecisionApi = EvaluateDecisionApiImpl(
     decisionService = decisionService,
-    objectMapper = objectMapper
+    objectMapper = objectMapper,
+    commandExecutor = commandExecutor
   )
 
   @Bean
@@ -135,24 +144,29 @@ class C7EmbeddedAdapterAutoConfiguration {
     subscriptionRepository: SubscriptionRepository,
     c7AdapterProperties: C7EmbeddedAdapterProperties,
     @Qualifier("c7embedded-failure-retry-supplier")
-    failureRetrySupplier: FailureRetrySupplier
+    failureRetrySupplier: FailureRetrySupplier,
+    commandExecutor: EngineCommandExecutor
   ): ServiceTaskCompletionApi =
     C7ServiceTaskCompletionApiImpl(
       workerId = c7AdapterProperties.serviceTasks.workerId,
       externalTaskService = externalTaskService,
       subscriptionRepository = subscriptionRepository,
-      failureRetrySupplier = failureRetrySupplier
+      failureRetrySupplier = failureRetrySupplier,
+      commandExecutor = commandExecutor,
+
     )
 
   @Bean("c7embedded-user-task-completion-api")
   @Qualifier("c7embedded-user-task-completion-api")
   fun userTaskCompletionApi(
     taskService: TaskService,
-    subscriptionRepository: SubscriptionRepository
+    subscriptionRepository: SubscriptionRepository,
+    commandExecutor: EngineCommandExecutor
   ): UserTaskCompletionApi =
     C7UserTaskCompletionApiImpl(
       taskService = taskService,
-      subscriptionRepository = subscriptionRepository
+      subscriptionRepository = subscriptionRepository,
+      commandExecutor = commandExecutor,
     )
 
   /**

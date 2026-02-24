@@ -48,8 +48,8 @@ class DeploymentApiImpl(
   }
 
   private fun DeploymentWithDefinitionsDto.toDeploymentInformation() = DeploymentInformation(
-    deploymentKey = this.id,
-    deploymentTime = this.deploymentTime.toInstant(),
+    deploymentKey = this.id!!,
+    deploymentTime = this.deploymentTime!!.toInstant(),
     tenantId = this.tenantId
   )
 }

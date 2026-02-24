@@ -46,7 +46,7 @@ class EvaluateDecisionApiImpl(
             null
           }
 
-          var variables = valueMapper.mapValues(command.payloadSupplier.get())
+          val variables = valueMapper.mapValues(command.payloadSupplier.get())
           val result = if (tenantId != null) {
             decisionDefinitionApiClient
               .evaluateDecisionByKeyAndTenant(

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import dev.bpmcrafters.processengineapi.CommonRestrictions
 import dev.bpmcrafters.processengineapi.MetaInfo
 import dev.bpmcrafters.processengineapi.MetaInfoAware
+import dev.bpmcrafters.processengineapi.adapter.c7.embedded.shared.EngineCommandExecutor
 import dev.bpmcrafters.processengineapi.decision.*
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.camunda.bpm.dmn.engine.DmnDecisionResult
@@ -16,7 +17,8 @@ private val logger = KotlinLogging.logger {}
 
 class EvaluateDecisionApiImpl(
   private val decisionService: DecisionService,
-  private val objectMapper: ObjectMapper
+  private val objectMapper: ObjectMapper,
+  private val commandExecutor: EngineCommandExecutor
 ) : EvaluateDecisionApi {
 
   override fun evaluateDecision(command: DecisionEvaluationCommand): CompletableFuture<DecisionEvaluationResult> {
@@ -25,7 +27,7 @@ class EvaluateDecisionApiImpl(
         logger.debug {
           "PROCESS-ENGINE-C7-EMBEDDED-061: Evaluating decision by reference ${command.decisionRef}"
         }
-        CompletableFuture.supplyAsync {
+        commandExecutor.execute {
           val result = decisionService
             .evaluateDecisionByKey(command.decisionRef)
             .applyRestrictions(ensureSupported(command.restrictionSupplier.get()))

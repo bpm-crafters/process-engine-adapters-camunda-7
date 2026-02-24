@@ -104,7 +104,7 @@ class PullServiceTaskDelivery(
     logger.trace { "PROCESS-ENGINE-C7-REMOTE-042: pulled ${lockedTasks.size} service tasks" }
     lockedTasks
       .groupBy { it.topicName }
-      .forEach { (topic, tasks) -> metrics.incrementFetchedAndLockedTasksCounter(topic, tasks.size) }
+      .forEach { (topic, tasks) -> metrics.incrementFetchedAndLockedTasksCounter(topic!!, tasks.size) }
 
     val taskActionHandlerCallables = lockedTasks
       .asSequence()
@@ -112,7 +112,7 @@ class PullServiceTaskDelivery(
       .filter { (lockedTask, subscription) ->
         val keep = subscription != null
         if (!keep) {
-          metrics.incrementDroppedTasksCounter(lockedTask.topicName, NO_MATCHING_SUBSCRIPTIONS)
+          metrics.incrementDroppedTasksCounter(lockedTask.topicName!!, NO_MATCHING_SUBSCRIPTIONS)
         }
         keep
       }
@@ -125,20 +125,20 @@ class PullServiceTaskDelivery(
   internal fun createTaskActionHandlerCallable(lockedTask: LockedExternalTaskDto, activeSubscription: TaskSubscriptionHandle): Callable<Unit> = Callable {
     // make sure the task has not expired waiting in the queue for the execution
     val start = OffsetDateTime.now()
-    val timePassedSinceLockAcquisition = Duration.between(lockedTask.lockExpirationTime.minusSeconds(lockDurationInSeconds), start)
-    metrics.recordTaskQueueTime(lockedTask.topicName, timePassedSinceLockAcquisition)
+    val timePassedSinceLockAcquisition = Duration.between(lockedTask.lockExpirationTime!!.minusSeconds(lockDurationInSeconds), start)
+    metrics.recordTaskQueueTime(lockedTask.topicName!!, timePassedSinceLockAcquisition)
     if (start.isBefore(lockedTask.lockExpirationTime)) {
       try {
-        subscriptionRepository.activateSubscriptionForTask(lockedTask.id, activeSubscription)
-        val variables = valueMapper.mapDtos(lockedTask.variables).filterBySubscription(activeSubscription)
+        subscriptionRepository.activateSubscriptionForTask(lockedTask.id!!, activeSubscription)
+        val variables = valueMapper.mapDtos(lockedTask.variables!!).filterBySubscription(activeSubscription)
         logger.debug { "PROCESS-ENGINE-C7-REMOTE-031: delivering service task ${lockedTask.id}." }
         val taskInformation = toTaskInformation(lockedTask).withReason(CREATE)
         activeSubscription.action.accept(taskInformation, variables)
         logger.debug { "PROCESS-ENGINE-C7-REMOTE-032: successfully delivered service task ${lockedTask.id}." }
-        metrics.incrementCompletedTasksCounter(lockedTask.topicName)
+        metrics.incrementCompletedTasksCounter(lockedTask.topicName!!)
       } catch (e: Exception) {
         logger.error { "PROCESS-ENGINE-C7-REMOTE-033: failing delivering task ${lockedTask.id}: ${e.message}" }
-        metrics.incrementFailedTasksCounter(lockedTask.topicName)
+        metrics.incrementFailedTasksCounter(lockedTask.topicName!!)
         val jobRetries: Int = lockedTask.retries?.minus(1) ?: retries
         externalTaskApiClient.handleFailure(
           lockedTask.id,
@@ -152,10 +152,10 @@ class PullServiceTaskDelivery(
         )
         logger.error { "PROCESS-ENGINE-C7-REMOTE-034: successfully failed delivering task ${lockedTask.id}: ${e.message}" }
       } finally {
-        metrics.recordTaskExecutionTime(lockedTask.topicName, Duration.between(start, OffsetDateTime.now()))
+        metrics.recordTaskExecutionTime(lockedTask.topicName!!, Duration.between(start, OffsetDateTime.now()))
       }
     } else {
-      metrics.incrementDroppedTasksCounter(lockedTask.topicName, EXPIRED_WHILE_IN_QUEUE)
+      metrics.incrementDroppedTasksCounter(lockedTask.topicName!!, EXPIRED_WHILE_IN_QUEUE)
     }
   }
 
@@ -180,7 +180,7 @@ class PullServiceTaskDelivery(
     )
     val stillLockedTaskIds =
       requireNotNull(stillLockedTasksResult.body) { "Could not fetch still locked tasks for worker: $workerId, status code was ${stillLockedTasksResult.statusCode}" }
-        .map { dto -> dto.id }
+        .map { dto -> dto.id!! }
         .toSet()
     stillLockedTasksGauge.set(stillLockedTaskIds.size)
 

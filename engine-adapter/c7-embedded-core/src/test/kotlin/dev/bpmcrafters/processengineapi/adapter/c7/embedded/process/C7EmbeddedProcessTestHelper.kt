@@ -56,12 +56,14 @@ class C7EmbeddedProcessTestHelper(private val processEngine: ProcessEngine) : Pr
 
   override fun getUserTaskCompletionApi(): UserTaskCompletionApi = C7UserTaskCompletionApiImpl(
     taskService = processEngine.taskService,
-    subscriptionRepository = subscriptionRepository
+    subscriptionRepository = subscriptionRepository,
+    commandExecutor = EngineCommandExecutor(),
   )
 
   override fun getEvaluateDecisionApi(): EvaluateDecisionApi = EvaluateDecisionApiImpl(
     decisionService = processEngine.decisionService,
     objectMapper = jacksonObjectMapper(),
+    commandExecutor = EngineCommandExecutor()
   )
 
   override fun getServiceTaskCompletionApi(): ServiceTaskCompletionApi = C7ServiceTaskCompletionApiImpl(
@@ -71,7 +73,8 @@ class C7EmbeddedProcessTestHelper(private val processEngine: ProcessEngine) : Pr
     failureRetrySupplier = LinearMemoryFailureRetrySupplier(
       retry = 1,
       retryTimeout = 10
-    )
+    ),
+    commandExecutor = EngineCommandExecutor()
   )
 
   override fun triggerPullingUserTaskDeliveryManually() = embeddedPullUserTaskDelivery.refresh()

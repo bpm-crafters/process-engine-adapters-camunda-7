@@ -1,9 +1,11 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.modification
 
+import dev.bpmcrafters.processengineapi.adapter.c7.embedded.shared.EngineCommandExecutor
 import dev.bpmcrafters.processengineapi.task.ChangeAssignmentModifyTaskCmd
 import dev.bpmcrafters.processengineapi.task.ChangePayloadModifyTaskCmd
 import dev.bpmcrafters.processengineapi.task.TaskModification
 import dev.bpmcrafters.processengineapi.task.UserTaskModificationApi
+import org.assertj.core.api.Assertions.assertThat
 import org.camunda.bpm.engine.TaskService
 import org.camunda.bpm.engine.impl.persistence.entity.IdentityLinkEntity
 import org.junit.jupiter.api.BeforeEach
@@ -15,10 +17,11 @@ import org.mockito.kotlin.verify
 import org.mockito.kotlin.verifyNoMoreInteractions
 import org.mockito.kotlin.whenever
 import java.util.*
+import java.util.concurrent.ExecutionException
 
 internal class C7UserTaskModificationApiImplTest {
   private val taskService: TaskService = mock()
-  private val api: UserTaskModificationApi = C7UserTaskModificationApiImpl(taskService)
+  private val api: UserTaskModificationApi = C7UserTaskModificationApiImpl(taskService, EngineCommandExecutor())
   private lateinit var taskId: String
 
   @BeforeEach
@@ -29,24 +32,26 @@ internal class C7UserTaskModificationApiImplTest {
 
   @Test
   fun `react on wrong assign command`() {
-    assertThrows<UnsupportedOperationException> {
+    val ex = assertThrows<ExecutionException> {
       api.update(
         object: ChangeAssignmentModifyTaskCmd(taskId) {
 
         }
       ).get()
     }
+    assertThat(ex.cause).isInstanceOf(UnsupportedOperationException::class.java)
   }
 
   @Test
   fun `react on wrong payload command`() {
-    assertThrows<UnsupportedOperationException> {
+    val ex = assertThrows<ExecutionException> {
       api.update(
         object: ChangePayloadModifyTaskCmd(taskId) {
 
         }
       ).get()
     }
+    assertThat(ex.cause).isInstanceOf(UnsupportedOperationException::class.java)
   }
 
 
@@ -57,7 +62,7 @@ internal class C7UserTaskModificationApiImplTest {
         assign("kermit")
         updatePayload(mapOf("key1" to "world"))
       }
-    )
+    ).get()
     verify(taskService).setAssignee(taskId, "kermit")
     verify(taskService).setVariablesLocal(taskId, mapOf("key1" to "world"))
     verifyNoMoreInteractions(taskService)
