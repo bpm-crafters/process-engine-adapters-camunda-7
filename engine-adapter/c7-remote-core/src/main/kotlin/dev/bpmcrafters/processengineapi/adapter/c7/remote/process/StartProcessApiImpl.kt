@@ -116,7 +116,7 @@ class StartProcessApiImpl(
 }
 
 fun MessageCorrelationResultWithVariableDto.toProcessInformation() = ProcessInformation(
-  instanceId = this.processInstance.id,
+  instanceId = this.processInstance!!.id!!,
   meta = mapOf(
     CommonRestrictions.PROCESS_DEFINITION_KEY to this.processInstance.definitionKey,
     CommonRestrictions.BUSINESS_KEY to this.processInstance.businessKey,
@@ -126,7 +126,7 @@ fun MessageCorrelationResultWithVariableDto.toProcessInformation() = ProcessInfo
 )
 
 fun ProcessInstanceWithVariablesDto.toProcessInformation() = ProcessInformation(
-  instanceId = this.id,
+  instanceId = this.id!!,
   meta = mapOf(
     CommonRestrictions.PROCESS_DEFINITION_KEY to this.definitionKey,
     CommonRestrictions.BUSINESS_KEY to this.businessKey,
@@ -136,7 +136,7 @@ fun ProcessInstanceWithVariablesDto.toProcessInformation() = ProcessInformation(
 )
 
 fun ProcessInstanceDto.toProcessInformation() = ProcessInformation(
-  instanceId = this.id,
+  instanceId = this.id!!,
   meta = mapOf(
     CommonRestrictions.PROCESS_DEFINITION_KEY to this.definitionKey,
     CommonRestrictions.BUSINESS_KEY to this.businessKey,

@@ -1,6 +1,7 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.completion
 
 import dev.bpmcrafters.processengineapi.Empty
+import dev.bpmcrafters.processengineapi.adapter.c7.embedded.shared.EngineCommandExecutor
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import dev.bpmcrafters.processengineapi.task.CompleteTaskByErrorCmd
 import dev.bpmcrafters.processengineapi.task.CompleteTaskCmd
@@ -18,32 +19,37 @@ private val logger = KotlinLogging.logger {}
  */
 class C7UserTaskCompletionApiImpl(
   private val taskService: TaskService,
-  private val subscriptionRepository: SubscriptionRepository
+  private val subscriptionRepository: SubscriptionRepository,
+  private val commandExecutor: EngineCommandExecutor
 ) : UserTaskCompletionApi {
 
   override fun completeTask(cmd: CompleteTaskCmd): CompletableFuture<Empty> {
     logger.debug { "PROCESS-ENGINE-C7-EMBEDDED-011: completing user task ${cmd.taskId}." }
-    taskService.complete(
-      cmd.taskId,
-      cmd.get()
-    )
-    subscriptionRepository.deactivateSubscriptionForTask(cmd.taskId)?.apply {
-      termination.accept(TaskInformation(cmd.taskId, emptyMap()).withReason(TaskInformation.COMPLETE))
-      logger.debug { "PROCESS-ENGINE-C7-EMBEDDED-012: successfully completed user task ${cmd.taskId}." }
+    return commandExecutor.execute {
+      taskService.complete(
+        cmd.taskId,
+        cmd.get()
+      )
+      subscriptionRepository.deactivateSubscriptionForTask(cmd.taskId)?.apply {
+        termination.accept(TaskInformation(cmd.taskId, emptyMap()).withReason(TaskInformation.COMPLETE))
+        logger.debug { "PROCESS-ENGINE-C7-EMBEDDED-012: successfully completed user task ${cmd.taskId}." }
+      }
+      Empty
     }
-    return CompletableFuture.completedFuture(Empty)
   }
 
   override fun completeTaskByError(cmd: CompleteTaskByErrorCmd): CompletableFuture<Empty> {
     logger.debug { "PROCESS-ENGINE-C7-EMBEDDED-013: throwing error on user task ${cmd.taskId}." }
-    taskService.handleBpmnError(
-      cmd.taskId,
-      cmd.errorCode
-    )
-    subscriptionRepository.deactivateSubscriptionForTask(cmd.taskId)?.apply {
-      termination.accept(TaskInformation(cmd.taskId, emptyMap()).withReason(TaskInformation.COMPLETE))
-      logger.debug { "PROCESS-ENGINE-C7-EMBEDDED-014: successfully thrown error on user task ${cmd.taskId}." }
+    return commandExecutor.execute {
+      taskService.handleBpmnError(
+        cmd.taskId,
+        cmd.errorCode
+      )
+      subscriptionRepository.deactivateSubscriptionForTask(cmd.taskId)?.apply {
+        termination.accept(TaskInformation(cmd.taskId, emptyMap()).withReason(TaskInformation.COMPLETE))
+        logger.debug { "PROCESS-ENGINE-C7-EMBEDDED-014: successfully thrown error on user task ${cmd.taskId}." }
+      }
+      Empty
     }
-    return CompletableFuture.completedFuture(Empty)
   }
 }
