@@ -4,6 +4,7 @@ import dev.bpmcrafters.processengineapi.CommonRestrictions
 import dev.bpmcrafters.processengineapi.Empty
 import dev.bpmcrafters.processengineapi.MetaInfo
 import dev.bpmcrafters.processengineapi.MetaInfoAware
+import dev.bpmcrafters.processengineapi.adapter.c7.embedded.shared.EngineCommandExecutor
 import dev.bpmcrafters.processengineapi.correlation.SendSignalCmd
 import dev.bpmcrafters.processengineapi.correlation.SignalApi
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -17,12 +18,13 @@ private val logger = KotlinLogging.logger {}
  * Implementation of Signal API using local runtime service.
  */
 class SignalApiImpl(
-  private val runtimeService: RuntimeService
+  private val runtimeService: RuntimeService,
+  private val commandExecutor: EngineCommandExecutor,
 ) : SignalApi {
 
   override fun sendSignal(cmd: SendSignalCmd): CompletableFuture<Empty> {
     logger.debug { "PROCESS-ENGINE-C7-EMBEDDED-002: sending signal ${cmd.signalName}." }
-    return CompletableFuture.supplyAsync {
+    return commandExecutor.execute {
       runtimeService
         .createSignalEvent(cmd.signalName)
         .applyRestrictions(ensureSupported(cmd.restrictions))

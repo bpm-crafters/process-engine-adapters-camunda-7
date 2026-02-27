@@ -3,7 +3,6 @@ package dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot.C7EmbeddedAdapterProperties.Companion.DEFAULT_PREFIX
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.boot.context.properties.NestedConfigurationProperty
-import org.springframework.core.Ordered
 import org.springframework.validation.annotation.Validated
 
 @ConfigurationProperties(prefix = DEFAULT_PREFIX)

@@ -5,10 +5,8 @@ import dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot.initial.C
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.delivery.pull.EmbeddedPullUserTaskDelivery
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import io.github.oshai.kotlinlogging.KotlinLogging
-import org.camunda.bpm.engine.RepositoryService
 import org.camunda.bpm.engine.TaskService
 import org.camunda.bpm.spring.boot.starter.event.ProcessApplicationStartedEvent
-import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.context.event.EventListener
 import org.springframework.core.Ordered
 import org.springframework.core.annotation.Order

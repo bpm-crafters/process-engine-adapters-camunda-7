@@ -5,7 +5,7 @@
   <parent>
     <groupId>dev.bpm-crafters.process-engine-adapters</groupId>
     <artifactId>process-engine-adapter-camunda-platform-c7-root</artifactId>
-    <version>2025.11.1</version>
+    <version>2026.02.1</version>
     <relativePath>../../pom.xml</relativePath>
   </parent>
 
@@ -30,6 +30,11 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-validation</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-configuration-processor</artifactId>
+      <optional>true</optional>
+    </dependency>
 
     <!-- Use subscription-based delivery using official Camunda client -->
     <dependency>
@@ -41,9 +46,9 @@
 
     <!-- Use for Camunda REST API by provided Feign Client -->
     <dependency>
-      <groupId>org.camunda.community.rest</groupId>
-      <artifactId>camunda-platform-7-rest-client-spring-boot-starter-feign</artifactId>
-      <version>${camunda-platform-7-rest-client.version}</version>
+      <groupId>io.holunda.c7</groupId>
+      <artifactId>c7-rest-client-spring-boot-starter-feign</artifactId>
+      <version>${c7.version}</version>
       <scope>provided</scope>
     </dependency>
 
@@ -58,6 +63,27 @@
 
   <build>
     <plugins>
+      <plugin>
+        <groupId>org.jetbrains.kotlin</groupId>
+        <artifactId>kotlin-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>kapt</id>
+            <goals>
+              <goal>kapt</goal>
+            </goals>
+            <configuration>
+              <annotationProcessorPaths>
+                <annotationProcessorPath>
+                  <groupId>org.springframework.boot</groupId>
+                  <artifactId>spring-boot-configuration-processor</artifactId>
+                  <version>${spring-boot.version}</version>
+                </annotationProcessorPath>
+              </annotationProcessorPaths>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-enforcer-plugin</artifactId>

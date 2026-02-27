@@ -55,9 +55,9 @@ data class CachingProcessDefinitionMetaDataResolver(
     }
     val processDefinition = result.body
     if (processDefinition != null) {
-      processDefinitionIds[processDefinitionKey to tenantId] = processDefinition.id
-      versionTags[processDefinition.id] = processDefinition.versionTag
-      keys[processDefinition.id] = processDefinition.key
+      processDefinitionIds[processDefinitionKey to tenantId] = processDefinition.id!!
+      versionTags[processDefinition.id!!] = processDefinition.versionTag
+      keys[processDefinition.id!!] = processDefinition.key!!
     }
   }
 
@@ -65,7 +65,7 @@ data class CachingProcessDefinitionMetaDataResolver(
     val result = processDefinitionApiClient.getProcessDefinition(processDefinitionId)
     val definition =
       requireNotNull(result.body) { "Could not retrieve process definition for id $processDefinitionId, resulted in status code ${result.statusCode}" }
-    this.keys[processDefinitionId] = definition.key
+    this.keys[processDefinitionId] = definition.key!!
     this.versionTags[processDefinitionId] = definition.versionTag
   }
 }

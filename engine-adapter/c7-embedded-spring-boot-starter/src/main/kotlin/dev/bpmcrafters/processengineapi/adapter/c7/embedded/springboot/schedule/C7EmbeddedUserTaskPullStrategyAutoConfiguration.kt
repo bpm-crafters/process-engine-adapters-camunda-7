@@ -7,7 +7,6 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.context.annotation.Configuration
 import org.springframework.scheduling.annotation.Scheduled
-import org.springframework.scheduling.config.ScheduledTaskRegistrar
 import java.util.concurrent.TimeUnit.SECONDS
 
 private val logger = KotlinLogging.logger {}

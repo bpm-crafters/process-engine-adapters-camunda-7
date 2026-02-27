@@ -11,7 +11,6 @@ import org.camunda.community.rest.client.model.PatchVariablesDto
 import org.camunda.community.rest.client.model.UserIdDto
 import org.camunda.community.rest.variables.ValueMapper
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.Future
 
 private val logger = KotlinLogging.logger {}
 

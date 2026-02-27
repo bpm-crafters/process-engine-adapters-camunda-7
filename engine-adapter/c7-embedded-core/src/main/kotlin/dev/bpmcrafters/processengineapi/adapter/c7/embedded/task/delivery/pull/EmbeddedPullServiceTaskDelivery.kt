@@ -2,10 +2,10 @@ package dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.delivery.pull
 
 import dev.bpmcrafters.processengineapi.CommonRestrictions
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.delivery.ExternalServiceTaskDelivery
-import dev.bpmcrafters.processengineapi.impl.task.filterBySubscription
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.delivery.toTaskInformation
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import dev.bpmcrafters.processengineapi.impl.task.TaskSubscriptionHandle
+import dev.bpmcrafters.processengineapi.impl.task.filterBySubscription
 import dev.bpmcrafters.processengineapi.task.TaskInformation
 import dev.bpmcrafters.processengineapi.task.TaskType
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -21,14 +21,14 @@ private val logger = KotlinLogging.logger {}
  * This implementation uses internal Java API and pulls tasks for delivery.
  */
 class EmbeddedPullServiceTaskDelivery(
-    private val externalTaskService: ExternalTaskService,
-    private val workerId: String,
-    private val subscriptionRepository: SubscriptionRepository,
-    private val maxTasks: Int,
-    private val lockDurationInSeconds: Long,
-    private val retryTimeoutInSeconds: Long,
-    private val retries: Int,
-    private val executorService: ExecutorService
+  private val externalTaskService: ExternalTaskService,
+  private val workerId: String,
+  private val subscriptionRepository: SubscriptionRepository,
+  private val maxTasks: Int,
+  private val lockDurationInSeconds: Long,
+  private val retryTimeoutInSeconds: Long,
+  private val retries: Int,
+  private val executorService: ExecutorService
 ) : ExternalServiceTaskDelivery, RefreshableDelivery {
 
   /**
@@ -52,7 +52,8 @@ class EmbeddedPullServiceTaskDelivery(
               executorService.submit {  // in another thread
                 try {
                   val taskInformation = if (deliveredTaskIds.contains(lockedTask.id)
-                    && subscriptionRepository.getActiveSubscriptionForTask(lockedTask.id) == activeSubscription) {
+                    && subscriptionRepository.getActiveSubscriptionForTask(lockedTask.id) == activeSubscription
+                  ) {
                     // task is already delivered to the current subscription, nothing to do
                     null
                   } else {
@@ -71,9 +72,9 @@ class EmbeddedPullServiceTaskDelivery(
                   // remove from already delivered
                   deliveredTaskIds.remove(lockedTask.id)
                 } catch (e: Exception) {
-                  val jobRetries: Int = lockedTask.retries ?: retries
+                  val jobRetries: Int = lockedTask.retries?.minus(1) ?: retries
                   logger.error { "PROCESS-ENGINE-C7-EMBEDDED-033: failing delivering task ${lockedTask.id}: ${e.message}" }
-                  externalTaskService.handleFailure(lockedTask.id, workerId, e.message, jobRetries - 1, retryTimeoutInSeconds * 1000)
+                  externalTaskService.handleFailure(lockedTask.id, workerId, e.message, jobRetries, retryTimeoutInSeconds * 1000)
                   subscriptionRepository.deactivateSubscriptionForTask(taskId = lockedTask.id)
                   logger.error { "PROCESS-ENGINE-C7-EMBEDDED-034: successfully failed delivering task ${lockedTask.id}: ${e.message}" }
                 }
@@ -88,7 +89,12 @@ class EmbeddedPullServiceTaskDelivery(
       deliveredTaskIds.parallelStream().map { taskId ->
         executorService.submit {
           // deactivate active subscription and handle termination
-          subscriptionRepository.deactivateSubscriptionForTask(taskId)?.termination?.accept(TaskInformation(taskId, emptyMap()).withReason(TaskInformation.DELETE))
+          subscriptionRepository.deactivateSubscriptionForTask(taskId)?.termination?.accept(
+            TaskInformation(
+              taskId,
+              emptyMap()
+            ).withReason(TaskInformation.DELETE)
+          )
           logger.trace { "PROCESS-ENGINE-C7-EMBEDDED-043: deactivating $taskId, task is gone." }
         }
       }.forEach { taskTerminationFuture -> taskTerminationFuture.get() }
@@ -101,14 +107,20 @@ class EmbeddedPullServiceTaskDelivery(
   private fun ExternalTaskQueryBuilder.forSubscriptions(subscriptions: List<TaskSubscriptionHandle>): ExternalTaskQueryBuilder {
     subscriptions
       .filter { it.taskDescriptionKey != null }
-      .distinctBy { it.taskDescriptionKey  }
+      .distinctBy { it.taskDescriptionKey }
       .forEach { subscription ->
+        val lockDurationInMilliseconds = getLockDurationForSubscription(subscription)
         this
-          .topic(subscription.taskDescriptionKey, lockDurationInSeconds * 1000) // convert to ms
+          .topic(subscription.taskDescriptionKey, lockDurationInMilliseconds) // convert to ms
           .enableCustomObjectDeserialization()
         // FIXME -> consider complex tenant filtering
       }
     return this
+  }
+
+  private fun getLockDurationForSubscription(subscription: TaskSubscriptionHandle): Long {
+    val customLockDuration = subscription.restrictions["workerLockDurationInMilliseconds"]
+    return customLockDuration?.toLong() ?: (lockDurationInSeconds * 1000)
   }
 
   private fun TaskSubscriptionHandle.matches(task: LockedExternalTask): Boolean {

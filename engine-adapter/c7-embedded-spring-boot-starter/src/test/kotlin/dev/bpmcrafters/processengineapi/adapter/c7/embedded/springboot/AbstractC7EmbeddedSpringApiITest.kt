@@ -22,7 +22,7 @@ abstract class AbstractC7EmbeddedSpringApiITest(override val processTestHelper: 
     const val KEY = "simple-process"
     const val START_MESSAGE = "startMessage"
     const val BPMN = "bpmn/$KEY.bpmn"
-
+    const val DMN = "decision/main_decision.dmn"
     const val USER_TASK = "user-perform-task"
     const val EXTERNAL_TASK = "execute-action-external"
 
@@ -44,6 +44,7 @@ abstract class AbstractC7EmbeddedSpringApiITest(override val processTestHelper: 
     repositoryService.createDeployment()
       .name("Simple Process")
       .addClasspathResource(BPMN)
+      .addClasspathResource(DMN)
       .deploy()
   }
 

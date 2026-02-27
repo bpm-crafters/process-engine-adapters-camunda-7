@@ -6,6 +6,7 @@ import dev.bpmcrafters.processengineapi.CommonRestrictions
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.correlation.CorrelationApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.correlation.SignalApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.deploy.DeploymentApiImpl
+import dev.bpmcrafters.processengineapi.adapter.c7.embedded.shared.EngineCommandExecutor
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.process.CachingProcessDefinitionMetaDataResolver
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.process.StartProcessApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.completion.C7ServiceTaskCompletionApiImpl
@@ -32,6 +33,7 @@ import org.camunda.bpm.engine.history.HistoricActivityInstance
 import org.camunda.bpm.engine.runtime.ProcessInstance
 import org.camunda.bpm.engine.test.assertions.bpmn.BpmnAwareTests
 import org.camunda.bpm.engine.variable.VariableMap
+import java.time.Duration
 import java.util.*
 import java.util.concurrent.Executors
 import kotlin.collections.set
@@ -119,19 +121,34 @@ abstract class AbstractC7EmbeddedStage<SUBTYPE : AbstractC7EmbeddedStage<SUBTYPE
     this.workerId = self().javaClass.simpleName
 
     val subscriptionRepository = InMemSubscriptionRepository()
+    val commandExecutor = EngineCommandExecutor { it.run() }
 
     startProcessApi = StartProcessApiImpl(
       runtimeService = processEngineServices.runtimeService,
       repositoryService = processEngineServices.repositoryService,
+      commandExecutor = commandExecutor,
     )
-    deploymentApi = DeploymentApiImpl(processEngineServices.repositoryService)
-    userTaskCompletionApi = C7UserTaskCompletionApiImpl(processEngineServices.taskService, subscriptionRepository)
+    deploymentApi = DeploymentApiImpl(
+      repositoryService = processEngineServices.repositoryService,
+      commandExecutor = commandExecutor,
+    )
+    userTaskCompletionApi = C7UserTaskCompletionApiImpl(
+      taskService = processEngineServices.taskService,
+      subscriptionRepository = subscriptionRepository,
+      commandExecutor = commandExecutor
+    )
     serviceTaskCompletionApi = C7ServiceTaskCompletionApiImpl(
-      workerId, processEngineServices.externalTaskService, subscriptionRepository, LinearMemoryFailureRetrySupplier(3, 3L)
+      workerId = workerId,
+      externalTaskService = processEngineServices.externalTaskService,
+      subscriptionRepository = subscriptionRepository,
+      failureRetrySupplier = LinearMemoryFailureRetrySupplier(3, 3L),
+      commandExecutor = commandExecutor
     )
     embeddedPullUserTaskDelivery = EmbeddedPullUserTaskDelivery(
       taskService = processEngineServices.taskService,
-      processDefinitionMetaDataResolver = CachingProcessDefinitionMetaDataResolver(repositoryService = processEngineServices.repositoryService),
+      processDefinitionMetaDataResolver = CachingProcessDefinitionMetaDataResolver(
+        repositoryService = processEngineServices.repositoryService
+      ),
       subscriptionRepository = subscriptionRepository,
       executorService = Executors.newFixedThreadPool(1)
     )
@@ -141,18 +158,27 @@ abstract class AbstractC7EmbeddedStage<SUBTYPE : AbstractC7EmbeddedStage<SUBTYPE
     )
 
     taskSubscriptionApi = C7TaskSubscriptionApiImpl(
-      subscriptionRepository
+      subscriptionRepository = subscriptionRepository
     )
 
-    userTaskModificationApi = C7UserTaskModificationApiImpl(processEngineServices.taskService)
+    userTaskModificationApi = C7UserTaskModificationApiImpl(
+      taskService = processEngineServices.taskService,
+      commandExecutor = commandExecutor,
+    )
 
     this.userTaskSupport = UserTaskSupport()
     userTaskSupport.subscribe(
       taskSubscriptionApi, restrictions, null, null
     )
 
-    signalApi = SignalApiImpl(processEngineServices.runtimeService)
-    correlationApi = CorrelationApiImpl(processEngineServices.runtimeService)
+    signalApi = SignalApiImpl(
+      runtimeService = processEngineServices.runtimeService,
+      commandExecutor = commandExecutor,
+    )
+    correlationApi = CorrelationApiImpl(
+      runtimeService = processEngineServices.runtimeService,
+      commandExecutor = commandExecutor,
+    )
 
     initialize()
 
@@ -224,7 +250,7 @@ abstract class AbstractC7EmbeddedStage<SUBTYPE : AbstractC7EmbeddedStage<SUBTYPE
     return self()
   }
 
-  @As("external task of type \$jobType is completed with error \$errorMessage")
+  @As("external task of type \$topicName is completed with error \$errorMessage")
   open fun external_task_is_completed_with_error(@Quoted topicName: String, errorMessage: String, variables: VariableMap): SUBTYPE {
     Objects.requireNonNull(
       topicToExternalTaskId[topicName], "No active external service task found, consider to assert using external_task_exists"
@@ -233,6 +259,19 @@ abstract class AbstractC7EmbeddedStage<SUBTYPE : AbstractC7EmbeddedStage<SUBTYPE
       CompleteTaskByErrorCmd(
         topicToExternalTaskId.getValue(topicName), errorMessage
       ) { variables }).get()
+    return self()
+  }
+
+  @As("external task of type \$topicName has failed with reason \$reason")
+  open fun external_task_is_failed(@Quoted topicName: String, reason: String, retryCount: Int): SUBTYPE {
+    Objects.requireNonNull(
+      topicToExternalTaskId[topicName], "No active external service task found, consider to assert using external_task_exists"
+    )
+    serviceTaskCompletionApi.failTask(
+      FailTaskCmd(
+        topicToExternalTaskId.getValue(topicName), reason, null,
+        retryCount, Duration.ofSeconds(3)
+      )).get()
     return self()
   }
 
@@ -372,6 +411,12 @@ abstract class AbstractC7EmbeddedStage<SUBTYPE : AbstractC7EmbeddedStage<SUBTYPE
 
   open fun process_is_stopped(): SUBTYPE {
     processEngineServices.runtimeService.deleteProcessInstance(this.processInstanceId, "Stopped", false, true)
+    return self()
+  }
+
+  open fun process_has_incidents(): SUBTYPE {
+    Assertions.assertThat(processEngineServices.runtimeService.createIncidentQuery().processInstanceId(processInstanceId).count())
+      .isPositive
     return self()
   }
 

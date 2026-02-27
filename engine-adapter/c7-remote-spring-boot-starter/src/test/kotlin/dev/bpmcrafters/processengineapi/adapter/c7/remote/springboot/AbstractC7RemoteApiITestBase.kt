@@ -27,7 +27,7 @@ abstract class AbstractC7RemoteApiITestBase : JGivenSpringBaseIntegrationTest() 
     const val KEY = "simple-process"
     const val START_MESSAGE = "startMessage"
     const val BPMN = "bpmn/$KEY.bpmn"
-
+    const val DMN = "decision/main_decision.dmn"
     const val USER_TASK = "user-perform-task"
     const val EXTERNAL_TASK = "execute-action-external"
 
@@ -56,7 +56,10 @@ abstract class AbstractC7RemoteApiITestBase : JGivenSpringBaseIntegrationTest() 
     deploymentApi
       .deploy(
         DeployBundleCommand(
-          listOf(NamedResource.fromClasspath(BPMN))
+          listOf(
+            NamedResource.fromClasspath(BPMN),
+            NamedResource.fromClasspath(DMN),
+          )
         )
       ).get()
 

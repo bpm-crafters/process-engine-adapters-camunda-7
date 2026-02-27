@@ -1,0 +1,48 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>dev.bpm-crafters.process-engine-examples</groupId>
+    <artifactId>process-engine-api-example-root-c7</artifactId>
+    <version>2026.02.1</version>
+    <relativePath>../pom.xml</relativePath>
+  </parent>
+
+  <properties>
+    <spring-boot.version>4.0.2</spring-boot.version>
+  </properties>
+
+  <artifactId>process-engine-api-example-java-c7-remote-sb4</artifactId>
+  <name>Example: Java C7 Remote Spring Boot 4</name>
+
+  <dependencies>
+    <dependency>
+      <groupId>dev.bpm-crafters.process-engine-examples</groupId>
+      <artifactId>process-engine-api-example-java-c7-common-fixture</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>dev.bpm-crafters.process-engine-adapters</groupId>
+      <artifactId>process-engine-adapter-camunda-platform-c7-remote-spring-boot-starter</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+
+    <!-- Feign REST Client -->
+    <dependency>
+      <groupId>io.holunda.c7</groupId>
+      <artifactId>c7-rest-client-spring-boot-starter-feign-4</artifactId>
+      <version>${c7.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.fasterxml.jackson.module</groupId>
+      <artifactId>jackson-module-kotlin</artifactId>
+    </dependency>
+  </dependencies>
+
+</project>

@@ -10,6 +10,7 @@ import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.C7RemoteAda
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.UserTaskDelivery
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.PullServiceTaskDelivery
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.subscribe.SubscribingServiceTaskDelivery
+import dev.bpmcrafters.processengineapi.decision.EvaluateDecisionApi
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import dev.bpmcrafters.processengineapi.process.StartProcessApi
 import dev.bpmcrafters.processengineapi.task.ServiceTaskCompletionApi
@@ -54,6 +55,7 @@ class C7RemoteTestApplication {
     userTaskCompletionApi: UserTaskCompletionApi,
     serviceTaskCompletionApi: ServiceTaskCompletionApi,
     subscriptionRepository: SubscriptionRepository,
+    evaluateDecisionApi: EvaluateDecisionApi,
   ): ProcessTestHelper = C7RemoteProcessTestHelper(
     processInstanceApiClient = processInstanceApiClient,
     startProcessApi = startProcessApi,
@@ -62,7 +64,8 @@ class C7RemoteTestApplication {
     serviceTaskDelivery = serviceTaskDelivery,
     userTaskCompletionApi = userTaskCompletionApi,
     serviceTaskCompletionApi = serviceTaskCompletionApi,
-    subscriptionRepository = subscriptionRepository
+    subscriptionRepository = subscriptionRepository,
+    evaluateDecisionApi = evaluateDecisionApi,
   )
 
   @ConditionalOnServiceTaskDeliveryStrategy(
@@ -78,6 +81,7 @@ class C7RemoteTestApplication {
     userTaskCompletionApi: UserTaskCompletionApi,
     serviceTaskCompletionApi: ServiceTaskCompletionApi,
     subscriptionRepository: SubscriptionRepository,
+    evaluateDecisionApi: EvaluateDecisionApi,
   ): ProcessTestHelper = C7RemoteProcessTestHelper(
     processInstanceApiClient = processInstanceApiClient,
     startProcessApi = startProcessApi,
@@ -86,7 +90,8 @@ class C7RemoteTestApplication {
     serviceTaskDelivery = serviceTaskDelivery,
     userTaskCompletionApi = userTaskCompletionApi,
     serviceTaskCompletionApi = serviceTaskCompletionApi,
-    subscriptionRepository = subscriptionRepository
+    subscriptionRepository = subscriptionRepository,
+    evaluateDecisionApi = evaluateDecisionApi,
   )
 
 }

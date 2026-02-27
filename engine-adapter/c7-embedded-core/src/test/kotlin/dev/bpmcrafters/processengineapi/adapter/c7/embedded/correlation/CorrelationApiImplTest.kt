@@ -1,6 +1,7 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.embedded.correlation
 
 import dev.bpmcrafters.processengineapi.CommonRestrictions
+import dev.bpmcrafters.processengineapi.adapter.c7.embedded.shared.EngineCommandExecutor
 import dev.bpmcrafters.processengineapi.correlation.CorrelateMessageCmd
 import dev.bpmcrafters.processengineapi.correlation.Correlation
 import org.camunda.bpm.engine.RuntimeService
@@ -8,22 +9,17 @@ import org.camunda.bpm.engine.runtime.MessageCorrelationBuilder
 import org.camunda.community.mockito.ProcessExpressions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
-import org.mockito.InjectMocks
 import org.mockito.Mockito.mock
-import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.verify
-import org.mockito.kotlin.verifyNoInteractions
 import org.mockito.kotlin.verifyNoMoreInteractions
-import java.util.concurrent.ExecutionException
 
-@ExtendWith(MockitoExtension::class)
 class CorrelationApiImplTest {
 
   private val runtimeService: RuntimeService = mock()
-
-  @InjectMocks
-  private lateinit var correlationApi: CorrelationApiImpl
+  private val correlationApi = CorrelationApiImpl(
+    runtimeService = runtimeService,
+    commandExecutor = EngineCommandExecutor { it.run() }
+  )
 
   private lateinit var correlation: MessageCorrelationBuilder
 
@@ -66,6 +62,5 @@ class CorrelationApiImplTest {
     verify(correlation).setVariables(mapOf("some" to 1L))
     verify(correlation).processInstanceVariableEquals("myCorrelation", "varValue")
     verifyNoMoreInteractions(correlation)
-
   }
 }

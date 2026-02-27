@@ -3,6 +3,7 @@ package dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.process.toProcessInformation
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.delivery.pull.EmbeddedPullServiceTaskDelivery
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.delivery.pull.EmbeddedPullUserTaskDelivery
+import dev.bpmcrafters.processengineapi.decision.EvaluateDecisionApi
 import dev.bpmcrafters.processengineapi.impl.task.InMemSubscriptionRepository
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import dev.bpmcrafters.processengineapi.process.ProcessInformation
@@ -21,14 +22,15 @@ class C7EmbeddedSpringProcessTestHelper(
   private val taskSubscriptionApi: TaskSubscriptionApi,
   private val userTaskCompletionApi: UserTaskCompletionApi,
   private val serviceTaskCompletionApi: ServiceTaskCompletionApi,
-  private val subscriptionRepository: SubscriptionRepository
+  private val subscriptionRepository: SubscriptionRepository,
+  private val evaluateDecisionApi: EvaluateDecisionApi,
 ) : ProcessTestHelper {
 
   override fun getStartProcessApi(): StartProcessApi = startProcessApi
   override fun getTaskSubscriptionApi(): TaskSubscriptionApi = taskSubscriptionApi
   override fun getUserTaskCompletionApi(): UserTaskCompletionApi = userTaskCompletionApi
   override fun getServiceTaskCompletionApi(): ServiceTaskCompletionApi = serviceTaskCompletionApi
-
+  override fun getEvaluateDecisionApi(): EvaluateDecisionApi = evaluateDecisionApi
   override fun triggerPullingUserTaskDeliveryManually() = userTaskDelivery.refresh()
   override fun subscribeForUserTasks() {
     TODO("Not yet implemented")

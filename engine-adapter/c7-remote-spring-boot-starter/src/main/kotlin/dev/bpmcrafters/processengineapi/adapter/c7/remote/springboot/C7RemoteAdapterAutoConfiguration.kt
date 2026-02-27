@@ -1,7 +1,9 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.correlation.CorrelationApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.correlation.SignalApiImpl
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.decision.EvaluateDecisionApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.deploy.DeploymentApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.process.ProcessDefinitionMetaDataResolver
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.process.StartProcessApiImpl
@@ -13,6 +15,7 @@ import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.completion.Linear
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.PullServiceTaskDeliveryMetrics
 import dev.bpmcrafters.processengineapi.correlation.CorrelationApi
 import dev.bpmcrafters.processengineapi.correlation.SignalApi
+import dev.bpmcrafters.processengineapi.decision.EvaluateDecisionApi
 import dev.bpmcrafters.processengineapi.deploy.DeploymentApi
 import dev.bpmcrafters.processengineapi.impl.task.InMemSubscriptionRepository
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
@@ -22,10 +25,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import io.micrometer.core.instrument.MeterRegistry
 import io.toolisticon.spring.condition.ConditionalOnMissingQualifiedBean
 import jakarta.annotation.PostConstruct
-import org.camunda.community.rest.client.api.DeploymentApiClient
-import org.camunda.community.rest.client.api.MessageApiClient
-import org.camunda.community.rest.client.api.ProcessDefinitionApiClient
-import org.camunda.community.rest.client.api.SignalApiClient
+import org.camunda.community.rest.client.api.*
 import org.camunda.community.rest.variables.ValueMapper
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.autoconfigure.AutoConfiguration
@@ -87,6 +87,16 @@ class C7RemoteAdapterAutoConfiguration {
   fun deployApi(deploymentApiClient: DeploymentApiClient): DeploymentApi = DeploymentApiImpl(
     deploymentApiClient = deploymentApiClient
   )
+
+  @Bean("c7remote-evaluate-decision-api")
+  @Qualifier("c7remote-evaluate-decision-api")
+  fun evaluateDecisionApi(decisionDefinitionApiClient: DecisionDefinitionApiClient, valueMapper: ValueMapper,
+                          objectMapper: ObjectMapper): EvaluateDecisionApi = EvaluateDecisionApiImpl(
+    decisionDefinitionApiClient = decisionDefinitionApiClient,
+    valueMapper = valueMapper,
+    objectMapper = objectMapper
+  )
+
   /**
    * Subscription Repository.
    */

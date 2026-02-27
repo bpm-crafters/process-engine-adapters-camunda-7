@@ -272,7 +272,7 @@ internal class PullServiceTaskDeliveryTest {
     taskDelivery.deliverNewTasks()
 
     verify(executor).queue
-    verify(metrics).incrementFetchedAndLockedTasksCounter(task.topicName, 1)
+    verify(metrics).incrementFetchedAndLockedTasksCounter(task.topicName!!, 1)
     verify(executor).submit(taskActionHandlerCallable)
     verifyNoMoreInteractions(executor)
   }
@@ -294,7 +294,7 @@ internal class PullServiceTaskDeliveryTest {
     taskDelivery.deliverNewTasks()
 
     verify(executor).queue
-    verify(metrics).incrementDroppedTasksCounter(task.topicName, NO_MATCHING_SUBSCRIPTIONS)
+    verify(metrics).incrementDroppedTasksCounter(task.topicName!!, NO_MATCHING_SUBSCRIPTIONS)
     verifyNoMoreInteractions(executor)
   }
 
@@ -309,7 +309,7 @@ internal class PullServiceTaskDeliveryTest {
     val callable = taskDelivery.createTaskActionHandlerCallable(lockedTask, activeSubscription)
     callable.call()
 
-    verify(metrics).incrementDroppedTasksCounter(lockedTask.topicName, EXPIRED_WHILE_IN_QUEUE)
+    verify(metrics).incrementDroppedTasksCounter(lockedTask.topicName!!, EXPIRED_WHILE_IN_QUEUE)
     verifyNoInteractions(subscriptionRepository)
   }
 
@@ -321,12 +321,12 @@ internal class PullServiceTaskDeliveryTest {
       .whenever(subscriptionRepository)
       .activateSubscriptionForTask("1", activeSubscription)
     val variables = Variables.createVariables()
-    lockedTask.variables.entries.forEach {
+    lockedTask.variables!!.entries.forEach {
       variables[it.key] = it.value.value
     }
     doReturn(variables)
       .whenever(valueMapper)
-      .mapDtos(lockedTask.variables)
+      .mapDtos(lockedTask.variables!!)
     doReturn(mockTaskInformation("1"))
       .whenever(taskDelivery)
       .toTaskInformation(lockedTask)
@@ -334,15 +334,15 @@ internal class PullServiceTaskDeliveryTest {
     val callable = taskDelivery.createTaskActionHandlerCallable(lockedTask, activeSubscription)
     callable.call()
 
-    verify(metrics).recordTaskQueueTime(eq(lockedTask.topicName), durationCaptor.capture())
+    verify(metrics).recordTaskQueueTime(eq(lockedTask.topicName!!), durationCaptor.capture())
     val queueTime = durationCaptor.singleValue.toMillis()
     assertTrue(3_000.rangeTo(4_000).contains(queueTime), "Expected queue time $queueTime to be between 3000 and 4000 ms")
     verify(activeSubscription.action).accept(taskInformationCaptor.capture(), eq(variables))
     val taskInformation = taskInformationCaptor.singleValue
     assertEquals("1", taskInformation.taskId)
     assertEquals(mapOf(REASON to CREATE), taskInformation.meta)
-    verify(metrics).incrementCompletedTasksCounter(lockedTask.topicName)
-    verify(metrics).recordTaskExecutionTime(eq(lockedTask.topicName), durationCaptor.capture())
+    verify(metrics).incrementCompletedTasksCounter(lockedTask.topicName!!)
+    verify(metrics).recordTaskExecutionTime(eq(lockedTask.topicName!!), durationCaptor.capture())
     val executionTime = durationCaptor.secondValue.toMillis()
     assertTrue(executionTime >= 0, "Expected execution time to be >= 0")
   }
@@ -361,7 +361,7 @@ internal class PullServiceTaskDeliveryTest {
     callable.call()
 
     verifyNoInteractions(valueMapper)
-    verify(metrics).incrementFailedTasksCounter(lockedTask.topicName)
+    verify(metrics).incrementFailedTasksCounter(lockedTask.topicName!!)
     verify(externalTaskApiClient).handleFailure(
       lockedTask.id,
       ExternalTaskFailureDto().apply {
@@ -383,6 +383,7 @@ internal class PullServiceTaskDeliveryTest {
     .id(id)
     .topicName("topical-but-not-tropical")
     .lockExpirationTime(lockExpirationTime)
+    .retries(1)
     .variables(mapOf(
       // ...to have something (most likely) unique for argument matching.
       "variable" to VariableValueDto().value(randomUUID().toString()))

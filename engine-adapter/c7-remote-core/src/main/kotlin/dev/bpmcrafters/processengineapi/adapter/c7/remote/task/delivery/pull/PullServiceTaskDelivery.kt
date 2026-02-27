@@ -17,7 +17,13 @@ import dev.bpmcrafters.processengineapi.task.TaskInformation.Companion.CREATE
 import dev.bpmcrafters.processengineapi.task.TaskType
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.camunda.community.rest.client.api.ExternalTaskApiClient
-import org.camunda.community.rest.client.model.*
+import org.camunda.community.rest.client.model.ExternalTaskFailureDto
+import org.camunda.community.rest.client.model.ExternalTaskQueryDto
+import org.camunda.community.rest.client.model.ExternalTaskQueryDtoSortingInner
+import org.camunda.community.rest.client.model.FetchExternalTaskTopicDto
+import org.camunda.community.rest.client.model.FetchExternalTasksDto
+import org.camunda.community.rest.client.model.FetchExternalTasksDtoSortingInner
+import org.camunda.community.rest.client.model.LockedExternalTaskDto
 import org.camunda.community.rest.variables.ValueMapper
 import java.time.Duration
 import java.time.OffsetDateTime
@@ -58,8 +64,8 @@ class PullServiceTaskDelivery(
    * Delivers all tasks found in the external service to corresponding subscriptions.
    */
   override fun refresh() {
-      cleanUpTerminatedTasks()
-      deliverNewTasks()
+    cleanUpTerminatedTasks()
+    deliverNewTasks()
   }
 
   internal fun deliverNewTasks() {
@@ -83,11 +89,13 @@ class PullServiceTaskDelivery(
         FetchExternalTasksDto(workerId, tasksToFetch)
           .forSubscriptions(subscriptions)
           .usePriority(true)
-          .sorting(mutableListOf(
-            FetchExternalTasksDtoSortingInner()
-              .sortBy(FetchExternalTasksDtoSortingInner.SortByEnum.CREATE_TIME)
-              .sortOrder(FetchExternalTasksDtoSortingInner.SortOrderEnum.ASC)
-          ))
+          .sorting(
+            mutableListOf(
+              FetchExternalTasksDtoSortingInner()
+                .sortBy(FetchExternalTasksDtoSortingInner.SortByEnum.CREATE_TIME)
+                .sortOrder(FetchExternalTasksDtoSortingInner.SortOrderEnum.ASC)
+            )
+          )
       )
 
     val lockedTasks =
@@ -96,7 +104,7 @@ class PullServiceTaskDelivery(
     logger.trace { "PROCESS-ENGINE-C7-REMOTE-042: pulled ${lockedTasks.size} service tasks" }
     lockedTasks
       .groupBy { it.topicName }
-      .forEach { (topic, tasks) -> metrics.incrementFetchedAndLockedTasksCounter(topic, tasks.size) }
+      .forEach { (topic, tasks) -> metrics.incrementFetchedAndLockedTasksCounter(topic!!, tasks.size) }
 
     val taskActionHandlerCallables = lockedTasks
       .asSequence()
@@ -104,7 +112,7 @@ class PullServiceTaskDelivery(
       .filter { (lockedTask, subscription) ->
         val keep = subscription != null
         if (!keep) {
-          metrics.incrementDroppedTasksCounter(lockedTask.topicName, NO_MATCHING_SUBSCRIPTIONS)
+          metrics.incrementDroppedTasksCounter(lockedTask.topicName!!, NO_MATCHING_SUBSCRIPTIONS)
         }
         keep
       }
@@ -117,26 +125,26 @@ class PullServiceTaskDelivery(
   internal fun createTaskActionHandlerCallable(lockedTask: LockedExternalTaskDto, activeSubscription: TaskSubscriptionHandle): Callable<Unit> = Callable {
     // make sure the task has not expired waiting in the queue for the execution
     val start = OffsetDateTime.now()
-    val timePassedSinceLockAcquisition = Duration.between(lockedTask.lockExpirationTime.minusSeconds(lockDurationInSeconds), start)
-    metrics.recordTaskQueueTime(lockedTask.topicName, timePassedSinceLockAcquisition)
+    val timePassedSinceLockAcquisition = Duration.between(lockedTask.lockExpirationTime!!.minusSeconds(lockDurationInSeconds), start)
+    metrics.recordTaskQueueTime(lockedTask.topicName!!, timePassedSinceLockAcquisition)
     if (start.isBefore(lockedTask.lockExpirationTime)) {
       try {
-        subscriptionRepository.activateSubscriptionForTask(lockedTask.id, activeSubscription)
-        val variables = valueMapper.mapDtos(lockedTask.variables).filterBySubscription(activeSubscription)
+        subscriptionRepository.activateSubscriptionForTask(lockedTask.id!!, activeSubscription)
+        val variables = valueMapper.mapDtos(lockedTask.variables!!).filterBySubscription(activeSubscription)
         logger.debug { "PROCESS-ENGINE-C7-REMOTE-031: delivering service task ${lockedTask.id}." }
         val taskInformation = toTaskInformation(lockedTask).withReason(CREATE)
         activeSubscription.action.accept(taskInformation, variables)
         logger.debug { "PROCESS-ENGINE-C7-REMOTE-032: successfully delivered service task ${lockedTask.id}." }
-        metrics.incrementCompletedTasksCounter(lockedTask.topicName)
+        metrics.incrementCompletedTasksCounter(lockedTask.topicName!!)
       } catch (e: Exception) {
         logger.error { "PROCESS-ENGINE-C7-REMOTE-033: failing delivering task ${lockedTask.id}: ${e.message}" }
-        metrics.incrementFailedTasksCounter(lockedTask.topicName)
-        val jobRetries: Int = lockedTask.retries ?: retries
+        metrics.incrementFailedTasksCounter(lockedTask.topicName!!)
+        val jobRetries: Int = lockedTask.retries?.minus(1) ?: retries
         externalTaskApiClient.handleFailure(
           lockedTask.id,
           ExternalTaskFailureDto().apply {
             workerId = this@PullServiceTaskDelivery.workerId
-            retries = jobRetries - 1
+            retries = jobRetries
             retryTimeout = retryTimeoutInSeconds * 1000 // from seconds to millis
             errorDetails = e.stackTraceToString()
             errorMessage = e.message
@@ -144,10 +152,10 @@ class PullServiceTaskDelivery(
         )
         logger.error { "PROCESS-ENGINE-C7-REMOTE-034: successfully failed delivering task ${lockedTask.id}: ${e.message}" }
       } finally {
-        metrics.recordTaskExecutionTime(lockedTask.topicName, Duration.between(start, OffsetDateTime.now()))
+        metrics.recordTaskExecutionTime(lockedTask.topicName!!, Duration.between(start, OffsetDateTime.now()))
       }
     } else {
-      metrics.incrementDroppedTasksCounter(lockedTask.topicName, EXPIRED_WHILE_IN_QUEUE)
+      metrics.incrementDroppedTasksCounter(lockedTask.topicName!!, EXPIRED_WHILE_IN_QUEUE)
     }
   }
 
@@ -162,15 +170,17 @@ class PullServiceTaskDelivery(
       ExternalTaskQueryDto()
         .workerId(workerId)
         .locked(true)
-        .sorting(listOf(
-          ExternalTaskQueryDtoSortingInner()
-            .sortBy(ExternalTaskQueryDtoSortingInner.SortByEnum.CREATE_TIME)
-            .sortOrder(ExternalTaskQueryDtoSortingInner.SortOrderEnum.ASC))
+        .sorting(
+          listOf(
+            ExternalTaskQueryDtoSortingInner()
+              .sortBy(ExternalTaskQueryDtoSortingInner.SortByEnum.CREATE_TIME)
+              .sortOrder(ExternalTaskQueryDtoSortingInner.SortOrderEnum.ASC)
+          )
         )
     )
     val stillLockedTaskIds =
       requireNotNull(stillLockedTasksResult.body) { "Could not fetch still locked tasks for worker: $workerId, status code was ${stillLockedTasksResult.statusCode}" }
-        .map { dto -> dto.id }
+        .map { dto -> dto.id!! }
         .toSet()
     stillLockedTasksGauge.set(stillLockedTaskIds.size)
 
@@ -210,12 +220,10 @@ class PullServiceTaskDelivery(
     subscriptions
       .map { it.taskDescriptionKey to it.restrictions }
       .distinctBy { it.first }
-      .forEach { (topic, _) ->
+      .forEach { (topic, restrictions) ->
+        val lockDurationInMilliseconds = getLockDurationForSubscription(restrictions)
         this.addTopicsItem(
-          FetchExternalTaskTopicDto(
-            topic,
-            lockDurationInSeconds * 1000 // convert to ms
-          ).apply {
+          FetchExternalTaskTopicDto(topic, lockDurationInMilliseconds).apply {
             this.deserializeValues = this@PullServiceTaskDelivery.deserializeOnServer
 
             /*
@@ -238,6 +246,13 @@ class PullServiceTaskDelivery(
         )
       }
     return this
+  }
+
+  private fun getLockDurationForSubscription(
+    restrictions: Map<String, String>,
+  ): Long {
+    val customLockDuration = restrictions["workerLockDurationInMilliseconds"]
+    return customLockDuration?.toLong() ?: (lockDurationInSeconds * 1000)
   }
 
   internal fun matches(task: LockedExternalTaskDto, subscription: TaskSubscriptionHandle): Boolean =

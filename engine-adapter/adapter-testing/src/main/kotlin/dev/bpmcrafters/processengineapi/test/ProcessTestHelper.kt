@@ -1,5 +1,6 @@
 package dev.bpmcrafters.processengineapi.test
 
+import dev.bpmcrafters.processengineapi.decision.EvaluateDecisionApi
 import dev.bpmcrafters.processengineapi.process.ProcessInformation
 import dev.bpmcrafters.processengineapi.process.StartProcessApi
 import dev.bpmcrafters.processengineapi.task.ServiceTaskCompletionApi
@@ -15,6 +16,8 @@ interface ProcessTestHelper {
   fun getUserTaskCompletionApi(): UserTaskCompletionApi
 
   fun getServiceTaskCompletionApi(): ServiceTaskCompletionApi
+
+  fun getEvaluateDecisionApi(): EvaluateDecisionApi
 
   fun triggerPullingUserTaskDeliveryManually()
 

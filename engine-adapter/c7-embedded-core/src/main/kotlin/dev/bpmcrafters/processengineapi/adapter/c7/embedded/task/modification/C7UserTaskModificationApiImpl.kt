@@ -1,13 +1,13 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.modification
 
 import dev.bpmcrafters.processengineapi.Empty
+import dev.bpmcrafters.processengineapi.adapter.c7.embedded.shared.EngineCommandExecutor
 import dev.bpmcrafters.processengineapi.task.*
 import dev.bpmcrafters.processengineapi.task.ChangeAssignmentModifyTaskCmd.*
 import dev.bpmcrafters.processengineapi.task.ChangePayloadModifyTaskCmd.*
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.camunda.bpm.engine.TaskService
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.Future
 
 private val logger = KotlinLogging.logger {}
 
@@ -16,17 +16,20 @@ private val logger = KotlinLogging.logger {}
  */
 class C7UserTaskModificationApiImpl(
   private val taskService: TaskService,
+  private val commandExecutor: EngineCommandExecutor,
 ) : UserTaskModificationApi {
   override fun update(cmd: ModifyTaskCmd): CompletableFuture<Empty> {
     logger.debug { "PROCESS-ENGINE-C7-EMBEDDED-051: modifying user task ${cmd.taskId}." }
-    if (cmd is CompositeModifyTaskCmd) {
-      cmd.commands.forEach {
-        handleCommand(it)
+    return commandExecutor.execute {
+      if (cmd is CompositeModifyTaskCmd) {
+        cmd.commands.forEach {
+          handleCommand(it)
+        }
+      } else {
+        handleCommand(cmd)
       }
-    } else {
-      handleCommand(cmd)
+      Empty
     }
-    return CompletableFuture.completedFuture(Empty)
   }
 
   private fun handleCommand(cmd: ModifyTaskCmd) {

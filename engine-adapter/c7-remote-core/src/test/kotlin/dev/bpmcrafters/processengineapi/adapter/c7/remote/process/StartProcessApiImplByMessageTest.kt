@@ -30,6 +30,7 @@ class StartProcessApiImplByMessageTest {
   private val valueMapper: ValueMapper = TestFixtures.valueMapper()
 
   @Spy
+  @Suppress("unused")
   private val processDefinitionMetaDataResolver = CachingProcessDefinitionMetaDataResolver(
     processDefinitionApiClient
   )
@@ -104,6 +105,5 @@ class StartProcessApiImplByMessageTest {
     val expected = startProcessApi.getSupportedRestrictions().joinToString(", ")
     assertThat(exception.cause!!.message).isEqualTo("Only $expected are supported but businessKey were found.")
   }
-
 
 }

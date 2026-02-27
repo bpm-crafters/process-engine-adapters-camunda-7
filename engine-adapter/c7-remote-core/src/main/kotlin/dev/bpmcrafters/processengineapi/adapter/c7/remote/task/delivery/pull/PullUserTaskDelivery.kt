@@ -67,8 +67,8 @@ class PullUserTaskDelivery(
 
                   // create task information and set up the reason
                   val taskInformation =
-                    if (deliveredTaskIds.contains(task.id)
-                      && subscriptionRepository.getActiveSubscriptionForTask(task.id) == activeSubscription
+                    if (deliveredTaskIds.contains(task.id!!)
+                      && subscriptionRepository.getActiveSubscriptionForTask(task.id!!) == activeSubscription
                     ) {
                       // task was already delivered to this subscription
                       if (task.hasChanged()) {
@@ -86,9 +86,9 @@ class PullUserTaskDelivery(
                       task.toTaskInformation(candidates, processDefinitionMetaDataResolver).withReason(TaskInformation.CREATE)
                     }
                   if (taskInformation != null) {
-                    subscriptionRepository.activateSubscriptionForTask(task.id, activeSubscription)
+                    subscriptionRepository.activateSubscriptionForTask(task.id!!, activeSubscription)
                     synchronized(deliveredTasks) {
-                      deliveredTasks[task.id] = taskInformation
+                      deliveredTasks[task.id!!] = taskInformation
                     }
                     val variableResult = taskApiClient.getTaskVariables(task.id, deserializeOnServer)
                     val variables =
@@ -104,8 +104,8 @@ class PullUserTaskDelivery(
                   // since we do it from another thread, this must terminate before
                   // we can access the `deliveredTaskIds` for
                   synchronized(deliveredTasks) {
-                    if (deliveredTaskIds.contains(task.id)) { // if the task was already there, remove it from unprocessed list
-                      val successful = deliveredTaskIds.remove(task.id)
+                    if (deliveredTaskIds.contains(task.id!!)) { // if the task was already there, remove it from unprocessed list
+                      val successful = deliveredTaskIds.remove(task.id!!)
                       if (!successful) {
                         logger.error { "PROCESS-ENGINE-C7-REMOTE-038: error processing task ${task.id}, could not mark updated task as processed." }
                       }
@@ -114,7 +114,7 @@ class PullUserTaskDelivery(
 
                 } catch (e: Exception) {
                   logger.error { "PROCESS-ENGINE-C7-REMOTE-038: error delivering task ${task.id}: ${e.message}" }
-                  subscriptionRepository.deactivateSubscriptionForTask(taskId = task.id)
+                  subscriptionRepository.deactivateSubscriptionForTask(taskId = task.id!!)
                 }
               }
             }
@@ -157,7 +157,7 @@ class PullUserTaskDelivery(
    * Checks if a task has changed.
    */
   private fun TaskWithAttachmentAndCommentDto.hasChanged(): Boolean {
-    val taskInformation = deliveredTasks[this.id]
+    val taskInformation = deliveredTasks[this.id!!]
     return !(
       taskInformation != null
         && taskInformation.meta["lastUpdatedDate"] == this.lastUpdated.toDateString()
@@ -169,7 +169,7 @@ class PullUserTaskDelivery(
    * Checks if a task assignees, candidate users and candidate users have changed.
    */
   private fun TaskWithAttachmentAndCommentDto.hasChangedAssignees(candidates: Set<IdentityLinkDto>): Boolean {
-    val taskInformation = deliveredTasks[this.id]
+    val taskInformation = deliveredTasks[this.id!!]
     return !(taskInformation != null
       && taskInformation.meta["assignee"] == this.assignee
       && taskInformation.meta["candidateUsers"] == candidates.toUsersString()

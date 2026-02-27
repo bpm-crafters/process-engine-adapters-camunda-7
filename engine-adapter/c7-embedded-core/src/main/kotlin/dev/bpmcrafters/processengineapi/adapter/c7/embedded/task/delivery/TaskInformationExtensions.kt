@@ -40,27 +40,6 @@ fun Task.toTaskInformation(candidates: Set<IdentityLink>, processDefinitionKey: 
     }
   )
 
-fun TaskEntity.toTaskInformation() =
-  TaskInformation(
-    taskId = this.id,
-    meta = mapOf(
-      CommonRestrictions.PROCESS_DEFINITION_ID to this.processDefinitionId,
-      CommonRestrictions.ACTIVITY_ID to this.taskDefinitionKey,
-      CommonRestrictions.TENANT_ID to this.tenantId,
-      CommonRestrictions.PROCESS_INSTANCE_ID to this.processInstanceId,
-      "taskName" to this.name,
-      "taskDescription" to this.description,
-      "assignee" to this.assignee,
-      "creationDate" to this.createTime.toDateString(),
-      "followUpDate" to this.followUpDate.toDateString(),
-      "dueDate" to this.dueDate.toDateString(),
-      "formKey" to this.formKey,
-      "candidateUsers" to this.candidates.toUsersString(),
-      "candidateGroups" to this.candidates.toGroupsString(),
-      "lastUpdatedDate" to this.lastUpdated.toDateString()
-    )
-  )
-
 fun DelegateTask.toTaskInformation() =
   TaskInformation(
     taskId = this.id,
@@ -95,23 +74,6 @@ fun LockedExternalTask.toTaskInformation(): TaskInformation =
       TaskInformation.RETRIES to (this.retries?.toString() ?: ""),
     )
   )
-
-
-fun ExternalTaskEntity.toTaskInformation(): TaskInformation {
-  return TaskInformation(
-    taskId = this.id,
-    meta = mapOf(
-      CommonRestrictions.PROCESS_DEFINITION_ID to this.processDefinitionId,
-      CommonRestrictions.PROCESS_DEFINITION_KEY to this.processDefinitionKey,
-      CommonRestrictions.PROCESS_INSTANCE_ID to this.processInstanceId,
-      CommonRestrictions.TENANT_ID to this.tenantId,
-      CommonRestrictions.ACTIVITY_ID to this.activityId,
-      "topicName" to this.topicName,
-      "creationDate" to this.createTime.toDateString(),
-      TaskInformation.RETRIES to (this.retries?.toString() ?: ""),
-    )
-  )
-}
 
 /**
  * Converts engine internal representation into a string.

@@ -1,0 +1,48 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: Java Camunda Platform 7 Remote
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+
+springdoc:
+  swagger-ui:
+    try-it-out-enabled: true
+
+dev:
+  bpm-crafters:
+    process-api:
+      adapter:
+        c7remote:
+          enabled: true
+          service-tasks:
+            delivery-strategy: remote_scheduled
+            schedule-delivery-fixed-rate-in-seconds: 5
+            worker-id: embedded-worker
+            lock-time-in-seconds: 10
+            deserialize-on-server: false
+            worker-thread-pool-queue-capacity: 5
+            worker-thread-pool-size: 2
+            max-task-count: 2
+          user-tasks:
+            schedule-delivery-fixed-rate-in-seconds: 5
+            delivery-strategy: remote_scheduled
+            execute-initial-pull-on-startup: false
+            deserialize-on-server: false
+
+feign:
+  client:
+    config:
+      default:
+        url: "http://localhost:9090/engine-rest/"
+
+logging:
+  level:
+    dev.bpmcrafters.processengineapi: INFO
+    dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot: TRACE

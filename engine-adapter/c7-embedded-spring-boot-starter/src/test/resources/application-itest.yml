@@ -18,3 +18,9 @@ dev:
             schedule-delivery-fixed-rate-in-seconds: 1
             delivery-strategy: embedded_scheduled
             execute-initial-pull-on-startup: false
+
+camunda:
+  bpm:
+    generic-properties:
+      properties:
+        historyTimeToLive: P1D

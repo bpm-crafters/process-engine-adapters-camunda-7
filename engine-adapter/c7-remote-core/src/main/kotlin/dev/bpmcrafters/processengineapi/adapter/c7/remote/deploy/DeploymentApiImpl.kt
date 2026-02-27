@@ -9,7 +9,6 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.camunda.community.rest.client.api.DeploymentApiClient
 import org.camunda.community.rest.client.model.DeploymentWithDefinitionsDto
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.Future
 
 private val logger = KotlinLogging.logger {}
 
@@ -49,8 +48,8 @@ class DeploymentApiImpl(
   }
 
   private fun DeploymentWithDefinitionsDto.toDeploymentInformation() = DeploymentInformation(
-    deploymentKey = this.id,
-    deploymentTime = this.deploymentTime.toInstant(),
+    deploymentKey = this.id!!,
+    deploymentTime = this.deploymentTime!!.toInstant(),
     tenantId = this.tenantId
   )
 }
