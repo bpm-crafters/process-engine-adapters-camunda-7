@@ -7,10 +7,13 @@ import dev.bpmcrafters.processengineapi.adapter.c7.embedded.decision.EvaluateDec
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.deploy.DeploymentApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.process.StartProcessApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.shared.EngineCommandExecutor
+import dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot.schedule.DefaultPullServiceTaskDeliveryMetrics
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.completion.C7ServiceTaskCompletionApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.completion.C7UserTaskCompletionApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.completion.FailureRetrySupplier
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.completion.LinearMemoryFailureRetrySupplier
+import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.delivery.pull.EmbeddedPullServiceTaskDeliveryMetrics
+import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.delivery.pull.NoOpPullServiceTaskDeliveryMetrics
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.modification.C7UserTaskModificationApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.subscription.C7TaskSubscriptionApiImpl
 import dev.bpmcrafters.processengineapi.correlation.CorrelationApi
@@ -25,10 +28,12 @@ import dev.bpmcrafters.processengineapi.task.TaskSubscriptionApi
 import dev.bpmcrafters.processengineapi.task.UserTaskCompletionApi
 import dev.bpmcrafters.processengineapi.task.UserTaskModificationApi
 import io.github.oshai.kotlinlogging.KotlinLogging
+import io.micrometer.core.instrument.MeterRegistry
 import io.toolisticon.spring.condition.ConditionalOnMissingQualifiedBean
 import jakarta.annotation.PostConstruct
 import org.camunda.bpm.engine.*
 import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
@@ -125,6 +130,18 @@ class C7EmbeddedAdapterAutoConfiguration {
 
   @Bean
   @ConditionalOnMissingBean
+  @ConditionalOnBean(MeterRegistry::class)
+  fun defaultEmbeddedPullServiceTaskDeliveryMetrics(registry: MeterRegistry): EmbeddedPullServiceTaskDeliveryMetrics =
+    DefaultPullServiceTaskDeliveryMetrics(registry)
+
+  @Bean
+  @ConditionalOnMissingBean(EmbeddedPullServiceTaskDeliveryMetrics::class, MeterRegistry::class)
+  fun noOpEmbeddedPullServiceTaskDeliveryMetrics(): EmbeddedPullServiceTaskDeliveryMetrics =
+    NoOpPullServiceTaskDeliveryMetrics()
+
+
+  @Bean
+  @ConditionalOnMissingBean
   fun subscriptionRepository(): SubscriptionRepository = InMemSubscriptionRepository()
 
   @Bean("c7embedded-failure-retry-supplier")
@@ -154,7 +171,7 @@ class C7EmbeddedAdapterAutoConfiguration {
       failureRetrySupplier = failureRetrySupplier,
       commandExecutor = commandExecutor,
 
-    )
+      )
 
   @Bean("c7embedded-user-task-completion-api")
   @Qualifier("c7embedded-user-task-completion-api")

@@ -8,6 +8,7 @@ import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.completion.C7Us
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.completion.LinearMemoryFailureRetrySupplier
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.delivery.pull.EmbeddedPullServiceTaskDelivery
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.delivery.pull.EmbeddedPullUserTaskDelivery
+import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.delivery.pull.NoOpPullServiceTaskDeliveryMetrics
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.subscription.C7TaskSubscriptionApiImpl
 import dev.bpmcrafters.processengineapi.decision.EvaluateDecisionApi
 import dev.bpmcrafters.processengineapi.impl.task.InMemSubscriptionRepository
@@ -19,6 +20,10 @@ import dev.bpmcrafters.processengineapi.task.UserTaskCompletionApi
 import dev.bpmcrafters.processengineapi.test.ProcessTestHelper
 import org.camunda.bpm.engine.ProcessEngine
 import java.util.concurrent.Executors
+import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.ThreadPoolExecutor
+import java.util.concurrent.TimeUnit
+
 
 const val WORKER_ID = "execute-action-external"
 
@@ -41,7 +46,16 @@ class C7EmbeddedProcessTestHelper(private val processEngine: ProcessEngine) : Pr
     lockDurationInSeconds = 10L,
     retryTimeoutInSeconds = 10L,
     retries = 3,
-    executorService = Executors.newFixedThreadPool(3)
+    executor = ThreadPoolExecutor(
+      3,  // corePoolSize
+      8,  // maximumPoolSize
+      60L,  // keepAliveTime
+      TimeUnit.SECONDS,  // time unit
+      LinkedBlockingQueue(100),  // work queue
+      Executors.defaultThreadFactory(),
+      ThreadPoolExecutor.AbortPolicy() // rejection handler
+    ),
+    metrics = NoOpPullServiceTaskDeliveryMetrics()
   )
 
   override fun getStartProcessApi(): StartProcessApi = StartProcessApiImpl(
