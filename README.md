@@ -6,10 +6,24 @@
 [![Maven Central Version](https://img.shields.io/maven-central/v/dev.bpm-crafters.process-engine-adapters/process-engine-adapter-camunda-platform-c7-bom)](https://maven-badges.herokuapp.com/maven-central/dev.bpm-crafters.process-engine-adapters/process-engine-adapter-camunda-platform-c7-bom)
 [![Camunda Platform 7](https://img.shields.io/badge/Compatible%20with-Camunda%20Platform%207-26d07c)](https://img.shields.io/badge/Compatible%20with-Camunda%20Platform%207-26d07c)
 
-
 ## Purpose of the library
 
 This library provides an adapter implementation of Process Engine API for Camunda 7 process engine. 
+
+## Compatibility
+
+| Adapter-7 Version                                                                                     | Camunda 7 Version | API Version |
+|-------------------------------------------------------------------------------------------------------|-------------------|-------------|
+| [2026.02.1](https://github.com/bpm-crafters/process-engine-adapters-camunda-7/releases/tag/2026.02.1) | 7.24.0            | 1.5         |
+| [2025.11.1](https://github.com/bpm-crafters/process-engine-adapters-camunda-7/releases/tag/2025.11.1) | 7.24.0            | 1.4         |
+| [2025.07.1](https://github.com/bpm-crafters/process-engine-adapters-camunda-7/releases/tag/2025.07.1) | 7.23.4            | 1.3         |
+
+
+## 📚 Documentation
+
+The documentation can be found [here](https://bpm-crafters.github.io/process-engine-api-docs/stable/) or in its
+respective [repository](https://github.com/bpm-crafters/process-engine-api-docs).
+
 
 ## Usage
 
@@ -33,25 +47,5 @@ The library contains of the following Maven modules:
 - `process-engine-adapter-camunda-platform-c7-remote-core`: Camunda 7 Platform Remote Adapter implementation 
 - `process-engine-adapter-camunda-platform-c7-remote-spring-boot-starter`: Camunda 7 Platform Remote Adapter Spring Boot Starter 
 - `process-engine-adapter-camunda-platform-c7-bom`: Maven BOM containing dependency definitions.
-
-
-## Compatibility
-
-| Adapter-7 Version                                                                                     | Camunda 7 Version | API Version |
-|-------------------------------------------------------------------------------------------------------|-------------------|-------------|
-| [2026.02.1](https://github.com/bpm-crafters/process-engine-adapters-camunda-7/releases/tag/2026.02.1) | 7.24.0            | 1.5         |
-| [2025.11.1](https://github.com/bpm-crafters/process-engine-adapters-camunda-7/releases/tag/2025.11.1) | 7.24.0            | 1.4         |
-| [2025.07.1](https://github.com/bpm-crafters/process-engine-adapters-camunda-7/releases/tag/2025.07.1) | 7.23.4            | 1.3         |
-| [2025.06.1](https://github.com/bpm-crafters/process-engine-adapters-camunda-7/releases/tag/2025.06.1) | 7.23              | 1.2         |
-| [2025.05.5](https://github.com/bpm-crafters/process-engine-adapters-camunda-7/releases/tag/2025.05.5) | 7.23              | 1.2         |
-| [2025.05.4](https://github.com/bpm-crafters/process-engine-adapters-camunda-7/releases/tag/2025.05.4) | 7.23              | 1.2         |
-| [2025.05.3](https://github.com/bpm-crafters/process-engine-adapters-camunda-7/releases/tag/2025.05.3) | 7.23              | 1.2         |
-| [2025.05.2](https://github.com/bpm-crafters/process-engine-adapters-camunda-7/releases/tag/2025.05.2) | 7.23              | 1.1         |
-| [2025.05.1](https://github.com/bpm-crafters/process-engine-adapters-camunda-7/releases/tag/2025.05.1) | 7.23              | 1.1         |
-| [2025.04.4](https://github.com/bpm-crafters/process-engine-adapters-camunda-7/releases/tag/2025.05.4) | 7.22              | 1.1         |
-| [2025.04.3](https://github.com/bpm-crafters/process-engine-adapters-camunda-7/releases/tag/2025.05.3) | 7.22              | 1.1         |
-| [2025.04.2](https://github.com/bpm-crafters/process-engine-adapters-camunda-7/releases/tag/2025.05.2) | 7.22              | 1.0         |
-| [2025.04.1](https://github.com/bpm-crafters/process-engine-adapters-camunda-7/releases/tag/2025.05.1) | 7.22              | 1.0         |
-
 
 
