@@ -15,7 +15,7 @@ import java.util.*
 fun LockedExternalTaskDto.toTaskInformation(pdMetaDataResolver: ProcessDefinitionMetaDataResolver): TaskInformation =
   TaskInformation(
     taskId = this.id!!,
-    meta = mapOf(
+    meta = metaOf(
       CommonRestrictions.ACTIVITY_ID to this.activityId,
       CommonRestrictions.PROCESS_DEFINITION_ID to this.processDefinitionId,
       CommonRestrictions.PROCESS_DEFINITION_KEY to this.processDefinitionKey,
@@ -23,14 +23,14 @@ fun LockedExternalTaskDto.toTaskInformation(pdMetaDataResolver: ProcessDefinitio
       CommonRestrictions.TENANT_ID to this.tenantId,
       "topicName" to this.topicName,
       "creationDate" to this.createTime.toDateString(),
-      TaskInformation.RETRIES to (this.retries?.toString() ?: ""),
+      TaskInformation.RETRIES to this.retries?.toString(),
     ).enrichWithProcessDefinitionMetadata(this.processDefinitionId!!, pdMetaDataResolver)
   )
 
 fun TaskWithAttachmentAndCommentDto.toTaskInformation(candidates: Set<IdentityLinkDto>, pdMetaDataResolver: ProcessDefinitionMetaDataResolver) =
   TaskInformation(
     taskId = this.id!!,
-    meta = mapOf(
+    meta = metaOf(
       CommonRestrictions.ACTIVITY_ID to this.taskDefinitionKey,
       CommonRestrictions.TENANT_ID to this.tenantId,
       CommonRestrictions.PROCESS_DEFINITION_ID to this.processDefinitionId,
@@ -68,17 +68,12 @@ fun Map<String, String>.enrichWithProcessDefinitionMetadata(processDefinitionId:
 /**
  * Converts engine internal representation into a string.
  */
-fun Date?.toDateString() = this?.toInstant()?.toIso8601() ?: ""
+fun Date?.toDateString() = this?.toInstant()?.toString()
 
 /**
  * Converts offset date time to string representation in ISO8601 in UTC.
  */
-fun OffsetDateTime?.toDateString() = this?.atZoneSameInstant(ZoneOffset.UTC)?.toString() ?: ""
-
-/**
- * Converts to offset date time in ISO8601 in UTC.
- */
-fun Instant.toIso8601() = OffsetDateTime.ofInstant(this, ZoneOffset.UTC).toString()
+fun OffsetDateTime?.toDateString() = this?.atZoneSameInstant(ZoneOffset.UTC)?.toString()
 
 /**
  * Extracts candidates groups as a comma-separated string.
@@ -90,6 +85,18 @@ fun Set<IdentityLinkDto>.toGroupsString() = this.mapNotNull { it.groupId }.sorte
  */
 fun Set<IdentityLinkDto>.toUsersString() = this.mapNotNull { it.userId }.sorted().joinToString(",")
 
+/**
+ * Creates a map of the provided pairs.
+ *
+ * If the 2nd component of a pair is `null`, the pair is dropped and not added to the resulting map.
+ */
+fun metaOf(vararg pairs: Pair<String, String?>): Map<String, String> =
+  sequenceOf(*pairs)
+    .filter { it.second != null }
+    .associate {
+      @Suppress("UNCHECKED_CAST")
+      it as Pair<String, String>
+    }
 
 fun <T : Any> Map<String, T>.filterBySubscription(subscription: TaskSubscriptionHandle): Map<String, T> =
   if (subscription.payloadDescription != null) {

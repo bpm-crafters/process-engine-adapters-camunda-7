@@ -1,13 +1,14 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.subscribe
 
 import dev.bpmcrafters.processengineapi.CommonRestrictions
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.metaOf
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.toDateString
 import dev.bpmcrafters.processengineapi.task.TaskInformation
 import org.camunda.bpm.client.task.ExternalTask
 
 fun ExternalTask.toTaskInformation(): TaskInformation = TaskInformation(
   taskId = this.id,
-  meta = mapOf(
+  meta = metaOf(
     CommonRestrictions.ACTIVITY_ID to this.activityId,
     CommonRestrictions.PROCESS_DEFINITION_KEY to this.processDefinitionKey,
     CommonRestrictions.PROCESS_INSTANCE_ID to this.processInstanceId,
@@ -16,6 +17,6 @@ fun ExternalTask.toTaskInformation(): TaskInformation = TaskInformation(
     CommonRestrictions.TENANT_ID to this.tenantId,
     "topicName" to this.topicName,
     "creationDate" to this.createTime.toDateString(),
-    TaskInformation.RETRIES to (this.retries?.toString() ?: ""),
+    TaskInformation.RETRIES to this.retries?.toString(),
   )
 )
