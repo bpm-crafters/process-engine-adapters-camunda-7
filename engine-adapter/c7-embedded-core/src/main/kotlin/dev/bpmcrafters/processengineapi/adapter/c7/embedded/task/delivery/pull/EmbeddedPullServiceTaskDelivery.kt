@@ -111,7 +111,7 @@ class EmbeddedPullServiceTaskDelivery(
       metrics.recordTaskQueueTime(lockedTask.topicName!!, timePassedSinceLockAcquisition)
       if (start.isBefore(lockExpirationInstant)) {
         try {
-          if (subscriptionRepository.getActiveSubscriptionForTask(lockedTask.id) == activeSubscription) {
+          if (subscriptionRepository.getActiveSubscriptionForTask(lockedTask.id)==activeSubscription) {
             // task is already delivered to the current subscription, nothing to do
             logger.trace { "PROCESS-ENGINE-C7-EMBEDDED-041: skipping task ${lockedTask.id} since it is unchanged." }
           } else {
@@ -210,18 +210,22 @@ class EmbeddedPullServiceTaskDelivery(
   private fun TaskSubscriptionHandle.matches(task: LockedExternalTask): Boolean {
     return this.taskType==TaskType.EXTERNAL
       && (this.taskDescriptionKey==null || this.taskDescriptionKey==task.topicName)
-      && this.restrictions.all {
-      when (it.key) {
-        CommonRestrictions.EXECUTION_ID -> it.value==task.executionId
-        CommonRestrictions.ACTIVITY_ID -> it.value==task.activityId
-        CommonRestrictions.BUSINESS_KEY -> it.value==task.businessKey
-        CommonRestrictions.TENANT_ID -> it.value==task.tenantId
-        CommonRestrictions.PROCESS_INSTANCE_ID -> it.value==task.processInstanceId
-        CommonRestrictions.PROCESS_DEFINITION_KEY -> it.value==task.processDefinitionKey
-        CommonRestrictions.PROCESS_DEFINITION_ID -> it.value==task.processDefinitionId
-        CommonRestrictions.PROCESS_DEFINITION_VERSION_TAG -> it.value==task.processDefinitionVersionTag
-        else -> false
+      && this.restrictions
+      .minus( // ignore some restrictions which are not relevant for external tasks
+        "workerLockDurationInMilliseconds"
+      )
+      .all {
+        when (it.key) {
+          CommonRestrictions.EXECUTION_ID -> it.value==task.executionId
+          CommonRestrictions.ACTIVITY_ID -> it.value==task.activityId
+          CommonRestrictions.BUSINESS_KEY -> it.value==task.businessKey
+          CommonRestrictions.TENANT_ID -> it.value==task.tenantId
+          CommonRestrictions.PROCESS_INSTANCE_ID -> it.value==task.processInstanceId
+          CommonRestrictions.PROCESS_DEFINITION_KEY -> it.value==task.processDefinitionKey
+          CommonRestrictions.PROCESS_DEFINITION_ID -> it.value==task.processDefinitionId
+          CommonRestrictions.PROCESS_DEFINITION_VERSION_TAG -> it.value==task.processDefinitionVersionTag
+          else -> false
+        }
       }
-    }
   }
 }

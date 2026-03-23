@@ -30,7 +30,7 @@ class SubscribingServiceTaskDelivery(
 
   fun subscribe() {
 
-    val subscriptions = subscriptionRepository.getTaskSubscriptions().filter { s -> s.taskType == TaskType.EXTERNAL }
+    val subscriptions = subscriptionRepository.getTaskSubscriptions().filter { s -> s.taskType==TaskType.EXTERNAL }
     if (subscriptions.isNotEmpty()) {
       logger.trace { "PROCESS-ENGINE-C7-REMOTE-030: subscribing to external tasks for: $subscriptions" }
 
@@ -96,26 +96,29 @@ class SubscribingServiceTaskDelivery(
    * The activated job can be completed by the Subscription strategy and is correct type (topic).
    */
   private fun TaskSubscriptionHandle.matches(externalTask: ExternalTask): Boolean =
-    (this.taskDescriptionKey == null
-      || this.taskDescriptionKey == externalTask.topicName)
-      && this.restrictions.all {
-      when (it.key) {
-        CommonRestrictions.EXECUTION_ID -> it.value == externalTask.executionId
-        CommonRestrictions.ACTIVITY_ID -> it.value == externalTask.activityId
-        CommonRestrictions.BUSINESS_KEY -> it.value == externalTask.businessKey
-        CommonRestrictions.TENANT_ID -> it.value == externalTask.tenantId
-        CommonRestrictions.PROCESS_INSTANCE_ID -> it.value == externalTask.processInstanceId
-        CommonRestrictions.PROCESS_DEFINITION_KEY -> it.value == externalTask.processDefinitionKey
-        CommonRestrictions.PROCESS_DEFINITION_ID -> it.value == externalTask.processDefinitionId
-        CommonRestrictions.PROCESS_DEFINITION_VERSION_TAG -> it.value == externalTask.processDefinitionVersionTag
-        else -> false
+    (this.taskDescriptionKey==null
+      || this.taskDescriptionKey==externalTask.topicName)
+      && this.restrictions
+      .minus( // ignore some restrictions which are not relevant for external tasks
+        "workerLockDurationInMilliseconds"
+      ).all {
+        when (it.key) {
+          CommonRestrictions.EXECUTION_ID -> it.value==externalTask.executionId
+          CommonRestrictions.ACTIVITY_ID -> it.value==externalTask.activityId
+          CommonRestrictions.BUSINESS_KEY -> it.value==externalTask.businessKey
+          CommonRestrictions.TENANT_ID -> it.value==externalTask.tenantId
+          CommonRestrictions.PROCESS_INSTANCE_ID -> it.value==externalTask.processInstanceId
+          CommonRestrictions.PROCESS_DEFINITION_KEY -> it.value==externalTask.processDefinitionKey
+          CommonRestrictions.PROCESS_DEFINITION_ID -> it.value==externalTask.processDefinitionId
+          CommonRestrictions.PROCESS_DEFINITION_VERSION_TAG -> it.value==externalTask.processDefinitionVersionTag
+          else -> false
+        }
       }
-    }
 
 
   private fun TopicSubscriptionBuilder.forSubscription(subscription: TaskSubscriptionHandle): TopicSubscriptionBuilder {
     // FIXME -> more limitations....
-    return if (subscription.payloadDescription != null && subscription.payloadDescription!!.isNotEmpty()) {
+    return if (subscription.payloadDescription!=null && subscription.payloadDescription!!.isNotEmpty()) {
       this.variables(*subscription.payloadDescription!!.toTypedArray())
     } else {
       this
