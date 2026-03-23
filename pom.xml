@@ -29,6 +29,7 @@
     <jgiven.version>2.0.2</jgiven.version>
     <awaitility.version>4.3.0</awaitility.version>
     <mockk.version>1.14.9</mockk.version>
+    <logback.version>1.5.32</logback.version>
   </properties>
 
   <modules>
@@ -93,7 +94,12 @@
       <dependency>
         <groupId>ch.qos.logback</groupId>
         <artifactId>logback-classic</artifactId>
-        <version>1.5.17</version>
+        <version>${logback.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>ch.qos.logback</groupId>
+        <artifactId>logback-core</artifactId>
+        <version>${logback.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>

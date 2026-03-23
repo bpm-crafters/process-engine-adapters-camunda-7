@@ -78,7 +78,6 @@ class EmbeddedPullServiceTaskDelivery(
       .forSubscriptions(subscriptions)
       .execute()
 
-
     logger.trace { "PROCESS-ENGINE-C7-EMBEDDED-045: pulled ${lockedTasks.size} service tasks" }
     lockedTasks
       .groupBy { it.topicName }
@@ -97,7 +96,9 @@ class EmbeddedPullServiceTaskDelivery(
       .map { (lockedTask, activeSubscription) -> createTaskActionHandlerCallable(lockedTask, activeSubscription!!) }
       .toList()
 
-    taskActionHandlerCallables.forEach { executor.submit(it) }
+    taskActionHandlerCallables
+      .map { executor.submit(it) }
+      .forEach { it.get() }
 
   }
 
@@ -110,10 +111,7 @@ class EmbeddedPullServiceTaskDelivery(
       metrics.recordTaskQueueTime(lockedTask.topicName!!, timePassedSinceLockAcquisition)
       if (start.isBefore(lockExpirationInstant)) {
         try {
-          subscriptionRepository.activateSubscriptionForTask(lockedTask.id!!, activeSubscription)
-          logger.debug { "PROCESS-ENGINE-C7-REMOTE-031: delivering service task ${lockedTask.id}." }
-          if (subscriptionRepository.getActiveSubscriptionForTask(lockedTask.id)==activeSubscription
-          ) {
+          if (subscriptionRepository.getActiveSubscriptionForTask(lockedTask.id) == activeSubscription) {
             // task is already delivered to the current subscription, nothing to do
             logger.trace { "PROCESS-ENGINE-C7-EMBEDDED-041: skipping task ${lockedTask.id} since it is unchanged." }
           } else {
@@ -170,13 +168,15 @@ class EmbeddedPullServiceTaskDelivery(
     // the remaining tasks don't exist in the engine, lets handle them
     val taskTerminationHandlerCallables = deliveredTaskIdsMissingInEngine.map { createTaskTerminationHandlerCallable(it) }
 
-    taskTerminationHandlerCallables.forEach { executor.submit(it) }
+    taskTerminationHandlerCallables
+      .map { executor.submit(it) }
+      .forEach { it.get() }
   }
 
   internal fun createTaskTerminationHandlerCallable(taskId: String): Callable<Unit> = Callable {
     // deactivate active subscription and handle termination
     val taskSubscriptionHandle = subscriptionRepository.deactivateSubscriptionForTask(taskId)
-    if (taskSubscriptionHandle != null) {
+    if (taskSubscriptionHandle!=null) {
       taskSubscriptionHandle.termination.accept(
         TaskInformation(
           taskId = taskId,
