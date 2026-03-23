@@ -207,7 +207,7 @@ class EmbeddedPullServiceTaskDelivery(
     return customLockDuration?.toLong() ?: (lockDurationInSeconds * 1000)
   }
 
-  private fun TaskSubscriptionHandle.matches(task: LockedExternalTask): Boolean {
+  internal fun TaskSubscriptionHandle.matches(task: LockedExternalTask): Boolean {
     return this.taskType==TaskType.EXTERNAL
       && (this.taskDescriptionKey==null || this.taskDescriptionKey==task.topicName)
       && this.restrictions
@@ -224,7 +224,10 @@ class EmbeddedPullServiceTaskDelivery(
           CommonRestrictions.PROCESS_DEFINITION_KEY -> it.value==task.processDefinitionKey
           CommonRestrictions.PROCESS_DEFINITION_ID -> it.value==task.processDefinitionId
           CommonRestrictions.PROCESS_DEFINITION_VERSION_TAG -> it.value==task.processDefinitionVersionTag
-          else -> false
+          else -> {
+            logger.debug { "PROCESS-ENGINE-C7-EMBEDDED-041: Unknown restriction key: ${it.key}" }
+            false
+          }
         }
       }
   }

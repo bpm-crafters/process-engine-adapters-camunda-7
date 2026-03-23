@@ -265,7 +265,10 @@ class PullServiceTaskDelivery(
           CommonRestrictions.PROCESS_DEFINITION_KEY -> it.value==task.processDefinitionKey
           CommonRestrictions.PROCESS_DEFINITION_ID -> it.value==task.processDefinitionId
           CommonRestrictions.PROCESS_DEFINITION_VERSION_TAG -> it.value==task.processDefinitionVersionTag
-          else -> false
+          else -> {
+            logger.debug { "PROCESS-ENGINE-C7-REMOTE-043: Unknown restriction key: ${it.key}" }
+            false
+          }
         }
       }
 

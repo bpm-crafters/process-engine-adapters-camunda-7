@@ -171,14 +171,11 @@ class EmbeddedPullUserTaskDelivery(
   }
 
 
-  private fun TaskSubscriptionHandle.matches(task: Task): Boolean =
+  internal fun TaskSubscriptionHandle.matches(task: Task): Boolean =
     (this.taskDescriptionKey==null
       || this.taskDescriptionKey==task.taskDefinitionKey
       || this.taskDescriptionKey==task.id
       ) && this.restrictions
-      .minus( // ignore some restrictions which are not relevant for external tasks
-        "workerLockDurationInMilliseconds"
-      )
       .all {
         when (it.key) {
           CommonRestrictions.EXECUTION_ID -> it.value==task.executionId
@@ -188,7 +185,10 @@ class EmbeddedPullUserTaskDelivery(
           CommonRestrictions.PROCESS_DEFINITION_ID -> it.value==task.processDefinitionId
           CommonRestrictions.PROCESS_DEFINITION_KEY -> it.value==processDefinitionMetaDataResolver.getProcessDefinitionKey(task.processDefinitionId)
           CommonRestrictions.PROCESS_DEFINITION_VERSION_TAG -> it.value==processDefinitionMetaDataResolver.getProcessDefinitionVersionTag(task.processDefinitionId)
-          else -> false
+          else -> {
+            logger.debug { "PROCESS-ENGINE-C7-EMBEDDED-043: Unknown restriction key: ${it.key}" }
+            false
+          }
         }
       }
 }

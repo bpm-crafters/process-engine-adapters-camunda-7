@@ -95,7 +95,7 @@ class SubscribingServiceTaskDelivery(
    * Additional restrictions to check.
    * The activated job can be completed by the Subscription strategy and is correct type (topic).
    */
-  private fun TaskSubscriptionHandle.matches(externalTask: ExternalTask): Boolean =
+  internal fun TaskSubscriptionHandle.matches(externalTask: ExternalTask): Boolean =
     (this.taskDescriptionKey==null
       || this.taskDescriptionKey==externalTask.topicName)
       && this.restrictions
@@ -111,7 +111,10 @@ class SubscribingServiceTaskDelivery(
           CommonRestrictions.PROCESS_DEFINITION_KEY -> it.value==externalTask.processDefinitionKey
           CommonRestrictions.PROCESS_DEFINITION_ID -> it.value==externalTask.processDefinitionId
           CommonRestrictions.PROCESS_DEFINITION_VERSION_TAG -> it.value==externalTask.processDefinitionVersionTag
-          else -> false
+          else -> {
+            logger.debug { "PROCESS-ENGINE-C7-REMOTE-045: Unknown restriction key: ${it.key}" }
+            false
+          }
         }
       }
 

@@ -114,6 +114,23 @@ internal class EmbeddedPullUserTaskDeliveryTest {
     assertThat(userTaskSupport.getAllTasks()).hasSize(tasks.size)
   }
 
+  @Test
+  fun `matches returns false for unknown restriction`() {
+    val subscription = TaskSubscriptionHandle(
+      taskType = TaskType.USER,
+      restrictions = mapOf("unknown" to "value"),
+      taskDescriptionKey = null,
+      payloadDescription = null,
+      action = { _, _ -> },
+      termination = { }
+    )
+    val task = randomTask()
+
+    with(embeddedPullUserTaskDelivery) {
+      assertThat(subscription.matches(task)).isFalse()
+    }
+  }
+
   private fun randomTask() = TaskFake
     .builder()
     .id(UUID.randomUUID().toString())
