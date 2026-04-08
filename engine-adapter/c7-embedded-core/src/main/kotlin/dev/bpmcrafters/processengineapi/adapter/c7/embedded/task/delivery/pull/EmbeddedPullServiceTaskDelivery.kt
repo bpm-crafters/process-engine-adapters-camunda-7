@@ -58,7 +58,7 @@ class EmbeddedPullServiceTaskDelivery(
   }
 
   internal fun deliverNewTasks() {
-    val subscriptions = subscriptionRepository.getTaskSubscriptions().filter { s -> s.taskType==TaskType.EXTERNAL }
+    val subscriptions = subscriptionRepository.getTaskSubscriptions().filter { s -> s.taskType == TaskType.EXTERNAL }
     if (subscriptions.isEmpty()) {
       logger.trace { "PROCESS-ENGINE-C7-EMBEDDED-035: Pull external tasks disabled because of no active subscriptions" }
       metrics.incrementFetchAndLockTasksSkippedCounter(NO_SUBSCRIPTIONS)
