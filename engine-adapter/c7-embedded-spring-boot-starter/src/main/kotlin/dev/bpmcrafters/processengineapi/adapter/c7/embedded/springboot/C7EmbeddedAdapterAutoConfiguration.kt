@@ -171,7 +171,7 @@ class C7EmbeddedAdapterAutoConfiguration {
       failureRetrySupplier = failureRetrySupplier,
       commandExecutor = commandExecutor,
 
-      )
+    )
 
   @Bean("c7embedded-user-task-completion-api")
   @Qualifier("c7embedded-user-task-completion-api")
