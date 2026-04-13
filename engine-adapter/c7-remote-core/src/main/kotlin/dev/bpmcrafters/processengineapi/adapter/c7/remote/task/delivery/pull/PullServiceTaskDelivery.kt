@@ -102,15 +102,16 @@ class PullServiceTaskDelivery(
 
     val taskActionHandlerCallables = lockedTasks
       .asSequence()
-      .map { lockedTask -> lockedTask to subscriptions.firstOrNull { subscription -> matches(lockedTask, subscription) } }
-      .filter { (lockedTask, subscription) ->
-        val keep = subscription != null
-        if (!keep) {
+      .mapNotNull { lockedTask ->
+        val subscription = subscriptions.firstOrNull { subscription -> matches(lockedTask, subscription) }
+        if (subscription != null) {
+          lockedTask to subscription
+        } else {
           metrics.incrementDroppedTasksCounter(lockedTask.topicName!!, NO_MATCHING_SUBSCRIPTIONS)
+          null
         }
-        keep
       }
-      .map { (lockedTask, activeSubscription) -> createTaskActionHandlerCallable(lockedTask, activeSubscription!!) }
+      .map { (lockedTask, activeSubscription) -> createTaskActionHandlerCallable(lockedTask, activeSubscription) }
       .toList()
 
     taskActionHandlerCallables.forEach { executor.submit(it) }
