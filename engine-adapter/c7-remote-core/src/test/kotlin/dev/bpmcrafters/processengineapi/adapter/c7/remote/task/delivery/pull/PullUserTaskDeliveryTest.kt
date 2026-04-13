@@ -139,6 +139,29 @@ internal class PullUserTaskDeliveryTest {
     }
   }
 
+  @Test
+  fun `does not fail when task does not match any subscription`() {
+    // given
+    val deliveredDirectly = ConcurrentHashMap<String, TaskInformation>()
+
+    subscriptionRepository.createTaskSubscription(
+      TaskSubscriptionHandle(
+        taskType = TaskType.USER,
+        restrictions = mapOf(dev.bpmcrafters.processengineapi.CommonRestrictions.PROCESS_DEFINITION_KEY to "process-A"),
+        taskDescriptionKey = null,
+        payloadDescription = null,
+        action = { taskInformation, _ -> synchronized(deliveredDirectly) { deliveredDirectly[taskInformation.taskId] = taskInformation } },
+        termination = { }
+      )
+    )
+
+    // when
+    embeddedPullUserTaskDelivery.refresh()
+
+    // then
+    assertThat(deliveredDirectly).isEmpty()
+  }
+
   private fun randomTask() = TaskWithAttachmentAndCommentDto()
     .id(UUID.randomUUID().toString())
     .assignee("kermit")

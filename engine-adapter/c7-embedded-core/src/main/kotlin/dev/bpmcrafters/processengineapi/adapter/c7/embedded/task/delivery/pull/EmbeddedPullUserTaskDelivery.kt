@@ -51,8 +51,8 @@ class EmbeddedPullUserTaskDelivery(
         .initializeFormKeys()
         .forSubscriptions(subscriptions)
         .list()
-        .parallelStream()
-        .map { task ->
+        .asSequence()
+        .mapNotNull { task ->
           subscriptions
             .firstOrNull { subscription -> subscription.matches(task) }
             ?.let { activeSubscription: TaskSubscriptionHandle ->

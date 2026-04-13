@@ -54,8 +54,8 @@ class PullUserTaskDelivery(
       val taskDtoList = requireNotNull(result.body) { "Could not fetch user tasks for subscriptions: $subscriptions, status code was ${result.statusCode}" }
 
       taskDtoList
-        .parallelStream()
-        .map { task ->
+        .asSequence()
+        .mapNotNull { task ->
           subscriptions
             .firstOrNull { subscription -> subscription.matches(task) }
             ?.let { activeSubscription ->
