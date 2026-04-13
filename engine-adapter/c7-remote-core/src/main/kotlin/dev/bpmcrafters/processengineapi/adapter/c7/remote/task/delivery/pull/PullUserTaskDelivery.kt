@@ -178,21 +178,25 @@ class PullUserTaskDelivery(
   }
 
 
-  private fun TaskSubscriptionHandle.matches(task: TaskWithAttachmentAndCommentDto): Boolean =
+  internal fun TaskSubscriptionHandle.matches(task: TaskWithAttachmentAndCommentDto): Boolean =
     (this.taskDescriptionKey == null
       || this.taskDescriptionKey == task.taskDefinitionKey
       || this.taskDescriptionKey == task.id)
-      && this.restrictions.all {
-      when (it.key) {
-        CommonRestrictions.EXECUTION_ID -> it.value == task.executionId
-        CommonRestrictions.TENANT_ID -> it.value == task.tenantId
-        CommonRestrictions.ACTIVITY_ID -> it.value == task.taskDefinitionKey
-        CommonRestrictions.PROCESS_INSTANCE_ID -> it.value == task.processInstanceId
-        CommonRestrictions.PROCESS_DEFINITION_ID -> it.value == task.processDefinitionId
-        CommonRestrictions.PROCESS_DEFINITION_KEY -> it.value == processDefinitionMetaDataResolver.getProcessDefinitionKey(task.processDefinitionId)
-        CommonRestrictions.PROCESS_DEFINITION_VERSION_TAG -> it.value == processDefinitionMetaDataResolver.getProcessDefinitionVersionTag(task.processDefinitionId)
-        else -> false
+      && this.restrictions
+      .all {
+        when (it.key) {
+          CommonRestrictions.EXECUTION_ID -> it.value == task.executionId
+          CommonRestrictions.TENANT_ID -> it.value == task.tenantId
+          CommonRestrictions.ACTIVITY_ID -> it.value == task.taskDefinitionKey
+          CommonRestrictions.PROCESS_INSTANCE_ID -> it.value == task.processInstanceId
+          CommonRestrictions.PROCESS_DEFINITION_ID -> it.value == task.processDefinitionId
+          CommonRestrictions.PROCESS_DEFINITION_KEY -> it.value == processDefinitionMetaDataResolver.getProcessDefinitionKey(task.processDefinitionId)
+          CommonRestrictions.PROCESS_DEFINITION_VERSION_TAG -> it.value == processDefinitionMetaDataResolver.getProcessDefinitionVersionTag(task.processDefinitionId)
+          else -> {
+            logger.debug { "PROCESS-ENGINE-C7-REMOTE-044: Unknown restriction key: ${it.key}" }
+            false
+          }
+        }
       }
-    }
 }
 

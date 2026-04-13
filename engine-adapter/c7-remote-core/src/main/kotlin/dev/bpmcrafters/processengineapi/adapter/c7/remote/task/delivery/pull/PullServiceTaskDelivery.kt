@@ -17,13 +17,7 @@ import dev.bpmcrafters.processengineapi.task.TaskInformation.Companion.CREATE
 import dev.bpmcrafters.processengineapi.task.TaskType
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.camunda.community.rest.client.api.ExternalTaskApiClient
-import org.camunda.community.rest.client.model.ExternalTaskFailureDto
-import org.camunda.community.rest.client.model.ExternalTaskQueryDto
-import org.camunda.community.rest.client.model.ExternalTaskQueryDtoSortingInner
-import org.camunda.community.rest.client.model.FetchExternalTaskTopicDto
-import org.camunda.community.rest.client.model.FetchExternalTasksDto
-import org.camunda.community.rest.client.model.FetchExternalTasksDtoSortingInner
-import org.camunda.community.rest.client.model.LockedExternalTaskDto
+import org.camunda.community.rest.client.model.*
 import org.camunda.community.rest.variables.ValueMapper
 import java.time.Duration
 import java.time.OffsetDateTime
@@ -258,18 +252,24 @@ class PullServiceTaskDelivery(
   internal fun matches(task: LockedExternalTaskDto, subscription: TaskSubscriptionHandle): Boolean =
     (subscription.taskDescriptionKey == null
       || subscription.taskDescriptionKey == task.topicName)
-      && subscription.restrictions.all {
-      when (it.key) {
-        CommonRestrictions.EXECUTION_ID -> it.value == task.executionId
-        CommonRestrictions.ACTIVITY_ID -> it.value == task.activityId
-        CommonRestrictions.BUSINESS_KEY -> it.value == task.businessKey
-        CommonRestrictions.TENANT_ID -> it.value == task.tenantId
-        CommonRestrictions.PROCESS_INSTANCE_ID -> it.value == task.processInstanceId
-        CommonRestrictions.PROCESS_DEFINITION_KEY -> it.value == task.processDefinitionKey
-        CommonRestrictions.PROCESS_DEFINITION_ID -> it.value == task.processDefinitionId
-        CommonRestrictions.PROCESS_DEFINITION_VERSION_TAG -> it.value == task.processDefinitionVersionTag
-        else -> false
+      && subscription.restrictions
+      .minus( // ignore some restrictions which are not relevant for external tasks
+        "workerLockDurationInMilliseconds"
+      ).all {
+        when (it.key) {
+          CommonRestrictions.EXECUTION_ID -> it.value == task.executionId
+          CommonRestrictions.ACTIVITY_ID -> it.value == task.activityId
+          CommonRestrictions.BUSINESS_KEY -> it.value == task.businessKey
+          CommonRestrictions.TENANT_ID -> it.value == task.tenantId
+          CommonRestrictions.PROCESS_INSTANCE_ID -> it.value == task.processInstanceId
+          CommonRestrictions.PROCESS_DEFINITION_KEY -> it.value == task.processDefinitionKey
+          CommonRestrictions.PROCESS_DEFINITION_ID -> it.value == task.processDefinitionId
+          CommonRestrictions.PROCESS_DEFINITION_VERSION_TAG -> it.value == task.processDefinitionVersionTag
+          else -> {
+            logger.debug { "PROCESS-ENGINE-C7-REMOTE-043: Unknown restriction key: ${it.key}" }
+            false
+          }
+        }
       }
-    }
 
 }

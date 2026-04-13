@@ -10,8 +10,6 @@ import java.time.Duration
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Supplier
 
-@Component
-@ConditionalOnMissingBean(MeterRegistry::class)
 class NoOpPullServiceTaskDeliveryMetrics : PullServiceTaskDeliveryMetrics {
 
   override fun incrementFetchedAndLockedTasksCounter(topic: String, amount: Int) {}

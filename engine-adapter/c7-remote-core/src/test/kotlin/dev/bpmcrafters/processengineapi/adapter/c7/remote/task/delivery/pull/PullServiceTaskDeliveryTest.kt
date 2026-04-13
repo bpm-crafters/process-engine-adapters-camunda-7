@@ -374,6 +374,26 @@ internal class PullServiceTaskDeliveryTest {
     )
   }
 
+  @Test
+  fun `matches handles workerLockDurationInMilliseconds`() {
+    val subscription = mockTaskSubscriptionHandle().copy(
+      restrictions = mapOf("workerLockDurationInMilliseconds" to "5000")
+    )
+    val task = mockLockedExternalTaskDto("1")
+
+    assertTrue(taskDelivery.matches(task, subscription))
+  }
+
+  @Test
+  fun `matches returns false for unknown restriction`() {
+    val subscription = mockTaskSubscriptionHandle().copy(
+      restrictions = mapOf("unknown" to "value")
+    )
+    val task = mockLockedExternalTaskDto("1")
+
+    kotlin.test.assertFalse(taskDelivery.matches(task, subscription))
+  }
+
   fun mockExternalTask(id: String): ExternalTaskDto = ExternalTaskDto().id(id)
 
   fun mockLockedExternalTaskDto(

@@ -7,7 +7,6 @@ import dev.bpmcrafters.processengineapi.task.TaskInformation
 import org.camunda.community.rest.client.model.IdentityLinkDto
 import org.camunda.community.rest.client.model.LockedExternalTaskDto
 import org.camunda.community.rest.client.model.TaskWithAttachmentAndCommentDto
-import java.time.Instant
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.util.*

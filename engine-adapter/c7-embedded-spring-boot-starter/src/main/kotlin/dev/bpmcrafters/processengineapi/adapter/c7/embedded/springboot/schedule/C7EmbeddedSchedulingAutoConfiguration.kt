@@ -6,11 +6,13 @@ import dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot.*
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot.C7EmbeddedAdapterProperties.ExternalServiceTaskDeliveryStrategy.EMBEDDED_SCHEDULED
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot.C7EmbeddedAdapterProperties.UserTaskDeliveryStrategy
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.delivery.pull.EmbeddedPullServiceTaskDelivery
+import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.delivery.pull.EmbeddedPullServiceTaskDeliveryMetrics
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.delivery.pull.EmbeddedPullUserTaskDelivery
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.toolisticon.spring.condition.ConditionalOnMissingQualifiedBean
 import jakarta.annotation.PostConstruct
+import jdk.internal.platform.Container.metrics
 import org.camunda.bpm.engine.ExternalTaskService
 import org.camunda.bpm.engine.RepositoryService
 import org.camunda.bpm.engine.TaskService
@@ -30,6 +32,7 @@ import org.springframework.scheduling.annotation.EnableScheduling
 import org.springframework.scheduling.concurrent.SimpleAsyncTaskScheduler
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler
 import java.util.concurrent.ExecutorService
+import java.util.concurrent.ThreadPoolExecutor
 
 private val logger = KotlinLogging.logger {}
 
@@ -80,7 +83,8 @@ class C7EmbeddedSchedulingAutoConfiguration {
     externalTaskService: ExternalTaskService,
     c7AdapterProperties: C7EmbeddedAdapterProperties,
     @Qualifier("c7embedded-service-task-worker-executor")
-    executorService: ExecutorService
+    executor: ThreadPoolExecutor,
+    metrics: EmbeddedPullServiceTaskDeliveryMetrics,
   ) = EmbeddedPullServiceTaskDelivery(
     subscriptionRepository = subscriptionRepository,
     externalTaskService = externalTaskService,
@@ -89,7 +93,8 @@ class C7EmbeddedSchedulingAutoConfiguration {
     lockDurationInSeconds = c7AdapterProperties.serviceTasks.lockTimeInSeconds,
     retryTimeoutInSeconds = c7AdapterProperties.serviceTasks.retryTimeoutInSeconds,
     retries = c7AdapterProperties.serviceTasks.retries,
-    executorService = executorService
+    executor = executor,
+    metrics = metrics
   )
 
 

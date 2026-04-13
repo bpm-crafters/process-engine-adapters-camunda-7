@@ -2,6 +2,7 @@ package dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot.initial
 
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.process.ProcessDefinitionMetaDataResolver
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot.*
+import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.delivery.pull.EmbeddedPullServiceTaskDeliveryMetrics
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import io.github.oshai.kotlinlogging.KotlinLogging
 import jakarta.annotation.PostConstruct
@@ -14,6 +15,7 @@ import org.springframework.context.annotation.Conditional
 import org.springframework.context.annotation.Configuration
 import org.springframework.scheduling.annotation.EnableAsync
 import java.util.concurrent.ExecutorService
+import java.util.concurrent.ThreadPoolExecutor
 
 private val logger = KotlinLogging.logger {}
 
@@ -54,15 +56,17 @@ class C7EmbeddedInitialPullOnStartupAutoConfiguration {
   @Qualifier("c7embedded-service-task-initial-pull")
   @Conditional(C7EmbeddedAdapterServiceTaskInitialPullEnabledCondition::class)
   fun configureInitialPullForExternalServiceTaskDelivery(
-      externalTaskService: ExternalTaskService,
-      subscriptionRepository: SubscriptionRepository,
-      c7AdapterProperties: C7EmbeddedAdapterProperties,
-      @Qualifier("c7embedded-service-task-worker-executor")
-    executorService: ExecutorService
+    externalTaskService: ExternalTaskService,
+    subscriptionRepository: SubscriptionRepository,
+    c7AdapterProperties: C7EmbeddedAdapterProperties,
+    @Qualifier("c7embedded-service-task-worker-executor")
+    executor: ThreadPoolExecutor,
+    metrics: EmbeddedPullServiceTaskDeliveryMetrics
   ) = C7EmbeddedInitialPullServiceTasksDeliveryBinding(
     externalTaskService = externalTaskService,
     subscriptionRepository = subscriptionRepository,
     c7AdapterProperties = c7AdapterProperties,
-    executorService = executorService
+    executor = executor,
+    metrics = metrics
   )
 }

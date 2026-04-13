@@ -21,15 +21,15 @@ export default {
   //   name: 'Operations',
   //   vendor: 'Company'
   // },
-     customScripts: [
-  //   // If you have a folder called 'my-custom-script' (in the 'cockpit' folder)
-  //   // with a file called 'customScript.js' in it
-  //   // 'my-custom-script/customScript'
-          'scripts/definition-historic-activities.js',
-          'scripts/instance-historic-activities.js',
-          'scripts/instance-route-history.js'
-       // 'scripts/instance-tab-modify.js'
-     ],
+  customScripts: [
+    //   // If you have a folder called 'my-custom-script' (in the 'cockpit' folder)
+    //   // with a file called 'customScript.js' in it
+    //   // 'my-custom-script/customScript'
+    'scripts/definition-historic-activities.js',
+    'scripts/instance-historic-activities.js',
+    'scripts/instance-route-history.js'
+    // 'scripts/instance-tab-modify.js'
+  ],
   // requireJsConfig: {
   //   // AngularJS module names
   //   ngDeps: ['ui.bootstrap'],
@@ -72,19 +72,19 @@ export default {
   //   // select if Historic Batches should be loaded automatically when navigating to #/batch
   //   'autoLoadEnded': true
   // },
-     bpmnJs: {
-  //   moddleExtensions: {
-  //     // if you have a folder called 'my-custom-moddle' (in the 'cockpit' folder)
-  //     // with a file called 'camunda.json' in it defining the 'camunda' moddle extension
-  //     camunda: 'my-custom-moddle/camunda'
-  //   },
-       additionalModules: [
-  //     // if you have a folder called 'my-custom-module' (in the 'cockpit' folder)
-  //     // with a file called 'module.js' in it
-  //     'my-custom-module/module'
-         'scripts/robot-module.js'
-       ],
-     },
+  bpmnJs: {
+    //   moddleExtensions: {
+    //     // if you have a folder called 'my-custom-moddle' (in the 'cockpit' folder)
+    //     // with a file called 'camunda.json' in it defining the 'camunda' moddle extension
+    //     camunda: 'my-custom-moddle/camunda'
+    //   },
+    additionalModules: [
+      //     // if you have a folder called 'my-custom-module' (in the 'cockpit' folder)
+      //     // with a file called 'module.js' in it
+      //     'my-custom-module/module'
+      'scripts/robot-module.js'
+    ],
+  },
   // defaultFilter: {
   //   historicProcessDefinitionInstancesSearch: {
   //     lastDays: 5,
@@ -92,7 +92,7 @@ export default {
   //   }
   // },
   // csrfCookieName: 'XSRF-TOKEN',
-     disableWelcomeMessage: true,
+  disableWelcomeMessage: true,
   // userOperationLogAnnotationLength: 5000,
-     previewHtml: true
+  previewHtml: true
 };
