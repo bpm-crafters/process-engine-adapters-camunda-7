@@ -59,6 +59,7 @@ class UserTaskModificationApiImpl(
         cmd.taskId,
         PatchVariablesDto().modifications(valueMapper.mapValues(cmd.get()))
       )
+
       is DeletePayloadTaskCmd -> taskApiClient.removeVariablesLocal(cmd.taskId, cmd.get())
       is ClearPayloadTaskCmd -> taskApiClient.clearTaskVariablesLocal(cmd.taskId)
       else -> throw UnsupportedOperationException("Unsupported command ${cmd.javaClass.canonicalName}.")

@@ -66,7 +66,7 @@ class EmbeddedPullServiceTaskDelivery(
     }
 
     val tasksToFetch = maxTasks.coerceAtMost(executor.queue.remainingCapacity())
-    if (tasksToFetch==0) {
+    if (tasksToFetch == 0) {
       logger.trace { "PROCESS-ENGINE-C7-EMBEDDED-044: Task executor queue is full, skipping task fetch" }
       metrics.incrementFetchAndLockTasksSkippedCounter(QUEUE_FULL)
       return
@@ -85,15 +85,15 @@ class EmbeddedPullServiceTaskDelivery(
 
     val taskActionHandlerCallables = lockedTasks
       .asSequence()
-      .map { lockedTask -> lockedTask to subscriptions.firstOrNull { subscription -> subscription.matches(lockedTask) } }
-      .filter { (lockedTask, subscription) ->
-        val keep = subscription!=null
-        if (!keep) {
+      .mapNotNull { lockedTask ->
+        val subscription = subscriptions.firstOrNull { subscription -> subscription.matches(lockedTask) }
+        if (subscription != null) {
+          lockedTask to subscription
+        } else {
           metrics.incrementDroppedTasksCounter(lockedTask.topicName!!, NO_MATCHING_SUBSCRIPTIONS)
+          null
         }
-        keep
-      }
-      .map { (lockedTask, activeSubscription) -> createTaskActionHandlerCallable(lockedTask, activeSubscription!!) }
+      }.map { (lockedTask, activeSubscription) -> createTaskActionHandlerCallable(lockedTask, activeSubscription) }
       .toList()
 
     taskActionHandlerCallables
@@ -111,7 +111,7 @@ class EmbeddedPullServiceTaskDelivery(
       metrics.recordTaskQueueTime(lockedTask.topicName!!, timePassedSinceLockAcquisition)
       if (start.isBefore(lockExpirationInstant)) {
         try {
-          if (subscriptionRepository.getActiveSubscriptionForTask(lockedTask.id)==activeSubscription) {
+          if (subscriptionRepository.getActiveSubscriptionForTask(lockedTask.id) == activeSubscription) {
             // task is already delivered to the current subscription, nothing to do
             logger.trace { "PROCESS-ENGINE-C7-EMBEDDED-041: skipping task ${lockedTask.id} since it is unchanged." }
           } else {
@@ -176,7 +176,7 @@ class EmbeddedPullServiceTaskDelivery(
   internal fun createTaskTerminationHandlerCallable(taskId: String): Callable<Unit> = Callable {
     // deactivate active subscription and handle termination
     val taskSubscriptionHandle = subscriptionRepository.deactivateSubscriptionForTask(taskId)
-    if (taskSubscriptionHandle!=null) {
+    if (taskSubscriptionHandle != null) {
       taskSubscriptionHandle.termination.accept(
         TaskInformation(
           taskId = taskId,
@@ -190,7 +190,7 @@ class EmbeddedPullServiceTaskDelivery(
 
   private fun ExternalTaskQueryBuilder.forSubscriptions(subscriptions: List<TaskSubscriptionHandle>): ExternalTaskQueryBuilder {
     subscriptions
-      .filter { it.taskDescriptionKey!=null }
+      .filter { it.taskDescriptionKey != null }
       .distinctBy { it.taskDescriptionKey }
       .forEach { subscription ->
         val lockDurationInMilliseconds = getLockDurationForSubscription(subscription)
@@ -208,22 +208,22 @@ class EmbeddedPullServiceTaskDelivery(
   }
 
   internal fun TaskSubscriptionHandle.matches(task: LockedExternalTask): Boolean {
-    return this.taskType==TaskType.EXTERNAL
-      && (this.taskDescriptionKey==null || this.taskDescriptionKey==task.topicName)
+    return this.taskType == TaskType.EXTERNAL
+      && (this.taskDescriptionKey == null || this.taskDescriptionKey == task.topicName)
       && this.restrictions
-      .minus( // ignore some restrictions which are not relevant for external tasks
+      .minus( // ignore some restrictions that are not relevant for external tasks or are already handled
         "workerLockDurationInMilliseconds"
       )
       .all {
         when (it.key) {
-          CommonRestrictions.EXECUTION_ID -> it.value==task.executionId
-          CommonRestrictions.ACTIVITY_ID -> it.value==task.activityId
-          CommonRestrictions.BUSINESS_KEY -> it.value==task.businessKey
-          CommonRestrictions.TENANT_ID -> it.value==task.tenantId
-          CommonRestrictions.PROCESS_INSTANCE_ID -> it.value==task.processInstanceId
-          CommonRestrictions.PROCESS_DEFINITION_KEY -> it.value==task.processDefinitionKey
-          CommonRestrictions.PROCESS_DEFINITION_ID -> it.value==task.processDefinitionId
-          CommonRestrictions.PROCESS_DEFINITION_VERSION_TAG -> it.value==task.processDefinitionVersionTag
+          CommonRestrictions.EXECUTION_ID -> it.value == task.executionId
+          CommonRestrictions.ACTIVITY_ID -> it.value == task.activityId
+          CommonRestrictions.BUSINESS_KEY -> it.value == task.businessKey
+          CommonRestrictions.TENANT_ID -> it.value == task.tenantId
+          CommonRestrictions.PROCESS_INSTANCE_ID -> it.value == task.processInstanceId
+          CommonRestrictions.PROCESS_DEFINITION_KEY -> it.value == task.processDefinitionKey
+          CommonRestrictions.PROCESS_DEFINITION_ID -> it.value == task.processDefinitionId
+          CommonRestrictions.PROCESS_DEFINITION_VERSION_TAG -> it.value == task.processDefinitionVersionTag
           else -> {
             logger.debug { "PROCESS-ENGINE-C7-EMBEDDED-041: Unknown restriction key: ${it.key}" }
             false

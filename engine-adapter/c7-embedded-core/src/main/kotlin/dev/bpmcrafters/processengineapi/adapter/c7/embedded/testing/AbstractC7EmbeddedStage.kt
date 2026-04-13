@@ -251,7 +251,7 @@ abstract class AbstractC7EmbeddedStage<SUBTYPE : AbstractC7EmbeddedStage<SUBTYPE
     Awaitility.await().untilAsserted {
       embeddedPullServiceTaskDelivery.refresh()
       Assertions.assertThat(topicToExternalTaskId.containsKey(topicName)).isTrue()
-      if (activityId!=null) {
+      if (activityId != null) {
         Assertions.assertThat(topicToElementId).containsEntry(topicName, activityId)
       }
     }
@@ -291,7 +291,8 @@ abstract class AbstractC7EmbeddedStage<SUBTYPE : AbstractC7EmbeddedStage<SUBTYPE
       FailTaskCmd(
         topicToExternalTaskId.getValue(topicName), reason, null,
         retryCount, Duration.ofSeconds(3)
-      )).get()
+      )
+    ).get()
     return self()
   }
 
@@ -454,7 +455,7 @@ abstract class AbstractC7EmbeddedStage<SUBTYPE : AbstractC7EmbeddedStage<SUBTYPE
     return Optional.ofNullable(
       userTaskSupport
         .getAllTasks()
-        .find { ti: TaskInformation -> ti.meta[CommonRestrictions.ACTIVITY_ID]==activityId }?.taskId
+        .find { ti: TaskInformation -> ti.meta[CommonRestrictions.ACTIVITY_ID] == activityId }?.taskId
     )
   }
 }

@@ -63,7 +63,7 @@ class PullServiceTaskDelivery(
   }
 
   internal fun deliverNewTasks() {
-    val subscriptions = subscriptionRepository.getTaskSubscriptions().filter { s -> s.taskType==TaskType.EXTERNAL }
+    val subscriptions = subscriptionRepository.getTaskSubscriptions().filter { s -> s.taskType == TaskType.EXTERNAL }
     if (subscriptions.isEmpty()) {
       logger.trace { "PROCESS-ENGINE-C7-REMOTE-035: Pull external tasks disabled because of no active subscriptions" }
       metrics.incrementFetchAndLockTasksSkippedCounter(NO_SUBSCRIPTIONS)
@@ -71,7 +71,7 @@ class PullServiceTaskDelivery(
     }
 
     val tasksToFetch = maxTasks.coerceAtMost(executor.queue.remainingCapacity())
-    if (tasksToFetch==0) {
+    if (tasksToFetch == 0) {
       logger.trace { "PROCESS-ENGINE-C7-REMOTE-041: Task executor queue is full, skipping task fetch" }
       metrics.incrementFetchAndLockTasksSkippedCounter(QUEUE_FULL)
       return
@@ -104,7 +104,7 @@ class PullServiceTaskDelivery(
       .asSequence()
       .map { lockedTask -> lockedTask to subscriptions.firstOrNull { subscription -> matches(lockedTask, subscription) } }
       .filter { (lockedTask, subscription) ->
-        val keep = subscription!=null
+        val keep = subscription != null
         if (!keep) {
           metrics.incrementDroppedTasksCounter(lockedTask.topicName!!, NO_MATCHING_SUBSCRIPTIONS)
         }
@@ -199,7 +199,7 @@ class PullServiceTaskDelivery(
   internal fun createTaskTerminationHandlerCallable(taskId: String): Callable<Unit> = Callable {
     // deactivate active subscription and handle termination
     val taskSubscriptionHandle = subscriptionRepository.deactivateSubscriptionForTask(taskId)
-    if (taskSubscriptionHandle!=null) {
+    if (taskSubscriptionHandle != null) {
       taskSubscriptionHandle.termination.accept(
         TaskInformation(
           taskId = taskId,
@@ -250,21 +250,21 @@ class PullServiceTaskDelivery(
   }
 
   internal fun matches(task: LockedExternalTaskDto, subscription: TaskSubscriptionHandle): Boolean =
-    (subscription.taskDescriptionKey==null
-      || subscription.taskDescriptionKey==task.topicName)
+    (subscription.taskDescriptionKey == null
+      || subscription.taskDescriptionKey == task.topicName)
       && subscription.restrictions
       .minus( // ignore some restrictions which are not relevant for external tasks
         "workerLockDurationInMilliseconds"
       ).all {
         when (it.key) {
-          CommonRestrictions.EXECUTION_ID -> it.value==task.executionId
-          CommonRestrictions.ACTIVITY_ID -> it.value==task.activityId
-          CommonRestrictions.BUSINESS_KEY -> it.value==task.businessKey
-          CommonRestrictions.TENANT_ID -> it.value==task.tenantId
-          CommonRestrictions.PROCESS_INSTANCE_ID -> it.value==task.processInstanceId
-          CommonRestrictions.PROCESS_DEFINITION_KEY -> it.value==task.processDefinitionKey
-          CommonRestrictions.PROCESS_DEFINITION_ID -> it.value==task.processDefinitionId
-          CommonRestrictions.PROCESS_DEFINITION_VERSION_TAG -> it.value==task.processDefinitionVersionTag
+          CommonRestrictions.EXECUTION_ID -> it.value == task.executionId
+          CommonRestrictions.ACTIVITY_ID -> it.value == task.activityId
+          CommonRestrictions.BUSINESS_KEY -> it.value == task.businessKey
+          CommonRestrictions.TENANT_ID -> it.value == task.tenantId
+          CommonRestrictions.PROCESS_INSTANCE_ID -> it.value == task.processInstanceId
+          CommonRestrictions.PROCESS_DEFINITION_KEY -> it.value == task.processDefinitionKey
+          CommonRestrictions.PROCESS_DEFINITION_ID -> it.value == task.processDefinitionId
+          CommonRestrictions.PROCESS_DEFINITION_VERSION_TAG -> it.value == task.processDefinitionVersionTag
           else -> {
             logger.debug { "PROCESS-ENGINE-C7-REMOTE-043: Unknown restriction key: ${it.key}" }
             false

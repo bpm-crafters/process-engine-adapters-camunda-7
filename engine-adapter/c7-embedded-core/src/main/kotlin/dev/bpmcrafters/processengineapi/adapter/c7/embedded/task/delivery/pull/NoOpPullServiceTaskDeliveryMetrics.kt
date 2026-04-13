@@ -4,6 +4,9 @@ import java.time.Duration
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Supplier
 
+/**
+ * No-op implementation of [EmbeddedPullServiceTaskDeliveryMetrics].
+ */
 class NoOpPullServiceTaskDeliveryMetrics : EmbeddedPullServiceTaskDeliveryMetrics {
 
   override fun incrementFetchedAndLockedTasksCounter(topic: String, amount: Int) {}

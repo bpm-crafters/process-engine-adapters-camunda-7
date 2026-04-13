@@ -35,7 +35,7 @@ class EmbeddedPullUserTaskDelivery(
    * Delivers all tasks found in user task service to corresponding subscriptions.
    */
   override fun refresh() {
-    val subscriptions = subscriptionRepository.getTaskSubscriptions().filter { s -> s.taskType==TaskType.USER }
+    val subscriptions = subscriptionRepository.getTaskSubscriptions().filter { s -> s.taskType == TaskType.USER }
     if (subscriptions.isNotEmpty()) {
       val deliveredTaskIds = subscriptionRepository.getDeliveredTaskIds(TaskType.USER).toMutableList()
       // clean up task information items which are not in the list of delivered task ids. This is because,
@@ -63,7 +63,7 @@ class EmbeddedPullUserTaskDelivery(
                   // create task information and set up the reason
                   val taskInformation =
                     if (deliveredTaskIds.contains(task.id)
-                      && subscriptionRepository.getActiveSubscriptionForTask(task.id)==activeSubscription
+                      && subscriptionRepository.getActiveSubscriptionForTask(task.id) == activeSubscription
                     ) {
                       // task was already delivered to this subscription
                       if (task.hasChanged()) {
@@ -81,7 +81,7 @@ class EmbeddedPullUserTaskDelivery(
                       // task is new for this subscription
                       task.toTaskInformation(candidates, processDefinitionKey).withReason(TaskInformation.CREATE)
                     }
-                  if (taskInformation!=null) {
+                  if (taskInformation != null) {
                     subscriptionRepository.activateSubscriptionForTask(task.id, activeSubscription)
                     synchronized(deliveredTasks) {
                       deliveredTasks[task.id] = taskInformation
@@ -145,9 +145,9 @@ class EmbeddedPullUserTaskDelivery(
   private fun Task.hasChanged(): Boolean {
     val taskInformation = deliveredTasks[this.id]
     return !(
-      taskInformation!=null
-        && taskInformation.meta["lastUpdatedDate"]==this.lastUpdated.toDateString()
-        && taskInformation.meta["creationDate"]==this.createTime.toDateString()
+      taskInformation != null
+        && taskInformation.meta["lastUpdatedDate"] == this.lastUpdated.toDateString()
+        && taskInformation.meta["creationDate"] == this.createTime.toDateString()
       )
   }
 
@@ -156,10 +156,10 @@ class EmbeddedPullUserTaskDelivery(
    */
   private fun Task.hasChangedAssignees(candidates: Set<IdentityLink>): Boolean {
     val taskInformation = deliveredTasks[this.id]
-    return !(taskInformation!=null
-      && taskInformation.meta["assignee"]==this.assignee
-      && taskInformation.meta["candidateUsers"]==candidates.toUsersString()
-      && taskInformation.meta["candidateGroups"]==candidates.toGroupsString()
+    return !(taskInformation != null
+      && taskInformation.meta["assignee"] == this.assignee
+      && taskInformation.meta["candidateUsers"] == candidates.toUsersString()
+      && taskInformation.meta["candidateGroups"] == candidates.toGroupsString()
       )
   }
 
@@ -172,19 +172,19 @@ class EmbeddedPullUserTaskDelivery(
 
 
   internal fun TaskSubscriptionHandle.matches(task: Task): Boolean =
-    (this.taskDescriptionKey==null
-      || this.taskDescriptionKey==task.taskDefinitionKey
-      || this.taskDescriptionKey==task.id
+    (this.taskDescriptionKey == null
+      || this.taskDescriptionKey == task.taskDefinitionKey
+      || this.taskDescriptionKey == task.id
       ) && this.restrictions
       .all {
         when (it.key) {
-          CommonRestrictions.EXECUTION_ID -> it.value==task.executionId
-          CommonRestrictions.TENANT_ID -> it.value==task.tenantId
-          CommonRestrictions.ACTIVITY_ID -> it.value==task.taskDefinitionKey
-          CommonRestrictions.PROCESS_INSTANCE_ID -> it.value==task.processInstanceId
-          CommonRestrictions.PROCESS_DEFINITION_ID -> it.value==task.processDefinitionId
-          CommonRestrictions.PROCESS_DEFINITION_KEY -> it.value==processDefinitionMetaDataResolver.getProcessDefinitionKey(task.processDefinitionId)
-          CommonRestrictions.PROCESS_DEFINITION_VERSION_TAG -> it.value==processDefinitionMetaDataResolver.getProcessDefinitionVersionTag(task.processDefinitionId)
+          CommonRestrictions.EXECUTION_ID -> it.value == task.executionId
+          CommonRestrictions.TENANT_ID -> it.value == task.tenantId
+          CommonRestrictions.ACTIVITY_ID -> it.value == task.taskDefinitionKey
+          CommonRestrictions.PROCESS_INSTANCE_ID -> it.value == task.processInstanceId
+          CommonRestrictions.PROCESS_DEFINITION_ID -> it.value == task.processDefinitionId
+          CommonRestrictions.PROCESS_DEFINITION_KEY -> it.value == processDefinitionMetaDataResolver.getProcessDefinitionKey(task.processDefinitionId)
+          CommonRestrictions.PROCESS_DEFINITION_VERSION_TAG -> it.value == processDefinitionMetaDataResolver.getProcessDefinitionVersionTag(task.processDefinitionId)
           else -> {
             logger.debug { "PROCESS-ENGINE-C7-EMBEDDED-043: Unknown restriction key: ${it.key}" }
             false
