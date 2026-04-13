@@ -5,6 +5,7 @@ import dev.bpmcrafters.processengineapi.MetaInfo
 import dev.bpmcrafters.processengineapi.MetaInfoAware
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.correlation.applyTenantRestrictions
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.shared.EngineCommandExecutor
+import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.delivery.metaOf
 import dev.bpmcrafters.processengineapi.process.*
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.camunda.bpm.engine.RepositoryService
@@ -104,10 +105,11 @@ class StartProcessApiImpl(
 
 fun ProcessInstance.toProcessInformation() = ProcessInformation(
   instanceId = this.id,
-  meta = mapOf(
+  meta = metaOf(
     CommonRestrictions.PROCESS_DEFINITION_KEY to this.processDefinitionId,
     CommonRestrictions.BUSINESS_KEY to this.businessKey,
     CommonRestrictions.TENANT_ID to this.tenantId,
-    "rootProcessInstanceId" to this.rootProcessInstanceId
+    "rootProcessInstanceId" to this.rootProcessInstanceId,
+    CommonRestrictions.PROCESS_DEFINITION_ID to this.processDefinitionId,
   )
 )

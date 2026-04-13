@@ -57,7 +57,7 @@ class C7EmbeddedTaskApiITest : AbstractC7EmbeddedApiITest(C7EmbeddedProcessTestH
   @Test
   fun `should not get subscribed for external task with pull strategy after unsubscribe`() {
     GIVEN
-      .`a active external task subscription`(USER_TASK)
+      .`a active external task subscription`(EXTERNAL_TASK)
 
     WHEN
       .`unsubscribe external task subscription`()

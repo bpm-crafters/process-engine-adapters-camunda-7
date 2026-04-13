@@ -122,6 +122,46 @@ internal class PullUserTaskDeliveryTest {
     assertThat(deliveredViaUserTaskSupport).hasSize(tasks.size)
   }
 
+  @Test
+  fun `matches returns false for unknown restriction`() {
+    val subscription = TaskSubscriptionHandle(
+      taskType = TaskType.USER,
+      restrictions = mapOf("unknown" to "value"),
+      taskDescriptionKey = null,
+      payloadDescription = null,
+      action = { _, _ -> },
+      termination = { }
+    )
+    val task = randomTask()
+
+    with(embeddedPullUserTaskDelivery) {
+      assertThat(subscription.matches(task)).isFalse()
+    }
+  }
+
+  @Test
+  fun `does not fail when task does not match any subscription`() {
+    // given
+    val deliveredDirectly = ConcurrentHashMap<String, TaskInformation>()
+
+    subscriptionRepository.createTaskSubscription(
+      TaskSubscriptionHandle(
+        taskType = TaskType.USER,
+        restrictions = mapOf(dev.bpmcrafters.processengineapi.CommonRestrictions.PROCESS_DEFINITION_KEY to "process-A"),
+        taskDescriptionKey = null,
+        payloadDescription = null,
+        action = { taskInformation, _ -> synchronized(deliveredDirectly) { deliveredDirectly[taskInformation.taskId] = taskInformation } },
+        termination = { }
+      )
+    )
+
+    // when
+    embeddedPullUserTaskDelivery.refresh()
+
+    // then
+    assertThat(deliveredDirectly).isEmpty()
+  }
+
   private fun randomTask() = TaskWithAttachmentAndCommentDto()
     .id(UUID.randomUUID().toString())
     .assignee("kermit")

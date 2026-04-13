@@ -70,11 +70,11 @@ internal class EvaluateDecisionApiImplTest {
     whenever(builder.evaluate()).thenReturn(
       DmnDecisionResultImpl(
         listOf(
-      DmnDecisionResultEntriesImpl().apply {
-        putValue("key1", Variables.stringValue("bar"))
-        putValue("key2", Variables.stringValue("baz"))
-      }
-    )))
+          DmnDecisionResultEntriesImpl().apply {
+            putValue("key1", Variables.stringValue("bar"))
+            putValue("key2", Variables.stringValue("baz"))
+          }
+        )))
     val result = testSubject.evaluateDecision(
       DecisionByRefEvaluationCommand(
         decisionRef = "ref",

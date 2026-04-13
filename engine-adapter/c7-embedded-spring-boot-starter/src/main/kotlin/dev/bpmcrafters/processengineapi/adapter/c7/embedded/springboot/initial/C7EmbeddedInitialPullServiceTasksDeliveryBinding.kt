@@ -3,6 +3,7 @@ package dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot.initial
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot.C7EmbeddedAdapterProperties
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot.initial.C7EmbeddedInitialPullServiceTasksDeliveryBinding.Companion.ORDER
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.delivery.pull.EmbeddedPullServiceTaskDelivery
+import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.delivery.pull.EmbeddedPullServiceTaskDeliveryMetrics
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.camunda.bpm.engine.ExternalTaskService
@@ -11,7 +12,7 @@ import org.springframework.context.event.EventListener
 import org.springframework.core.Ordered
 import org.springframework.core.annotation.Order
 import org.springframework.scheduling.annotation.Async
-import java.util.concurrent.ExecutorService
+import java.util.concurrent.ThreadPoolExecutor
 
 private val logger = KotlinLogging.logger {}
 
@@ -22,10 +23,11 @@ private val logger = KotlinLogging.logger {}
  */
 @Order(ORDER)
 open class C7EmbeddedInitialPullServiceTasksDeliveryBinding(
-    externalTaskService: ExternalTaskService,
-    subscriptionRepository: SubscriptionRepository,
-    c7AdapterProperties: C7EmbeddedAdapterProperties,
-    executorService: ExecutorService
+  externalTaskService: ExternalTaskService,
+  subscriptionRepository: SubscriptionRepository,
+  c7AdapterProperties: C7EmbeddedAdapterProperties,
+  executor: ThreadPoolExecutor,
+  metrics: EmbeddedPullServiceTaskDeliveryMetrics
 ) {
   companion object {
     const val ORDER = Ordered.HIGHEST_PRECEDENCE + 1000
@@ -40,7 +42,8 @@ open class C7EmbeddedInitialPullServiceTasksDeliveryBinding(
     lockDurationInSeconds = c7AdapterProperties.serviceTasks.lockTimeInSeconds,
     retryTimeoutInSeconds = c7AdapterProperties.serviceTasks.retryTimeoutInSeconds,
     retries = c7AdapterProperties.serviceTasks.retries,
-    executorService = executorService
+    executor = executor,
+    metrics = metrics
   )
 
   @EventListener

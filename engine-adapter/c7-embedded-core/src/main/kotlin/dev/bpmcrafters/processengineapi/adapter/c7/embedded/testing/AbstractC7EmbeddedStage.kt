@@ -6,14 +6,15 @@ import dev.bpmcrafters.processengineapi.CommonRestrictions
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.correlation.CorrelationApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.correlation.SignalApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.deploy.DeploymentApiImpl
-import dev.bpmcrafters.processengineapi.adapter.c7.embedded.shared.EngineCommandExecutor
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.process.CachingProcessDefinitionMetaDataResolver
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.process.StartProcessApiImpl
+import dev.bpmcrafters.processengineapi.adapter.c7.embedded.shared.EngineCommandExecutor
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.completion.C7ServiceTaskCompletionApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.completion.C7UserTaskCompletionApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.completion.LinearMemoryFailureRetrySupplier
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.delivery.pull.EmbeddedPullServiceTaskDelivery
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.delivery.pull.EmbeddedPullUserTaskDelivery
+import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.delivery.pull.NoOpPullServiceTaskDeliveryMetrics
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.modification.C7UserTaskModificationApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.subscription.C7TaskSubscriptionApiImpl
 import dev.bpmcrafters.processengineapi.correlation.CorrelationApi
@@ -36,7 +37,10 @@ import org.camunda.bpm.engine.variable.VariableMap
 import java.time.Duration
 import java.util.*
 import java.util.concurrent.Executors
-import kotlin.collections.set
+import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.ThreadPoolExecutor
+import java.util.concurrent.TimeUnit
+
 
 /**
  * Abstract JGiven stage for implementing BDD tests operating on  Camunda 7 Embedded.
@@ -121,7 +125,7 @@ abstract class AbstractC7EmbeddedStage<SUBTYPE : AbstractC7EmbeddedStage<SUBTYPE
     this.workerId = self().javaClass.simpleName
 
     val subscriptionRepository = InMemSubscriptionRepository()
-    val commandExecutor = EngineCommandExecutor { it.run() }
+    val commandExecutor = EngineCommandExecutor()
 
     startProcessApi = StartProcessApiImpl(
       runtimeService = processEngineServices.runtimeService,
@@ -154,7 +158,23 @@ abstract class AbstractC7EmbeddedStage<SUBTYPE : AbstractC7EmbeddedStage<SUBTYPE
     )
 
     embeddedPullServiceTaskDelivery = EmbeddedPullServiceTaskDelivery(
-      processEngineServices.externalTaskService, workerId, subscriptionRepository, Int.MAX_VALUE, 1000, 1000, 1, Executors.newFixedThreadPool(1)
+      externalTaskService = processEngineServices.externalTaskService,
+      workerId = workerId,
+      subscriptionRepository = subscriptionRepository,
+      maxTasks = Int.MAX_VALUE,
+      lockDurationInSeconds = 1000,
+      retryTimeoutInSeconds = 1000,
+      retries = 1,
+      executor = ThreadPoolExecutor(
+        4,  // corePoolSize
+        8,  // maximumPoolSize
+        60L,  // keepAliveTime
+        TimeUnit.SECONDS,  // time unit
+        LinkedBlockingQueue(100),  // work queue
+        Executors.defaultThreadFactory(),
+        ThreadPoolExecutor.AbortPolicy() // rejection handler
+      ),
+      metrics = NoOpPullServiceTaskDeliveryMetrics()
     )
 
     taskSubscriptionApi = C7TaskSubscriptionApiImpl(
@@ -271,7 +291,8 @@ abstract class AbstractC7EmbeddedStage<SUBTYPE : AbstractC7EmbeddedStage<SUBTYPE
       FailTaskCmd(
         topicToExternalTaskId.getValue(topicName), reason, null,
         retryCount, Duration.ofSeconds(3)
-      )).get()
+      )
+    ).get()
     return self()
   }
 

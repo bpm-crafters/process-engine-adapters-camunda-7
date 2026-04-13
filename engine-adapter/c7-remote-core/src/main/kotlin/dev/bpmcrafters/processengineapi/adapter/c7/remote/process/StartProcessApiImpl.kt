@@ -4,6 +4,7 @@ import dev.bpmcrafters.processengineapi.CommonRestrictions
 import dev.bpmcrafters.processengineapi.MetaInfo
 import dev.bpmcrafters.processengineapi.MetaInfoAware
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.correlation.applyRestrictions
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.metaOf
 import dev.bpmcrafters.processengineapi.process.*
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.camunda.community.rest.client.api.MessageApiClient
@@ -115,19 +116,13 @@ class StartProcessApiImpl(
 
 }
 
-fun MessageCorrelationResultWithVariableDto.toProcessInformation() = ProcessInformation(
-  instanceId = this.processInstance!!.id!!,
-  meta = mapOf(
-    CommonRestrictions.PROCESS_DEFINITION_KEY to this.processInstance.definitionKey,
-    CommonRestrictions.BUSINESS_KEY to this.processInstance.businessKey,
-    CommonRestrictions.TENANT_ID to this.processInstance.tenantId,
-    CommonRestrictions.PROCESS_DEFINITION_ID to this.processInstance.definitionId,
-  )
-)
+fun MessageCorrelationResultWithVariableDto.toProcessInformation() =
+  this.processInstance!!.toProcessInformation()
+
 
 fun ProcessInstanceWithVariablesDto.toProcessInformation() = ProcessInformation(
   instanceId = this.id!!,
-  meta = mapOf(
+  meta = metaOf(
     CommonRestrictions.PROCESS_DEFINITION_KEY to this.definitionKey,
     CommonRestrictions.BUSINESS_KEY to this.businessKey,
     CommonRestrictions.TENANT_ID to this.tenantId,
@@ -137,7 +132,7 @@ fun ProcessInstanceWithVariablesDto.toProcessInformation() = ProcessInformation(
 
 fun ProcessInstanceDto.toProcessInformation() = ProcessInformation(
   instanceId = this.id!!,
-  meta = mapOf(
+  meta = metaOf(
     CommonRestrictions.PROCESS_DEFINITION_KEY to this.definitionKey,
     CommonRestrictions.BUSINESS_KEY to this.businessKey,
     CommonRestrictions.TENANT_ID to this.tenantId,

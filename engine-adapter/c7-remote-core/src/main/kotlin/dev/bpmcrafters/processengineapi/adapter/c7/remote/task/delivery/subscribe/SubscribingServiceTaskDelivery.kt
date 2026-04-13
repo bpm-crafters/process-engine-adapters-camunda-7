@@ -95,22 +95,28 @@ class SubscribingServiceTaskDelivery(
    * Additional restrictions to check.
    * The activated job can be completed by the Subscription strategy and is correct type (topic).
    */
-  private fun TaskSubscriptionHandle.matches(externalTask: ExternalTask): Boolean =
+  internal fun TaskSubscriptionHandle.matches(externalTask: ExternalTask): Boolean =
     (this.taskDescriptionKey == null
       || this.taskDescriptionKey == externalTask.topicName)
-      && this.restrictions.all {
-      when (it.key) {
-        CommonRestrictions.EXECUTION_ID -> it.value == externalTask.executionId
-        CommonRestrictions.ACTIVITY_ID -> it.value == externalTask.activityId
-        CommonRestrictions.BUSINESS_KEY -> it.value == externalTask.businessKey
-        CommonRestrictions.TENANT_ID -> it.value == externalTask.tenantId
-        CommonRestrictions.PROCESS_INSTANCE_ID -> it.value == externalTask.processInstanceId
-        CommonRestrictions.PROCESS_DEFINITION_KEY -> it.value == externalTask.processDefinitionKey
-        CommonRestrictions.PROCESS_DEFINITION_ID -> it.value == externalTask.processDefinitionId
-        CommonRestrictions.PROCESS_DEFINITION_VERSION_TAG -> it.value == externalTask.processDefinitionVersionTag
-        else -> false
+      && this.restrictions
+      .minus( // ignore some restrictions which are not relevant for external tasks
+        "workerLockDurationInMilliseconds"
+      ).all {
+        when (it.key) {
+          CommonRestrictions.EXECUTION_ID -> it.value == externalTask.executionId
+          CommonRestrictions.ACTIVITY_ID -> it.value == externalTask.activityId
+          CommonRestrictions.BUSINESS_KEY -> it.value == externalTask.businessKey
+          CommonRestrictions.TENANT_ID -> it.value == externalTask.tenantId
+          CommonRestrictions.PROCESS_INSTANCE_ID -> it.value == externalTask.processInstanceId
+          CommonRestrictions.PROCESS_DEFINITION_KEY -> it.value == externalTask.processDefinitionKey
+          CommonRestrictions.PROCESS_DEFINITION_ID -> it.value == externalTask.processDefinitionId
+          CommonRestrictions.PROCESS_DEFINITION_VERSION_TAG -> it.value == externalTask.processDefinitionVersionTag
+          else -> {
+            logger.debug { "PROCESS-ENGINE-C7-REMOTE-045: Unknown restriction key: ${it.key}" }
+            false
+          }
+        }
       }
-    }
 
 
   private fun TopicSubscriptionBuilder.forSubscription(subscription: TaskSubscriptionHandle): TopicSubscriptionBuilder {
