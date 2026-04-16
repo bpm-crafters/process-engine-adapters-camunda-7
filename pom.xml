@@ -20,7 +20,7 @@
   <properties>
     <!-- COMMON GLOBAL -->
     <spring-boot.version>3.5.13</spring-boot.version>
-    <process-engine-api.version>1.5</process-engine-api.version>
+    <process-engine-api.version>1.6-SNAPSHOT</process-engine-api.version>
     <c7.version>2026.04.1</c7.version>
     <!-- TEST -->
     <mockito.version>6.3.0</mockito.version>
