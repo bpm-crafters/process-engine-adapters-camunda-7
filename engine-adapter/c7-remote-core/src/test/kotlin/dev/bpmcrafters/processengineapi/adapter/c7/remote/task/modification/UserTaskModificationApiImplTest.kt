@@ -5,6 +5,7 @@ import dev.bpmcrafters.processengineapi.task.*
 import org.camunda.community.rest.client.api.TaskApiClient
 import org.camunda.community.rest.client.model.IdentityLinkDto
 import org.camunda.community.rest.client.model.PatchVariablesDto
+import org.camunda.community.rest.client.model.TaskDto
 import org.camunda.community.rest.client.model.UserIdDto
 import org.camunda.community.rest.client.model.VariableValueDto
 import org.camunda.community.rest.variables.ValueMapper
@@ -14,6 +15,7 @@ import org.junit.jupiter.api.assertThrows
 import org.mockito.Mockito
 import org.mockito.kotlin.*
 import org.springframework.http.ResponseEntity
+import java.time.OffsetDateTime
 import java.util.*
 
 internal class UserTaskModificationApiImplTest {
@@ -261,6 +263,44 @@ internal class UserTaskModificationApiImplTest {
       taskId, PatchVariablesDto()
         .modifications(valueMapper.mapValues(mapOf("key1" to "world")))
     )
+    verifyNoMoreInteractions(taskApiClient)
+  }
+
+  @Test
+  fun `set due date`() {
+    val dueDate = OffsetDateTime.now().plusDays(7)
+    api.update(
+      ChangeDatesModifyTaskCmd.SetDueDateTaskCmd(taskId = taskId, dueDate = dueDate)
+    ).get()
+    verify(taskApiClient).updateTask(taskId, TaskDto().due(dueDate))
+    verifyNoMoreInteractions(taskApiClient)
+  }
+
+  @Test
+  fun `clear due date`() {
+    api.update(
+      ChangeDatesModifyTaskCmd.ClearDueDateTaskCmd(taskId = taskId)
+    ).get()
+    verify(taskApiClient).updateTask(taskId, TaskDto().due(null))
+    verifyNoMoreInteractions(taskApiClient)
+  }
+
+  @Test
+  fun `set follow-up date`() {
+    val followUpDate = OffsetDateTime.now().plusDays(3)
+    api.update(
+      ChangeDatesModifyTaskCmd.SetFollowUpDateTaskCmd(taskId = taskId, followUpDate = followUpDate)
+    ).get()
+    verify(taskApiClient).updateTask(taskId, TaskDto().followUp(followUpDate))
+    verifyNoMoreInteractions(taskApiClient)
+  }
+
+  @Test
+  fun `clear follow-up date`() {
+    api.update(
+      ChangeDatesModifyTaskCmd.ClearFollowUpDateTaskCmd(taskId = taskId)
+    ).get()
+    verify(taskApiClient).updateTask(taskId, TaskDto().followUp(null))
     verifyNoMoreInteractions(taskApiClient)
   }
 
