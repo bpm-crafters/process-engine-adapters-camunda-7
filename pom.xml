@@ -19,7 +19,7 @@
 
   <properties>
     <!-- COMMON GLOBAL -->
-    <spring-boot.version>3.5.13</spring-boot.version>
+    <spring-boot.version>3.5.14</spring-boot.version>
     <process-engine-api.version>1.5</process-engine-api.version>
     <c7.version>2026.04.2</c7.version>
     <!-- TEST -->
