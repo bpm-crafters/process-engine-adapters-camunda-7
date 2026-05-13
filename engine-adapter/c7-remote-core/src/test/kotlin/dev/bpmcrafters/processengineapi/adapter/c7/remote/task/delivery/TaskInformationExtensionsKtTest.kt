@@ -9,6 +9,7 @@ import org.camunda.community.rest.client.api.ProcessDefinitionApiClient
 import org.camunda.community.rest.client.model.IdentityLinkDto
 import org.camunda.community.rest.client.model.LockedExternalTaskDto
 import org.camunda.community.rest.client.model.TaskWithAttachmentAndCommentDto
+import org.camunda.community.rest.client.model.VariableValueDto
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.NullSource
 import org.junit.jupiter.params.provider.ValueSource
@@ -44,6 +45,11 @@ class TaskInformationExtensionsKtTest {
       .due(maybeNullDate)
       .formKey("formKey")
       .lastUpdated(maybeNullDate)
+      .variables(
+        mapOf(
+          CommonRestrictions.BUSINESS_KEY to VariableValueDto().value("businessKey")
+        )
+      )
 
     val identityLinks =
       listOf(identityLink(groupId = "group"), identityLink(userId = "user-1"), identityLink(userId = "user-2"))
@@ -54,6 +60,7 @@ class TaskInformationExtensionsKtTest {
     assertThat(taskInformation.meta[CommonRestrictions.PROCESS_DEFINITION_ID]).isEqualTo("processDefinitionId")
     assertThat(taskInformation.meta[CommonRestrictions.PROCESS_DEFINITION_KEY]).isEqualTo("processDefinitionKey")
     assertThat(taskInformation.meta[CommonRestrictions.TENANT_ID]).isEqualTo("tenantId")
+    assertThat(taskInformation.meta[CommonRestrictions.BUSINESS_KEY]).isEqualTo("businessKey")
     assertThat(taskInformation.meta["taskName"]).isEqualTo("name")
     assertThat(taskInformation.meta["taskDescription"]).isEqualTo("description")
     assertThat(taskInformation.meta["assignee"]).isEqualTo("assignee")
@@ -77,8 +84,40 @@ class TaskInformationExtensionsKtTest {
 
   @ParameterizedTest
   @NullSource
+  @ValueSource(strings = ["2007-12-03T10:15:30+01:00"])
+  fun `should map TaskWithAttachmentAndCommentDto without business key`(maybeNullDate: OffsetDateTime?) {
+    val now = OffsetDateTime.now()
+
+    val task = TaskWithAttachmentAndCommentDto()
+      .id("taskId")
+      .processDefinitionId("processDefinitionId")
+      .processInstanceId("processInstanceId")
+      .tenantId("tenantId")
+      .taskDefinitionKey("taskDefinitionKey")
+      .name("name")
+      .description("description")
+      .assignee("assignee")
+      .created(now)
+      .followUp(maybeNullDate)
+      .due(maybeNullDate)
+      .formKey("formKey")
+      .lastUpdated(maybeNullDate)
+      .variables(emptyMap())
+
+    val identityLinks =
+      listOf(identityLink(groupId = "group"), identityLink(userId = "user-1"), identityLink(userId = "user-2"))
+
+    val taskInformation = task.toTaskInformation(identityLinks.toSet(), processDefinitionMetaDataResolver)
+
+    assertThat(taskInformation.taskId).isEqualTo("taskId")
+    assertThat(taskInformation.meta[CommonRestrictions.BUSINESS_KEY]).isNull()
+    assertThat(taskInformation.meta).doesNotContainKey(CommonRestrictions.BUSINESS_KEY)
+  }
+
+  @ParameterizedTest
+  @NullSource
   @ValueSource(ints = [3])
-  fun `should map TaskWithAttachmentAndCommentDto`(maybeNullRetryCount: Int?) {
+  fun `should map LockedExternalTaskDto`(maybeNullRetryCount: Int?) {
     val now = OffsetDateTime.now()
 
     val lockedTask = LockedExternalTaskDto()
@@ -91,6 +130,11 @@ class TaskInformationExtensionsKtTest {
       .activityInstanceId("activityInstanceId")
       .createTime(now)
       .retries(maybeNullRetryCount)
+      .variables(
+        mapOf(
+          CommonRestrictions.BUSINESS_KEY to VariableValueDto().value("businessKey")
+        )
+      )
 
     val taskInformation = lockedTask.toTaskInformation(processDefinitionMetaDataResolver)
 
@@ -99,6 +143,7 @@ class TaskInformationExtensionsKtTest {
     assertThat(taskInformation.meta[CommonRestrictions.PROCESS_INSTANCE_ID]).isEqualTo("processInstanceId")
     assertThat(taskInformation.meta[CommonRestrictions.ACTIVITY_ID]).isEqualTo("activityId")
     assertThat(taskInformation.meta[CommonRestrictions.TENANT_ID]).isEqualTo("tenantId")
+    assertThat(taskInformation.meta[CommonRestrictions.BUSINESS_KEY]).isEqualTo("businessKey")
     assertThat(taskInformation.meta["topicName"]).isEqualTo("topicName")
     assertThat(taskInformation.meta["creationDate"]).isEqualTo(now.toDateString())
     if (maybeNullRetryCount == null) {
@@ -106,6 +151,31 @@ class TaskInformationExtensionsKtTest {
     } else {
       assertThat(taskInformation.meta[TaskInformation.RETRIES]).isEqualTo(maybeNullRetryCount.toString())
     }
+  }
+
+  @ParameterizedTest
+  @NullSource
+  @ValueSource(ints = [3])
+  fun `should map LockedExternalTaskDto without business key`(maybeNullRetryCount: Int?) {
+    val now = OffsetDateTime.now()
+
+    val lockedTask = LockedExternalTaskDto()
+      .processDefinitionId("processDefinitionId")
+      .processInstanceId("processInstanceId")
+      .tenantId("tenantId")
+      .topicName("topicName")
+      .id("taskId")
+      .activityId("activityId")
+      .activityInstanceId("activityInstanceId")
+      .createTime(now)
+      .retries(maybeNullRetryCount)
+      .variables(emptyMap())
+
+    val taskInformation = lockedTask.toTaskInformation(processDefinitionMetaDataResolver)
+
+    assertThat(taskInformation.taskId).isEqualTo("taskId")
+    assertThat(taskInformation.meta[CommonRestrictions.BUSINESS_KEY]).isNull()
+    assertThat(taskInformation.meta).doesNotContainKey(CommonRestrictions.BUSINESS_KEY)
   }
 
   private fun identityLink(userId: String? = null, groupId: String? = null): IdentityLinkDto {
