@@ -86,6 +86,7 @@ class TaskInformationExtensionsKtTest {
     delegateTask.addGroupIdentityLink("group-2", "CANDIDATE")
     delegateTask.addUserIdentityLink("user-1", "CANDIDATE")
     delegateTask.addUserIdentityLink("user-2", "CANDIDATE")
+    delegateTask.setVariable(CommonRestrictions.BUSINESS_KEY, "businessKey")
 
     val taskInformation = delegateTask.toTaskInformation()
 
@@ -93,6 +94,7 @@ class TaskInformationExtensionsKtTest {
     assertThat(taskInformation.meta[CommonRestrictions.PROCESS_DEFINITION_ID]).isEqualTo("processDefinitionId")
     assertThat(taskInformation.meta[CommonRestrictions.ACTIVITY_ID]).isEqualTo("taskDefinitionKey")
     assertThat(taskInformation.meta[CommonRestrictions.TENANT_ID]).isEqualTo("tenantId")
+    assertThat(taskInformation.meta[CommonRestrictions.BUSINESS_KEY]).isEqualTo("businessKey")
     assertThat(taskInformation.meta["taskName"]).isEqualTo("name")
     assertThat(taskInformation.meta["taskDescription"]).isEqualTo("description")
     assertThat(taskInformation.meta["assignee"]).isEqualTo("assignee")

@@ -128,6 +128,7 @@ class TaskInformationExtensionsKtTest {
       .id("taskId")
       .activityId("activityId")
       .activityInstanceId("activityInstanceId")
+      .businessKey("businessKey")
       .createTime(now)
       .retries(maybeNullRetryCount)
       .variables(
