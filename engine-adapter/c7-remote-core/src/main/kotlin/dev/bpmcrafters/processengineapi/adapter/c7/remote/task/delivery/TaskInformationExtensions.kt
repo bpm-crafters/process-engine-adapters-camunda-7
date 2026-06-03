@@ -20,7 +20,7 @@ fun LockedExternalTaskDto.toTaskInformation(pdMetaDataResolver: ProcessDefinitio
       CommonRestrictions.PROCESS_DEFINITION_KEY to this.processDefinitionKey,
       CommonRestrictions.PROCESS_INSTANCE_ID to this.processInstanceId,
       CommonRestrictions.TENANT_ID to this.tenantId,
-      CommonRestrictions.BUSINESS_KEY to this.variables?.get(CommonRestrictions.BUSINESS_KEY)?.value?.toString(),
+      CommonRestrictions.BUSINESS_KEY to this.businessKey,
       "topicName" to this.topicName,
       "creationDate" to this.createTime.toDateString(),
       TaskInformation.RETRIES to this.retries?.toString(),
