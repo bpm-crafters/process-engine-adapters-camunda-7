@@ -4,9 +4,11 @@ import dev.bpmcrafters.processengineapi.Empty
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.shared.EngineCommandExecutor
 import dev.bpmcrafters.processengineapi.task.*
 import dev.bpmcrafters.processengineapi.task.ChangeAssignmentModifyTaskCmd.*
+import dev.bpmcrafters.processengineapi.task.ChangeDatesModifyTaskCmd.*
 import dev.bpmcrafters.processengineapi.task.ChangePayloadModifyTaskCmd.*
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.camunda.bpm.engine.TaskService
+import java.util.Date
 import java.util.concurrent.CompletableFuture
 
 private val logger = KotlinLogging.logger {}
@@ -37,6 +39,7 @@ class C7UserTaskModificationApiImpl(
     when (cmd) {
       is ChangeAssignmentModifyTaskCmd -> changeAssignment(cmd)
       is ChangePayloadModifyTaskCmd -> changePayload(cmd)
+      is ChangeDatesModifyTaskCmd -> changeDates(cmd)
       else -> throw UnsupportedOperationException("Unsupported command ${cmd.javaClass.canonicalName}.")
     }
   }
@@ -64,5 +67,18 @@ class C7UserTaskModificationApiImpl(
       is ClearPayloadTaskCmd -> taskService.removeAllVariablesLocal(cmd.taskId)
       else -> throw UnsupportedOperationException("Unsupported command ${cmd.javaClass.canonicalName}.")
     }
+  }
+
+  private fun changeDates(cmd: ChangeDatesModifyTaskCmd) {
+    val task = taskService.createTaskQuery().taskId(cmd.taskId).singleResult()
+      ?: throw IllegalArgumentException("Task with id ${cmd.taskId} not found.")
+    when (cmd) {
+      is SetDueDateTaskCmd -> task.dueDate = Date.from(cmd.dueDate.toInstant())
+      is ClearDueDateTaskCmd -> task.dueDate = null
+      is SetFollowUpDateTaskCmd -> task.followUpDate = Date.from(cmd.followUpDate.toInstant())
+      is ClearFollowUpDateTaskCmd -> task.followUpDate = null
+      else -> throw UnsupportedOperationException("Unsupported command ${cmd.javaClass.canonicalName}.")
+    }
+    taskService.saveTask(task)
   }
 }
