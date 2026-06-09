@@ -203,7 +203,7 @@ class EmbeddedPullServiceTaskDelivery(
   }
 
   private fun getLockDurationForSubscription(subscription: TaskSubscriptionHandle): Long {
-    val customLockDuration = subscription.restrictions["workerLockDurationInMilliseconds"]
+    val customLockDuration = subscription.restrictions[CommonRestrictions.WORKER_LOCK_DURATION_IN_MILLISECONDS]
     return customLockDuration?.toLong() ?: (lockDurationInSeconds * 1000)
   }
 
@@ -212,7 +212,7 @@ class EmbeddedPullServiceTaskDelivery(
       && (this.taskDescriptionKey == null || this.taskDescriptionKey == task.topicName)
       && this.restrictions
       .minus( // ignore some restrictions that are not relevant for external tasks or are already handled
-        "workerLockDurationInMilliseconds"
+        CommonRestrictions.WORKER_LOCK_DURATION_IN_MILLISECONDS
       )
       .all {
         when (it.key) {
