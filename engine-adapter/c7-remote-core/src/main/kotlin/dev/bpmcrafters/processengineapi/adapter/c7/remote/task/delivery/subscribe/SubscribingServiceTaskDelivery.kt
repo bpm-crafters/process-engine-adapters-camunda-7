@@ -100,7 +100,7 @@ class SubscribingServiceTaskDelivery(
       || this.taskDescriptionKey == externalTask.topicName)
       && this.restrictions
       .minus( // ignore some restrictions which are not relevant for external tasks
-        "workerLockDurationInMilliseconds"
+        CommonRestrictions.WORKER_LOCK_DURATION_IN_MILLISECONDS
       ).all {
         when (it.key) {
           CommonRestrictions.EXECUTION_ID -> it.value == externalTask.executionId

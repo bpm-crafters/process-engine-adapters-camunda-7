@@ -1,5 +1,6 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.delivery.pull
 
+import dev.bpmcrafters.processengineapi.CommonRestrictions
 import dev.bpmcrafters.processengineapi.impl.task.TaskSubscriptionHandle
 import dev.bpmcrafters.processengineapi.task.TaskType
 import org.assertj.core.api.Assertions.assertThat
@@ -26,7 +27,7 @@ internal class EmbeddedPullServiceTaskDeliveryTest {
   fun `matches handles workerLockDurationInMilliseconds`() {
     val subscription = TaskSubscriptionHandle(
       taskType = TaskType.EXTERNAL,
-      restrictions = mapOf("workerLockDurationInMilliseconds" to "5000"),
+      restrictions = mapOf(CommonRestrictions.WORKER_LOCK_DURATION_IN_MILLISECONDS to "5000"),
       taskDescriptionKey = "topic",
       payloadDescription = null,
       action = { _, _ -> },
