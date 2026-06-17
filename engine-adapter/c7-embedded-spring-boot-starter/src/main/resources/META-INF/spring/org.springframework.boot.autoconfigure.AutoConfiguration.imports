@@ -1,4 +1,5 @@
 dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot.C7EmbeddedAdapterAutoConfiguration
+dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot.C7EmbeddedCamundaBpmSpringBoot4AutoConfiguration
 dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot.schedule.C7EmbeddedSchedulingAutoConfiguration
 dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot.schedule.C7EmbeddedServiceTaskPullStrategyAutoConfiguration
 dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot.schedule.C7EmbeddedUserTaskPullStrategyAutoConfiguration

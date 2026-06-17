@@ -32,19 +32,26 @@ import io.micrometer.core.instrument.MeterRegistry
 import io.toolisticon.spring.condition.ConditionalOnMissingQualifiedBean
 import jakarta.annotation.PostConstruct
 import org.camunda.bpm.engine.*
+import org.springframework.boot.autoconfigure.AutoConfiguration
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Conditional
-import org.springframework.context.annotation.Configuration
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
 private val logger = KotlinLogging.logger {}
 
-@Configuration
+/**
+ * Registers the BPM Crafters API beans that adapt the in-process Camunda 7 engine services.
+ *
+ * The class is declared as an auto-configuration because it is listed in
+ * `AutoConfiguration.imports`; the adapter enabled condition intentionally applies only to these
+ * adapter-facing beans, not to the separate Camunda Spring Boot 4 compatibility configuration.
+ */
+@AutoConfiguration
 @EnableConfigurationProperties(value = [C7EmbeddedAdapterProperties::class])
 @Conditional(C7EmbeddedAdapterEnabledCondition::class)
 class C7EmbeddedAdapterAutoConfiguration {
