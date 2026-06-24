@@ -7,6 +7,7 @@ import dev.bpmcrafters.processengineapi.decision.DecisionByRefEvaluationCommand
 import dev.bpmcrafters.processengineapi.decision.DecisionEvaluationResult
 import dev.bpmcrafters.processengineapi.process.StartProcessByDefinitionAtElementCmd
 import dev.bpmcrafters.processengineapi.process.StartProcessByDefinitionCmd
+import dev.bpmcrafters.processengineapi.process.StartProcessByMessageAtElementCmd
 import dev.bpmcrafters.processengineapi.process.StartProcessByMessageCmd
 import dev.bpmcrafters.processengineapi.task.*
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -81,6 +82,16 @@ class BaseGivenWhenStage : Stage<BaseGivenWhenStage>() {
     instanceId = processTestHelper.getStartProcessApi().startProcess(
       StartProcessByDefinitionAtElementCmd(
         definitionKey = definitionKey,
+        elementId = elementId,
+        payloadSupplier = { emptyMap() },
+      )
+    ).get().instanceId
+  }
+
+  fun `start process by message at element`(messageName: String, elementId: String) = step {
+    instanceId = processTestHelper.getStartProcessApi().startProcess(
+      StartProcessByMessageAtElementCmd(
+        messageName = messageName,
         elementId = elementId,
         payloadSupplier = { emptyMap() },
       )
