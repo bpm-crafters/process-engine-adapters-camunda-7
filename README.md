@@ -14,7 +14,7 @@ This library provides an adapter implementation of Process Engine API for Camund
 
 | Adapter-7 Version                                                                                     | Camunda 7 Version | API Version |
 |-------------------------------------------------------------------------------------------------------|-------------------|-------------|
-| [2026.06.2](https://github.com/bpm-crafters/process-engine-adapters-camunda-7/releases/tag/2026.06.1) | 7.24.0            | 1.7         |
+| [2026.06.2](https://github.com/bpm-crafters/process-engine-adapters-camunda-7/releases/tag/2026.06.2) | 7.24.0            | 1.7         |
 | [2026.06.1](https://github.com/bpm-crafters/process-engine-adapters-camunda-7/releases/tag/2026.06.1) | 7.24.0            | 1.6         |
 | [2026.04.2](https://github.com/bpm-crafters/process-engine-adapters-camunda-7/releases/tag/2026.04.1) | 7.24.0            | 1.5         |
 | [2026.04.1](https://github.com/bpm-crafters/process-engine-adapters-camunda-7/releases/tag/2026.04.1) | 7.24.0            | 1.5         |
