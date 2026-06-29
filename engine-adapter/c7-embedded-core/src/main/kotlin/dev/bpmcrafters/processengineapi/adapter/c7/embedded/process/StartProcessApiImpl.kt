@@ -89,6 +89,23 @@ class StartProcessApiImpl(
           instance
         }
 
+      is StartProcessByMessageAtElementCmd ->
+        commandExecutor.execute {
+          logger.debug { "PROCESS-ENGINE-C7-EMBEDDED-007: starting a new process instance by message ${cmd.messageName} at element ${cmd.elementId}" }
+          val startProcessCommand = StartProcessByMessageCmd(
+            messageName = cmd.messageName,
+            payloadSupplier = cmd.payloadSupplier,
+            restrictions = cmd.restrictions,
+          )
+          val instance = this.startProcess(startProcessCommand).get()
+          val processDefinitionId = instance.meta[CommonRestrictions.PROCESS_DEFINITION_KEY] as String
+          runtimeService.createModification(processDefinitionId)
+            .processInstanceIds(instance.instanceId)
+            .startBeforeActivity(cmd.elementId)
+            .execute()
+          instance
+        }
+
       else -> throw IllegalArgumentException("Unsupported start command $cmd")
     }
   }

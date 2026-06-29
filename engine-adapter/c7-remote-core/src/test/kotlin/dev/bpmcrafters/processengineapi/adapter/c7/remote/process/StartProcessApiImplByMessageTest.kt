@@ -6,6 +6,7 @@ import dev.bpmcrafters.processengineapi.process.StartProcessByMessageCmd
 import org.assertj.core.api.Assertions.assertThat
 import org.camunda.community.rest.client.api.MessageApiClient
 import org.camunda.community.rest.client.api.ProcessDefinitionApiClient
+import org.camunda.community.rest.client.api.ProcessInstanceApiClient
 import org.camunda.community.rest.client.model.*
 import org.camunda.community.rest.variables.ValueMapper
 import org.junit.jupiter.api.BeforeEach
@@ -25,6 +26,9 @@ class StartProcessApiImplByMessageTest {
 
   private val processDefinitionApiClient: ProcessDefinitionApiClient = mock()
   private val messageApiClient: MessageApiClient = mock()
+
+  @Suppress("unused")
+  private val processInstanceApiClient: ProcessInstanceApiClient = mock()
 
   @Spy
   private val valueMapper: ValueMapper = TestFixtures.valueMapper()

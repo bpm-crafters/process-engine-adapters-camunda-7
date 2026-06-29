@@ -246,7 +246,7 @@ class PullServiceTaskDelivery(
   private fun getLockDurationForSubscription(
     restrictions: Map<String, String>,
   ): Long {
-    val customLockDuration = restrictions["workerLockDurationInMilliseconds"]
+    val customLockDuration = restrictions[CommonRestrictions.WORKER_LOCK_DURATION_IN_MILLISECONDS]
     return customLockDuration?.toLong() ?: (lockDurationInSeconds * 1000)
   }
 
@@ -255,7 +255,7 @@ class PullServiceTaskDelivery(
       || subscription.taskDescriptionKey == task.topicName)
       && subscription.restrictions
       .minus( // ignore some restrictions which are not relevant for external tasks
-        "workerLockDurationInMilliseconds"
+        CommonRestrictions.WORKER_LOCK_DURATION_IN_MILLISECONDS
       ).all {
         when (it.key) {
           CommonRestrictions.EXECUTION_ID -> it.value == task.executionId

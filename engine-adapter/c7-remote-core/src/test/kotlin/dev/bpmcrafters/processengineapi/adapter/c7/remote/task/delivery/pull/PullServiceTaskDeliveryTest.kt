@@ -1,5 +1,6 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull
 
+import dev.bpmcrafters.processengineapi.CommonRestrictions
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.process.ProcessDefinitionMetaDataResolver
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.PullServiceTaskDeliveryMetrics.DropReason.EXPIRED_WHILE_IN_QUEUE
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.PullServiceTaskDeliveryMetrics.DropReason.NO_MATCHING_SUBSCRIPTIONS
@@ -377,7 +378,7 @@ internal class PullServiceTaskDeliveryTest {
   @Test
   fun `matches handles workerLockDurationInMilliseconds`() {
     val subscription = mockTaskSubscriptionHandle().copy(
-      restrictions = mapOf("workerLockDurationInMilliseconds" to "5000")
+      restrictions = mapOf(CommonRestrictions.WORKER_LOCK_DURATION_IN_MILLISECONDS to "5000")
     )
     val task = mockLockedExternalTaskDto("1")
 
