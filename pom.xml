@@ -11,7 +11,7 @@
 
   <groupId>dev.bpm-crafters.process-engine-adapters</groupId>
   <artifactId>process-engine-adapter-camunda-platform-c7-root</artifactId>
-  <version>2026.06.2-SNAPSHOT</version>
+  <version>2026.06.2</version>
   <name>POM: Camunda 7 Adapter Project root</name>
   <description>Process Engine Adapters Camunda 7</description>
   <url>https://github.com/bpm-crafters/process-engine-adapters-camunda-7/</url>
@@ -19,7 +19,7 @@
 
   <properties>
     <!-- COMMON GLOBAL -->
-    <spring-boot.version>3.5.15</spring-boot.version>
+    <spring-boot.version>3.5.16</spring-boot.version>
     <process-engine-api.version>1.7</process-engine-api.version>
     <c7.version>2026.04.2</c7.version>
     <!-- TEST -->
