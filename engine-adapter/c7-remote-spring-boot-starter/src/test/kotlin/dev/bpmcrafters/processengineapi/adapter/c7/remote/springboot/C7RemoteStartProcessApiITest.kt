@@ -60,6 +60,7 @@ class C7RemoteStartProcessApiITest : AbstractC7RemoteApiITestBase() {
 
     THEN
       .`we should have a running process`()
+      .`we should have an active token in element`("service-do-action2")
   }
 
 }

@@ -15,6 +15,7 @@ import dev.bpmcrafters.processengineapi.task.TaskSubscriptionApi
 import dev.bpmcrafters.processengineapi.task.UserTaskCompletionApi
 import dev.bpmcrafters.processengineapi.test.ProcessTestHelper
 import org.camunda.community.rest.client.api.ProcessInstanceApiClient
+import org.camunda.community.rest.client.model.ActivityInstanceDto
 
 class C7RemoteProcessTestHelper(
   private val startProcessApi: StartProcessApi,
@@ -52,6 +53,22 @@ class C7RemoteProcessTestHelper(
       .getProcessInstance(instanceId)
       .body!!.toProcessInformation()
 
+
+  override fun getActiveElements(instanceId: String): Collection<String> {
+    val tree = processInstanceApiClient.getActivityInstanceTree(instanceId).body ?: return emptyList()
+    return tree.collectActiveElements()
+  }
+
+  /**
+   * Flattens the activity instance tree into the element ids that currently hold a token.
+   * The root node represents the process instance itself and is therefore skipped; only the
+   * descendant activity instances (and transition instances, i.e. async-before/after tokens) count.
+   */
+  private fun ActivityInstanceDto.collectActiveElements(isRoot: Boolean = true): List<String> {
+    val children = (childActivityInstances ?: emptyList()).flatMap { it.collectActiveElements(isRoot = false) }
+    val transitions = (childTransitionInstances ?: emptyList()).mapNotNull { it.activityId }
+    return if (isRoot) children + transitions else listOf(activityId) + children + transitions
+  }
 
   override fun clearAllSubscriptions() {
     (subscriptionRepository as InMemSubscriptionRepository).deleteAllTaskSubscriptions()

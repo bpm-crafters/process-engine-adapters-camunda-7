@@ -69,5 +69,6 @@ class C7EmbeddedStartProcessApiITest : AbstractC7EmbeddedApiITest(C7EmbeddedProc
 
     THEN
       .`we should have a running process`()
+      .`we should have an active token in element`("service-do-action2")
   }
 }

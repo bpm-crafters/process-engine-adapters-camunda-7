@@ -62,6 +62,7 @@ class C7EmbeddedSpringStartProcessApiITest(
 
     THEN
       .`we should have a running process`()
+      .`we should have an active token in element`("service-do-action2")
   }
 
 }
