@@ -5,6 +5,7 @@ import dev.bpmcrafters.processengineapi.adapter.c7.remote.TestFixtures
 import dev.bpmcrafters.processengineapi.process.StartProcessByDefinitionAtElementCmd
 import org.camunda.community.rest.client.api.MessageApiClient
 import org.camunda.community.rest.client.api.ProcessDefinitionApiClient
+import org.camunda.community.rest.client.api.ProcessInstanceApiClient
 import org.camunda.community.rest.client.model.ProcessDefinitionDto
 import org.camunda.community.rest.client.model.ProcessInstanceModificationInstructionDto
 import org.camunda.community.rest.client.model.ProcessInstanceModificationInstructionDto.TypeEnum.START_BEFORE_ACTIVITY
@@ -28,6 +29,9 @@ class StartProcessApiImplByDefinitionAtElementTest {
   @Suppress("unused")
   private val messageApiClient: MessageApiClient = mock()
   private val processDefinitionApiClient: ProcessDefinitionApiClient = mock()
+
+  @Suppress("unused")
+  private val processInstanceApiClient: ProcessInstanceApiClient = mock()
 
   @Spy
   private val valueMapper: ValueMapper = TestFixtures.valueMapper()

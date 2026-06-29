@@ -106,6 +106,9 @@ class C7EmbeddedProcessTestHelper(private val processEngine: ProcessEngine) : Pr
       .singleResult()
       .toProcessInformation()
 
+  override fun getActiveElements(instanceId: String): Collection<String> =
+    processEngine.runtimeService.getActiveActivityIds(instanceId)
+
   override fun clearAllSubscriptions() = subscriptionRepository.deleteAllTaskSubscriptions()
 
 

@@ -27,6 +27,8 @@ interface ProcessTestHelper {
 
   fun getProcessInformation(instanceId: String): ProcessInformation
 
+  fun getActiveElements(instanceId: String): Collection<String>
+
   fun clearAllSubscriptions()
 
 }

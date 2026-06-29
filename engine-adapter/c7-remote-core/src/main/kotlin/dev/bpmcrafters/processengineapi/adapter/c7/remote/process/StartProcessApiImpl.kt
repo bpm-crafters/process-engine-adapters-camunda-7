@@ -9,6 +9,7 @@ import dev.bpmcrafters.processengineapi.process.*
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.camunda.community.rest.client.api.MessageApiClient
 import org.camunda.community.rest.client.api.ProcessDefinitionApiClient
+import org.camunda.community.rest.client.api.ProcessInstanceApiClient
 import org.camunda.community.rest.client.model.*
 import org.camunda.community.rest.variables.ValueMapper
 import java.util.concurrent.CompletableFuture
@@ -18,6 +19,7 @@ private val logger = KotlinLogging.logger {}
 class StartProcessApiImpl(
   private val processDefinitionApiClient: ProcessDefinitionApiClient,
   private val messageApiClient: MessageApiClient,
+  private val processInstanceApiClient: ProcessInstanceApiClient,
   private val processDefinitionMetaDataResolver: ProcessDefinitionMetaDataResolver,
   private val valueMapper: ValueMapper,
 ) : StartProcessApi {
@@ -95,6 +97,27 @@ class StartProcessApiImpl(
           val instance = processDefinitionApiClient.startProcessInstance(processDefinitionId, startProcessInstanceDto)
           val processInformation = instance.body?.toProcessInformation()
           requireNotNull(processInformation) { "Could not start process instance ${cmd.definitionKey}, resulting status was ${instance.statusCode}" }
+        }
+
+      is StartProcessByMessageAtElementCmd ->
+        CompletableFuture.supplyAsync {
+          logger.debug { "PROCESS-ENGINE-C7-REMOTE-007: starting a new process instance by message ${cmd.messageName} at element ${cmd.elementId}" }
+          val startProcessCommand = StartProcessByMessageCmd(
+            messageName = cmd.messageName,
+            payloadSupplier = cmd.payloadSupplier,
+            restrictions = cmd.restrictions,
+          )
+          val instance = this.startProcess(startProcessCommand).get()
+
+          val startInstructionDto = ProcessInstanceModificationInstructionDto()
+          startInstructionDto.type = ProcessInstanceModificationInstructionDto.TypeEnum.START_BEFORE_ACTIVITY
+          startInstructionDto.activityId = cmd.elementId
+
+          val modificationDto = ProcessInstanceModificationDto()
+          modificationDto.instructions(listOf(startInstructionDto))
+
+          processInstanceApiClient.modifyProcessInstance(instance.instanceId, modificationDto)
+          instance
         }
 
       else -> throw IllegalArgumentException("Unsupported start command $cmd")
