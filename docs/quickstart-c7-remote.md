@@ -5,12 +5,10 @@ title: Camunda Platform 7 as remote engine
 If you start with a Camunda Platform 7, operated remotely, the following configuration is applicable for you.
 
 First of all add the corresponding adapter to your project's classpath. In order to connect to remote engine,
-you will need to use some client. Currently, the Camunda Hub extension [camunda-platform-7-rest-client-spring-boot](https://github.com/camunda-community-hub/camunda-platform-7-rest-client-spring-boot),
-you will also need to add some additional libraries. Here is the result:
+you need a Camunda 7 REST client on the classpath. The current examples use the Holunda Feign starter. Add the official Camunda external task client only if you want subscribed service-task delivery (`remote_subscribed`):
 
 ```xml
-
-<dependendcies>
+<dependencies>
   <!-- the correct adapter -->
   <dependency>
     <groupId>dev.bpm-crafters.process-engine-adapters</groupId>
@@ -19,18 +17,20 @@ you will also need to add some additional libraries. Here is the result:
   </dependency>
   <!-- rest client library -->
   <dependency>
-    <groupId>org.camunda.community.rest</groupId>
-    <artifactId>camunda-platform-7-rest-client-spring-boot-starter-feign</artifactId>
-    <version>7.23.4</version>
+    <groupId>io.holunda.c7</groupId>
+    <artifactId>c7-rest-client-spring-boot-starter-feign</artifactId>
+    <version>${c7.version}</version>
   </dependency>
-  <!-- Optional, if you want to use the official camunda client for service task delivery-->
+  <!-- Optional, only for service-tasks.delivery-strategy=remote_subscribed -->
   <dependency>
     <groupId>org.camunda.bpm.springboot</groupId>
     <artifactId>camunda-bpm-spring-boot-starter-external-task-client</artifactId>
-    <version>7.23.0</version>
+    <version>7.24.0</version>
   </dependency>
-</dependendcies>
+</dependencies>
 ```
+
+If you build on Spring Boot 4, use `io.holunda.c7:c7-rest-client-spring-boot-starter-feign-4` instead of `...-feign`.
 
 And finally, add the following configuration to your configuration properties. Here is a version for `application.yaml`:
 
@@ -42,24 +42,29 @@ dev:
         c7remote:
           enabled: true
           service-tasks:
-            delivery-strategy: remote_scheduled # or remote_subscribed if you want to use official camunda client
-            schedule-delivery-fixed-rate-in-seconds: 10
-            worker-id: embedded-worker
+            delivery-strategy: remote_scheduled # or remote_subscribed with the official external task client
+            schedule-delivery-fixed-rate-in-seconds: 5
+            worker-id: remote-worker
             lock-time-in-seconds: 10
-            worker-thread-pool-size: 10
-            worker-thread-pool-queue-capacity: 100
+            max-task-count: 2
+            deserialize-on-server: false
+            worker-thread-pool-size: 2
+            worker-thread-pool-queue-capacity: 5
+            execute-initial-pull-on-startup: true
           user-tasks:
             delivery-strategy: remote_scheduled
-            schedule-delivery-fixed-rate-in-seconds: 10
+            schedule-delivery-fixed-rate-in-seconds: 5
+            execute-initial-pull-on-startup: false
+            deserialize-on-server: false
 
-# to tell the client library where the engine is located provide the correct details below:
+# Needed for the remote REST client in all remote setups:
 feign:
   client:
     config:
       default:
         url: "http://localhost:9090/engine-rest/"
 
-# Just needed if you use remote_subscribed as delivery-strategy for service-tasks
+# Only needed for service-tasks.delivery-strategy=remote_subscribed
 camunda:
   bpm:
     client:
