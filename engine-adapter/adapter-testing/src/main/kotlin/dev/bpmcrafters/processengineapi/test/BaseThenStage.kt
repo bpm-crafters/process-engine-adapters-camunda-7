@@ -40,6 +40,14 @@ class BaseThenStage : Stage<BaseThenStage>() {
     assertThat(process).isNotNull()
   }
 
+  fun `we should have an active token in element`(elementId: String) = step {
+    await().untilAsserted {
+      assertThat(processTestHelper.getActiveElements(instanceId))
+        .describedAs("Process %s has no active token in element %s", instanceId, elementId)
+        .contains(elementId)
+    }
+  }
+
   fun `we should get notified about a new user task with pull strategy`() = step {
     processTestHelper.triggerPullingUserTaskDeliveryManually()
 

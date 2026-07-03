@@ -9,7 +9,6 @@ import org.camunda.community.rest.client.model.CompleteExternalTaskDto
 import org.camunda.community.rest.client.model.ExternalTaskBpmnError
 import org.camunda.community.rest.client.model.ExternalTaskFailureDto
 import org.camunda.community.rest.variables.ValueMapper
-import java.time.temporal.ChronoUnit
 import java.util.concurrent.CompletableFuture
 
 private val logger = KotlinLogging.logger {}
@@ -63,12 +62,13 @@ class FeignServiceTaskCompletionApiImpl(
   override fun failTask(cmd: FailTaskCmd): CompletableFuture<Empty> {
     logger.debug { "PROCESS-ENGINE-C7-REMOTE-010: failing service task ${cmd.taskId}." }
     val (retries, retryTimeoutInSeconds) = failureRetrySupplier.apply(cmd.taskId)
+    val retryTimeoutInMillis = cmd.retryBackoff?.toMillis() ?: retryTimeoutInSeconds * 1000
     externalTaskApiClient.handleFailure(
       cmd.taskId,
       ExternalTaskFailureDto().apply {
         this.workerId = this@FeignServiceTaskCompletionApiImpl.workerId
         this.retries = cmd.retryCount ?: retries
-        this.retryTimeout = cmd.retryBackoff?.get(ChronoUnit.SECONDS) ?: retryTimeoutInSeconds
+        this.retryTimeout = retryTimeoutInMillis
         this.errorDetails = cmd.errorDetails
         this.errorMessage = cmd.reason
       }

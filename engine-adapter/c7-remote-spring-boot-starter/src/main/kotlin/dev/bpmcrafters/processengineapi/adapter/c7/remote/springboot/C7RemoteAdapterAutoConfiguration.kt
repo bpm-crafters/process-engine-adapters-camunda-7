@@ -60,11 +60,13 @@ class C7RemoteAdapterAutoConfiguration {
   fun startProcessApi(
     processDefinitionApiClient: ProcessDefinitionApiClient,
     messageApiClient: MessageApiClient,
+    processInstanceApiClient: ProcessInstanceApiClient,
     valueMapper: ValueMapper,
     processDefinitionMetaDataResolver: ProcessDefinitionMetaDataResolver,
   ): StartProcessApi = StartProcessApiImpl(
     processDefinitionApiClient = processDefinitionApiClient,
     messageApiClient = messageApiClient,
+    processInstanceApiClient = processInstanceApiClient,
     processDefinitionMetaDataResolver = processDefinitionMetaDataResolver,
     valueMapper = valueMapper
   )

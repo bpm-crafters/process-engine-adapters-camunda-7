@@ -55,6 +55,7 @@ internal class PullServiceTaskDeliveryTest {
   private val callableCaptor = argumentCaptor<Callable<Unit>>()
 
   private val taskInformationCaptor = argumentCaptor<TaskInformation>()
+  private val failureDtoCaptor = argumentCaptor<ExternalTaskFailureDto>()
 
   private val durationCaptor = argumentCaptor<Duration>()
 
@@ -352,27 +353,51 @@ internal class PullServiceTaskDeliveryTest {
   fun `taskActionHandlerCallable handles exceptions`() {
     val lockedTask = mockLockedExternalTaskDto("1")
     val activeSubscription = mockTaskSubscriptionHandle()
-
-    val exception = RuntimeException("Something went wrong")
-    doThrow(exception)
-      .whenever(subscriptionRepository)
-      .activateSubscriptionForTask("1", activeSubscription)
-
-    val callable = taskDelivery.createTaskActionHandlerCallable(lockedTask, activeSubscription)
-    callable.call()
-
-    verifyNoInteractions(valueMapper)
-    verify(metrics).incrementFailedTasksCounter(lockedTask.topicName!!)
-    verify(externalTaskApiClient).handleFailure(
-      lockedTask.id,
-      ExternalTaskFailureDto().apply {
-        workerId = this@PullServiceTaskDeliveryTest.workerId
-        retries = 0
-        retryTimeout = 10_000
-        errorDetails = exception.stackTraceToString()
-        errorMessage = exception.message
+    val state = mutableMapOf<String, TaskInformation>()
+    val terminated = mutableListOf<TaskInformation>()
+    val variables = Variables.createVariables()
+    lockedTask.variables!!.entries.forEach {
+      variables[it.key] = it.value.value
+    }
+    val subscription = activeSubscription.copy(
+      action = { taskInformation, _ ->
+        state[taskInformation.taskId] = taskInformation
+        throw RuntimeException("Something went wrong")
+      },
+      termination = { taskInformation ->
+        state.remove(taskInformation.taskId)
+        terminated.add(taskInformation)
       }
     )
+
+    doAnswer {
+      val taskId = it.getArgument<String>(0)
+      val subscriptionHandle = it.getArgument<TaskSubscriptionHandle>(1)
+      whenever(subscriptionRepository.deactivateSubscriptionForTask(taskId)).thenReturn(subscriptionHandle)
+      Unit
+    }.whenever(subscriptionRepository).activateSubscriptionForTask("1", subscription)
+    doReturn(variables)
+      .whenever(valueMapper)
+      .mapDtos(lockedTask.variables!!)
+    doReturn(mockTaskInformation("1"))
+      .whenever(taskDelivery)
+      .toTaskInformation(lockedTask)
+
+    val callable = taskDelivery.createTaskActionHandlerCallable(lockedTask, subscription)
+    callable.call()
+
+    assertTrue(state.isEmpty())
+    assertEquals(1, terminated.size)
+    assertEquals(TaskInformation.DELETE, terminated.single().meta[REASON])
+    verify(metrics).incrementFailedTasksCounter(lockedTask.topicName!!)
+    verify(externalTaskApiClient).handleFailure(eq(lockedTask.id), failureDtoCaptor.capture())
+    val failureDto = failureDtoCaptor.singleValue
+    assertEquals(workerId, failureDto.workerId)
+    assertEquals(0, failureDto.retries)
+    assertEquals(10_000, failureDto.retryTimeout)
+    assertEquals("Something went wrong", failureDto.errorMessage)
+    assertTrue(failureDto.errorDetails?.contains("RuntimeException") == true)
+    verify(subscriptionRepository).deactivateSubscriptionForTask("1")
   }
 
   @Test

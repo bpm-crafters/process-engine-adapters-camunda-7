@@ -130,7 +130,7 @@ class EmbeddedPullServiceTaskDelivery(
           logger.error { "PROCESS-ENGINE-C7-EMBEDDED-033: failing delivering task ${lockedTask.id}: ${e.message}" }
           metrics.incrementFailedTasksCounter(lockedTask.topicName!!)
           externalTaskService.handleFailure(lockedTask.id, workerId, e.message, jobRetries, retryTimeoutInSeconds * 1000)
-          subscriptionRepository.deactivateSubscriptionForTask(taskId = lockedTask.id)
+          cleanupFailedDelivery(lockedTask.id)
           logger.error { "PROCESS-ENGINE-C7-EMBEDDED-034: successfully failed delivering task ${lockedTask.id}: ${e.message}" }
 
         } finally {
@@ -184,6 +184,19 @@ class EmbeddedPullServiceTaskDelivery(
         ).withReason(TaskInformation.DELETE)
       )
       metrics.incrementTerminatedTasksCounter(taskSubscriptionHandle.taskDescriptionKey ?: "?")
+    }
+  }
+
+  private fun cleanupFailedDelivery(taskId: String) {
+    val taskSubscriptionHandle = subscriptionRepository.deactivateSubscriptionForTask(taskId = taskId)
+    if (taskSubscriptionHandle != null) {
+      try {
+        taskSubscriptionHandle.termination.accept(
+          TaskInformation(taskId = taskId, meta = emptyMap()).withReason(TaskInformation.DELETE)
+        )
+      } catch (terminationError: Exception) {
+        logger.error { "PROCESS-ENGINE-C7-EMBEDDED-046: failed cleaning up delivery state for task $taskId: ${terminationError.message}" }
+      }
     }
   }
 

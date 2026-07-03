@@ -45,6 +45,9 @@ class C7EmbeddedSpringProcessTestHelper(
       .singleResult()
       .toProcessInformation()
 
+  override fun getActiveElements(instanceId: String): Collection<String> =
+    runtimeService.getActiveActivityIds(instanceId)
+
   override fun clearAllSubscriptions() = (subscriptionRepository as InMemSubscriptionRepository).deleteAllTaskSubscriptions()
 
 }
