@@ -4,6 +4,30 @@ title: Process Engine Adapter C7 Embedded
 
 # Decisions and supported features
 
+## Spring Boot compatibility
+
+The embedded Spring Boot starter supports Spring Boot 3 and Spring Boot 4. For Spring Boot 4, the scheduler
+auto-configuration uses adapter-owned threading conditions instead of Spring Boot's removed `Threading.VIRTUAL` and
+`Threading.PLATFORM` enum values.
+
+If `spring.threads.virtual.enabled=true` and the application runs on Java 21 or newer, the starter contributes a
+`SimpleAsyncTaskScheduler` for Spring's default `taskScheduler` bean. Otherwise, it falls back to a
+`ThreadPoolTaskScheduler`.
+
+The public Spring Boot 4 example uses Camunda 7 Community Edition `7.24.0`, the last CE release published on Maven
+Central. Enterprise patch versions require the consuming application to configure Camunda Enterprise repositories and
+versions explicitly.
+
+Camunda 7.24's Spring Boot starter still references the Spring Boot 3 Hibernate JPA auto-configuration class
+`org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration`. Under Spring Boot 4, the embedded adapter
+starter filters that Camunda auto-configuration and contributes an equivalent compatibility auto-configuration ordered
+after Spring Boot 4's `org.springframework.boot.hibernate.autoconfigure.HibernateJpaAutoConfiguration`.
+
+The compatibility layer does not replace Camunda runtime dependencies. Embedded Spring Boot 4 applications still need a
+working `DataSource` and transaction manager, for example via `spring-boot-starter-jdbc`. Applications that persist
+custom object variables as JSON should add `camunda-engine-plugin-spin` and
+`camunda-spin-dataformat-json-jackson`; the Spring Boot 4 example uses those dependencies to serialize the sample
+`LocalDateTime` payload.
 ## Configuration
 
 All embedded adapter properties use the prefix `dev.bpm-crafters.process-api.adapter.c7embedded`.

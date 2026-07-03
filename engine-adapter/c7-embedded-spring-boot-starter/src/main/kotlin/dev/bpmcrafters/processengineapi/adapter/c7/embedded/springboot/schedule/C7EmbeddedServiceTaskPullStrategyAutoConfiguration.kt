@@ -4,8 +4,8 @@ import dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot.C7Embedde
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot.ConditionalOnServiceTaskDeliveryStrategy
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.delivery.pull.EmbeddedPullServiceTaskDelivery
 import io.github.oshai.kotlinlogging.KotlinLogging
+import org.springframework.boot.autoconfigure.AutoConfiguration
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
-import org.springframework.context.annotation.Configuration
 import org.springframework.scheduling.annotation.Scheduled
 import java.util.concurrent.TimeUnit.SECONDS
 
@@ -13,8 +13,11 @@ private val logger = KotlinLogging.logger {}
 
 /**
  * Dynamic / imperative scheduling configuration using own task scheduler for service tasks.
+ *
+ * This class stays separate from the bean factory configuration so `@Scheduled` is only registered
+ * when the embedded scheduled delivery strategy is selected.
  */
-@Configuration
+@AutoConfiguration
 @ConditionalOnServiceTaskDeliveryStrategy(
   strategy = EMBEDDED_SCHEDULED
 )

@@ -9,10 +9,10 @@ import jakarta.annotation.PostConstruct
 import org.camunda.bpm.engine.ExternalTaskService
 import org.camunda.bpm.engine.TaskService
 import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.boot.autoconfigure.AutoConfiguration
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Conditional
-import org.springframework.context.annotation.Configuration
 import org.springframework.scheduling.annotation.EnableAsync
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.ThreadPoolExecutor
@@ -23,8 +23,12 @@ private val logger = KotlinLogging.logger {}
  * This configuration configures the initial pull bound to the application started event.
  * It is not relying on any delivery strategies but just configures the initial pull to happen
  * and deliver tasks to the task handlers.
+ *
+ * It is an auto-configuration because Boot imports it directly from `AutoConfiguration.imports`;
+ * ordering it after the adapter configuration guarantees that the shared adapter beans already
+ * exist before the startup bindings are created.
  */
-@Configuration
+@AutoConfiguration
 @AutoConfigureAfter(C7EmbeddedAdapterAutoConfiguration::class)
 @EnableAsync
 @Conditional(C7EmbeddedAdapterEnabledCondition::class)

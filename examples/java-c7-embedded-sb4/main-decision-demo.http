@@ -1,0 +1,53 @@
+###
+# @name Deploy decision
+// @no-log
+POST http://localhost:8082/main-decision/deploy
+
+> {%
+  client.test("Request executed successfully", function () {
+    client.assert(response.status === 201, "Response status is not 201");
+  });
+
+  client.global.set("deploymentKey", response.headers.valueOf("Location"));
+%}
+
+###
+# @name Evaluate single hit single output decision
+POST http://localhost:8082/main-decision/evaluate-single-hit-single-output-decision?id=99&amount=5000
+Accept: application/json
+
+> {%
+  client.test("Request executed successfully", function () {
+    client.assert(response.status === 200, "Response status is not 200");
+  });
+  client.assert(response.body.toString() === `10`, "Unexpected response body: " + response.body)
+%}
+
+###
+# @name Evaluate single hit multiple output decision
+POST http://localhost:8082/main-decision/evaluate-single-hit-multiple-output-decision?id=99&amount=50000
+Accept: application/json
+
+> {%
+  client.test("Request executed successfully", function () {
+    client.assert(response.status === 200, "Response status is not 200");
+  });
+  client.assert(response.body.score === 43, "Unexpected score: " + JSON.stringify(response.body));
+  client.assert(response.body.message === "OK", "Unexpected message: " + JSON.stringify(response.body));
+%}
+
+###
+# @name Evaluate multi hit multiple output decision
+POST http://localhost:8082/main-decision/evaluate-multi-hit-multi-output-decision?id=99&amount=5000
+Accept: application/json
+
+> {%
+  client.test("Request executed successfully", function () {
+    client.assert(response.status === 200, "Response status is not 200");
+  });
+  client.assert(response.body.length === 2, "Unexpected result count: " + JSON.stringify(response.body));
+  client.assert(response.body[0].score === 23.5, "Unexpected first score: " + JSON.stringify(response.body));
+  client.assert(response.body[0].message === "no-PIN", "Unexpected first message: " + JSON.stringify(response.body));
+  client.assert(response.body[1].score === 43, "Unexpected second score: " + JSON.stringify(response.body));
+  client.assert(response.body[1].message === "OK", "Unexpected second message: " + JSON.stringify(response.body));
+%}
