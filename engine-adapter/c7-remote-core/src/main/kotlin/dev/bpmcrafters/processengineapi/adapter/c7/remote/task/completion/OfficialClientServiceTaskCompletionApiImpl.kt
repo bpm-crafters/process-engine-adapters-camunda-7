@@ -4,7 +4,6 @@ import dev.bpmcrafters.processengineapi.Empty
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import dev.bpmcrafters.processengineapi.task.*
 import io.github.oshai.kotlinlogging.KotlinLogging
-import java.time.temporal.ChronoUnit
 import java.util.concurrent.CompletableFuture
 import org.camunda.bpm.client.task.ExternalTaskService as ClientExternalTaskService
 
@@ -59,13 +58,14 @@ class OfficialClientServiceTaskCompletionApiImpl(
   override fun failTask(cmd: FailTaskCmd): CompletableFuture<Empty> {
     logger.debug { "PROCESS-ENGINE-C7-REMOTE-010: failing service task ${cmd.taskId}." }
     val (retries, retryTimeoutInSeconds) = failureRetrySupplier.apply(cmd.taskId)
+    val retryTimeoutInMillis = cmd.retryBackoff?.toMillis() ?: retryTimeoutInSeconds * 1000
     externalTaskService
       .handleFailure(
         cmd.taskId,
         cmd.reason,
         cmd.errorDetails,
         cmd.retryCount ?: retries,
-        cmd.retryBackoff?.get(ChronoUnit.SECONDS) ?: retryTimeoutInSeconds
+        retryTimeoutInMillis
       )
     subscriptionRepository.deactivateSubscriptionForTask(cmd.taskId)?.apply {
       termination.accept(
