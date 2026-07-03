@@ -11,15 +11,18 @@ import dev.bpmcrafters.processengineapi.task.support.UserTaskSupport
 import org.assertj.core.api.Assertions.assertThat
 import org.camunda.bpm.engine.TaskService
 import org.camunda.bpm.engine.task.Task
+import org.camunda.bpm.engine.task.TaskQuery
 import org.camunda.community.mockito.QueryMocks
 import org.camunda.community.mockito.task.TaskFake
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.mock
+import org.mockito.kotlin.whenever
 import java.time.Instant
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicInteger
 
 internal class EmbeddedPullUserTaskDeliveryTest {
 
@@ -155,6 +158,39 @@ internal class EmbeddedPullUserTaskDeliveryTest {
 
     // then
     assertThat(deliveredDirectly).isEmpty()
+  }
+
+  @Test
+  fun `failed downstream handler does not leak tasks into user task support`() {
+    val leakingTaskCount = 70
+    val taskQuery = mock<TaskQuery>()
+    val firstRefreshTasks = tasks.take(leakingTaskCount)
+    val userTaskSupport = UserTaskSupport()
+    val terminatedTasks = ConcurrentHashMap<String, String>()
+    val thrownTasks = AtomicInteger()
+
+    whenever(taskService.createTaskQuery()).thenReturn(taskQuery)
+    whenever(taskQuery.initializeFormKeys()).thenReturn(taskQuery)
+    whenever(taskQuery.active()).thenReturn(taskQuery)
+    whenever(taskQuery.list()).thenReturn(firstRefreshTasks, emptyList())
+
+    userTaskSupport.subscribe(taskSubscriptionApi = C7TaskSubscriptionApiImpl(subscriptionRepository), restrictions = mapOf(), payloadDescription = null)
+    userTaskSupport.addHandler { taskInformation, _ ->
+      thrownTasks.incrementAndGet()
+      throw IllegalStateException("boom for ${taskInformation.taskId}")
+    }
+    userTaskSupport.addTerminationHandler { taskInformation ->
+      terminatedTasks[taskInformation.taskId] = taskInformation.taskId
+    }
+
+    embeddedPullUserTaskDelivery.refresh()
+    repeat(3) {
+      embeddedPullUserTaskDelivery.refresh()
+    }
+
+    assertThat(thrownTasks.get()).isEqualTo(leakingTaskCount)
+    assertThat(userTaskSupport.getAllTasks()).isEmpty()
+    assertThat(terminatedTasks).hasSize(leakingTaskCount)
   }
 
   private fun randomTask() = TaskFake

@@ -59,7 +59,7 @@ class SubscribingServiceTaskDelivery(
                       jobRetries,
                       retryTimeoutInSeconds * 1000 // millis
                     )
-                    subscriptionRepository.deactivateSubscriptionForTask(taskId = externalTask.id)
+                    cleanupFailedDelivery(externalTask.id)
                     logger.error { "PROCESS-ENGINE-C7-REMOTE-034: successfully failed delivering task ${externalTask.id}: ${e.message}" }
                   }
                 } else {
@@ -127,6 +127,19 @@ class SubscribingServiceTaskDelivery(
       this
     }
     // FIXME -> consider complex tenant filtering
+  }
+
+  private fun cleanupFailedDelivery(taskId: String) {
+    val taskSubscriptionHandle = subscriptionRepository.deactivateSubscriptionForTask(taskId = taskId)
+    if (taskSubscriptionHandle != null) {
+      try {
+        taskSubscriptionHandle.termination.accept(
+          TaskInformation(taskId = taskId, meta = emptyMap()).withReason(TaskInformation.DELETE)
+        )
+      } catch (terminationError: Exception) {
+        logger.error { "PROCESS-ENGINE-C7-REMOTE-046: failed cleaning up delivery state for task $taskId: ${terminationError.message}" }
+      }
+    }
   }
 
 }
