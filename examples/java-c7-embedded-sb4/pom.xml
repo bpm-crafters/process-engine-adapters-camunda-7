@@ -5,12 +5,12 @@
   <parent>
     <groupId>dev.bpm-crafters.process-engine-examples</groupId>
     <artifactId>process-engine-api-example-root-c7</artifactId>
-    <version>2026.06.2-SNAPSHOT</version>
+    <version>2026.06.3-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
   <properties>
-    <spring-boot.version>4.0.2</spring-boot.version>
+    <spring-boot.version>4.1.0</spring-boot.version>
   </properties>
 
   <artifactId>process-engine-api-example-java-c7-embedded-sb4</artifactId>
