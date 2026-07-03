@@ -2,6 +2,7 @@ package dev.bpmcrafters.processengineapi.adapter.c7.remote.decision
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import dev.bpmcrafters.processengineapi.CommonRestrictions
+import dev.bpmcrafters.processengineapi.adapter.c7.common.serialization.Jackson2AdapterDataConverter
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.TestFixtures
 import dev.bpmcrafters.processengineapi.decision.DecisionByRefEvaluationCommand
 import org.assertj.core.api.Assertions.assertThat
@@ -19,7 +20,7 @@ import java.util.concurrent.ExecutionException
 internal class EvaluateDecisionApiImplTest {
   val valueMapper = TestFixtures.valueMapper()
   val decisionClient: DecisionDefinitionApiClient = mock()
-  val testSubject = EvaluateDecisionApiImpl(decisionClient, valueMapper, jacksonObjectMapper())
+  val testSubject = EvaluateDecisionApiImpl(decisionClient, valueMapper, Jackson2AdapterDataConverter(jacksonObjectMapper()))
 
   @BeforeEach
   fun setUp() {

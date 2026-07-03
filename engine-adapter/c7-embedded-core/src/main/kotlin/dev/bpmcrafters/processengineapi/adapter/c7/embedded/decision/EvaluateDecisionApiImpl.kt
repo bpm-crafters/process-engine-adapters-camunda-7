@@ -1,6 +1,6 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.embedded.decision
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import dev.bpmcrafters.processengineapi.adapter.c7.common.serialization.AdapterDataConverter
 import dev.bpmcrafters.processengineapi.CommonRestrictions
 import dev.bpmcrafters.processengineapi.MetaInfo
 import dev.bpmcrafters.processengineapi.MetaInfoAware
@@ -17,7 +17,7 @@ private val logger = KotlinLogging.logger {}
 
 class EvaluateDecisionApiImpl(
   private val decisionService: DecisionService,
-  private val objectMapper: ObjectMapper,
+  private val dataConverter: AdapterDataConverter,
   private val commandExecutor: EngineCommandExecutor
 ) : EvaluateDecisionApi {
 
@@ -36,7 +36,7 @@ class EvaluateDecisionApiImpl(
           if (result.size == 0) {
             NoDecisionResult
           } else {
-            DelegatingDmnDecisionResult(result, objectMapper)
+            DelegatingDmnDecisionResult(result, dataConverter)
           }
         }
       }
@@ -75,5 +75,4 @@ class EvaluateDecisionApiImpl(
     TODO("Not yet implemented")
   }
 }
-
 

@@ -35,7 +35,6 @@
       <artifactId>spring-boot-configuration-processor</artifactId>
       <optional>true</optional>
     </dependency>
-
     <!-- Use subscription-based delivery using official Camunda client -->
     <dependency>
       <groupId>org.camunda.bpm.springboot</groupId>

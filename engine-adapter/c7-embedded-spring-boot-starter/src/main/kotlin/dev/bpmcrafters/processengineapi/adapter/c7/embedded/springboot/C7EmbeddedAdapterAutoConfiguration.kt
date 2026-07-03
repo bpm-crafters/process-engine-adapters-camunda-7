@@ -1,6 +1,6 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import dev.bpmcrafters.processengineapi.adapter.c7.common.serialization.AdapterDataConverter
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.correlation.CorrelationApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.correlation.SignalApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.decision.EvaluateDecisionApiImpl
@@ -127,11 +127,11 @@ class C7EmbeddedAdapterAutoConfiguration {
   @Qualifier("c7embedded-evaluate-decision-api")
   fun evaluateDecisionApi(
     decisionService: DecisionService,
-    objectMapper: ObjectMapper,
+    dataConverter: AdapterDataConverter,
     commandExecutor: EngineCommandExecutor
   ): EvaluateDecisionApi = EvaluateDecisionApiImpl(
     decisionService = decisionService,
-    objectMapper = objectMapper,
+    dataConverter = dataConverter,
     commandExecutor = commandExecutor
   )
 

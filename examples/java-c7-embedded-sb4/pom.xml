@@ -14,7 +14,7 @@
   </properties>
 
   <artifactId>process-engine-api-example-java-c7-embedded-sb4</artifactId>
-  <name>Example: Java C7 Embedded Spring Boot 4</name>
+  <name>Example: Java C7 Embedded Spring Boot 4 with Spin and Jackson 2</name>
 
   <dependencyManagement>
     <dependencies>
