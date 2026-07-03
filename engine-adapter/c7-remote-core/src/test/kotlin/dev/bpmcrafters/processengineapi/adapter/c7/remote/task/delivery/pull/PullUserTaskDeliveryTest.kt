@@ -23,6 +23,7 @@ import org.springframework.http.ResponseEntity
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicInteger
 
 internal class PullUserTaskDeliveryTest {
 
@@ -160,6 +161,36 @@ internal class PullUserTaskDeliveryTest {
 
     // then
     assertThat(deliveredDirectly).isEmpty()
+  }
+
+  @Test
+  fun `failed downstream handler does not leak tasks into user task support`() {
+    val leakingTaskCount = 70
+    val firstRefreshTasks = tasks.take(leakingTaskCount)
+    val userTaskSupport = UserTaskSupport()
+    val terminatedTasks = ConcurrentHashMap<String, String>()
+    val thrownTasks = AtomicInteger()
+
+    whenever(taskApiClient.queryTasks(any(), any(), any()))
+      .thenReturn(ResponseEntity.ok(firstRefreshTasks), ResponseEntity.ok(emptyList()))
+
+    userTaskSupport.subscribe(taskSubscriptionApi = TaskSubscriptionApiImpl(subscriptionRepository), restrictions = mapOf(), payloadDescription = null)
+    userTaskSupport.addHandler { taskInformation, _ ->
+      thrownTasks.incrementAndGet()
+      throw IllegalStateException("boom for ${taskInformation.taskId}")
+    }
+    userTaskSupport.addTerminationHandler { taskInformation ->
+      terminatedTasks[taskInformation.taskId] = taskInformation.taskId
+    }
+
+    embeddedPullUserTaskDelivery.refresh()
+    repeat(3) {
+      embeddedPullUserTaskDelivery.refresh()
+    }
+
+    assertThat(thrownTasks.get()).isEqualTo(leakingTaskCount)
+    assertThat(userTaskSupport.getAllTasks()).isEmpty()
+    assertThat(terminatedTasks).hasSize(leakingTaskCount)
   }
 
   private fun randomTask() = TaskWithAttachmentAndCommentDto()
