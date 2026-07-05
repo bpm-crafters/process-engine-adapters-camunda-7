@@ -40,7 +40,10 @@ class C7EmbeddedSpringEvaluateDecisionITest(
     WHEN
       .`evaluate decision by ref key with payload`("SingleSOutputDecision", mapOf("id" to 99, "amount" to 5000))
     THEN
-      .`evaluation result interpreted as ` { it.asSingle().asType(Integer::class.java) }
+      .`evaluation result interpreted as ` {
+        @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
+        it.asSingle().asType(Integer::class.java)
+      }
       .AND
       .`interpreted result is`(10)
   }
@@ -52,7 +55,9 @@ class C7EmbeddedSpringEvaluateDecisionITest(
     WHEN
       .`evaluate decision by ref key with payload`("SingleSOutputDecision", mapOf("id" to 1000, "amount" to 5000))
     THEN
-      .`evaluation result interpreted as ` { it.asSingle().asType(Integer::class.java) }
+      .`evaluation result interpreted as ` {
+        @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
+        it.asSingle().asType(Integer::class.java) }
       .AND
       .`interpreted result is`(null)
   }

@@ -28,6 +28,29 @@ working `DataSource` and transaction manager, for example via `spring-boot-start
 custom object variables as JSON should add `camunda-engine-plugin-spin` and
 `camunda-spin-dataformat-json-jackson`; the Spring Boot 4 example uses those dependencies to serialize the sample
 `LocalDateTime` payload.
+
+## Jackson and Spin compatibility
+
+The adapter starter can serialize adapter payloads with either Jackson 2 or Jackson 3, depending on what the
+application provides on the classpath. For embedded Camunda 7, that adapter-level flexibility is narrower once Spin is
+involved.
+
+Camunda Spin's JSON integration is tied to the Jackson 2 ecosystem. Because of that:
+
+- Embedded Camunda 7 with Spin JSON serialization must stay on Jackson 2 for the adapter-facing serialization path.
+- Embedded Camunda 7 with Jackson 3 should not use Spin JSON serialization.
+- Embedded Jackson 3 setups should avoid forcing `camunda.bpm.default-serialization-format=application/json` unless they provide a different compatible JSON variable serialization strategy.
+- Embedded Jackson 3 can still work when object variables use Java serialization instead of Spin JSON serialization.
+
+The provided examples reflect these supported combinations:
+
+- `examples/java-c7-embedded-sb4`: Spring Boot 4 embedded example with Spin and Jackson 2
+- `examples/java-c7-embedded-sb4-jackson3`: Spring Boot 4 embedded example without Spin and with Jackson 3
+
+If an embedded Boot 4 application accidentally ends up with both Jackson ecosystems on the classpath, the starter
+prefers Jackson 3 by default. When Spin is present, provide an explicit `AdapterDataConverter` bean backed by Jackson 2
+so the adapter matches Spin instead of relying on the default selection.
+
 ## Configuration
 
 All embedded adapter properties use the prefix `dev.bpm-crafters.process-api.adapter.c7embedded`.

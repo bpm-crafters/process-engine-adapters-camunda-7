@@ -7,6 +7,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.NoSuchBeanDefinitionException
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.getBean
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.ApplicationContext
 import org.springframework.test.context.ActiveProfiles
@@ -19,20 +20,19 @@ import org.springframework.test.context.ActiveProfiles
   ]
 )
 @ActiveProfiles("itest")
-class C7EmbeddedAdapterScheduledStrategyConditionsTest {
+class C7EmbeddedAdapterScheduledStrategyConditionsITest {
 
   @Autowired
   lateinit var context: ApplicationContext
 
   @Test
   fun test() {
-    assertThat(context.getBean(EmbeddedPullServiceTaskDelivery::class.java)).isNotNull()
-    assertThat(context.getBean(ServiceTaskCompletionApi::class.java)).isNotNull()
-    assertThat(context.getBean(EmbeddedPullUserTaskDelivery::class.java)).isNotNull()
+    assertThat(context.getBean<EmbeddedPullServiceTaskDelivery>()).isNotNull()
+    assertThat(context.getBean<ServiceTaskCompletionApi>()).isNotNull()
+    assertThat(context.getBean<EmbeddedPullUserTaskDelivery>()).isNotNull()
   }
 
 }
-
 
 @SpringBootTest(
   properties = [
@@ -49,10 +49,10 @@ class C7EmbeddedAdapterDisabledConditionsTest {
   @Test
   fun test() {
     org.junit.jupiter.api.assertThrows<NoSuchBeanDefinitionException> {
-      context.getBean(EmbeddedPullServiceTaskDelivery::class.java)
+      context.getBean<EmbeddedPullServiceTaskDelivery>()
     }
     org.junit.jupiter.api.assertThrows<NoSuchBeanDefinitionException> {
-      context.getBean(EmbeddedPullUserTaskDelivery::class.java)
+      context.getBean<EmbeddedPullUserTaskDelivery>()
     }
   }
 
@@ -68,10 +68,10 @@ class C7EmbeddedAdapterWithoutPropsConditionsTest {
   @Test
   fun test() {
     org.junit.jupiter.api.assertThrows<NoSuchBeanDefinitionException> {
-      context.getBean(EmbeddedPullServiceTaskDelivery::class.java)
+      context.getBean<EmbeddedPullServiceTaskDelivery>()
     }
     org.junit.jupiter.api.assertThrows<NoSuchBeanDefinitionException> {
-      context.getBean(EmbeddedPullUserTaskDelivery::class.java)
+      context.getBean<EmbeddedPullUserTaskDelivery>()
     }
   }
 

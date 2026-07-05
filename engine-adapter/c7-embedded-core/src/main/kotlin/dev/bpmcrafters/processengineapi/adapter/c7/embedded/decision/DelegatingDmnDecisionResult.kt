@@ -1,6 +1,6 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.embedded.decision
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import dev.bpmcrafters.processengineapi.adapter.c7.common.serialization.AdapterDataConverter
 import dev.bpmcrafters.processengineapi.decision.DecisionEvaluationOutput
 import dev.bpmcrafters.processengineapi.decision.DecisionEvaluationResult
 import org.camunda.bpm.dmn.engine.DmnDecisionResult
@@ -10,15 +10,15 @@ import org.camunda.bpm.dmn.engine.DmnDecisionResult
  */
 data class DelegatingDmnDecisionResult(
   val dmnDecisionResult: DmnDecisionResult,
-  private val objectMapper: ObjectMapper
+  private val dataConverter: AdapterDataConverter
 ) : DecisionEvaluationResult {
 
   override fun asSingle(): DecisionEvaluationOutput {
-    return DelegatingDmnDecisionEvaluationOutput(objectMapper, dmnDecisionResult.singleResult)
+    return DelegatingDmnDecisionEvaluationOutput(dataConverter, dmnDecisionResult.singleResult)
   }
 
   override fun asList(): List<DecisionEvaluationOutput> {
-    return dmnDecisionResult.map { DelegatingDmnDecisionEvaluationOutput(objectMapper, it) }
+    return dmnDecisionResult.map { DelegatingDmnDecisionEvaluationOutput(dataConverter, it) }
   }
 
   override fun meta(): Map<String, String> = mapOf(

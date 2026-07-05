@@ -10,7 +10,7 @@
   </root>
 
   <logger name="dev.bpmcrafters" level="INFO"/>
-  <logger name="dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.delivery.pull" level="TRACE"/>
+  <logger name="dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.delivery.pull" level="INFO"/>
   <logger name="org.camunda.bpm.engine" level="INFO"/>
 
 </configuration>

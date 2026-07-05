@@ -189,6 +189,10 @@ internal class PullServiceTaskDeliveryThreadingTest {
   }
 }
 
-private fun TaskHandler.wait() = (this as Object).wait()
+private fun TaskHandler.wait() =
+  @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
+  (this as Object).wait()
 
-private fun TaskHandler.notifyAll() = (this as Object).notifyAll()
+private fun TaskHandler.notifyAll() =
+  @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
+  (this as Object).notifyAll()

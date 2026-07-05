@@ -1,6 +1,7 @@
 package dev.bpmcrafters.example.common.adapter.in.process;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import java.io.Serializable;
 import lombok.RequiredArgsConstructor;
 import lombok.Value;
 
@@ -10,7 +11,7 @@ import java.util.List;
 
 @RequiredArgsConstructor
 @Value
-public class SomeComplexObject {
+public class SomeComplexObject implements Serializable {
 
   int oneNumber;
   int otherNumber;

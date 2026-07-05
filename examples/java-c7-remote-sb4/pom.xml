@@ -14,7 +14,7 @@
   </properties>
 
   <artifactId>process-engine-api-example-java-c7-remote-sb4</artifactId>
-  <name>Example: Java C7 Remote Spring Boot 4</name>
+  <name>Example: Java C7 Remote Spring Boot 4 with Jackson 3</name>
 
   <dependencies>
     <dependency>
@@ -37,11 +37,6 @@
       <groupId>io.holunda.c7</groupId>
       <artifactId>c7-rest-client-spring-boot-starter-feign-4</artifactId>
       <version>${c7.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>com.fasterxml.jackson.module</groupId>
-      <artifactId>jackson-module-kotlin</artifactId>
     </dependency>
   </dependencies>
 

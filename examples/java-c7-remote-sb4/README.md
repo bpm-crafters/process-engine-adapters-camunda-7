@@ -1,6 +1,9 @@
-# Java Example to demonstrate usage of process API using Spring Boot 4
+# Java Example to demonstrate usage of process API using Spring Boot 4 and Jackson 3
 
 This example is a test that we can invoke API defined in Kotlin from Java. It utilizes the API directly.
+
+The remote adapter does not depend on Camunda Spin, so this Boot 4 example is the straightforward Jackson 3 path. The
+starter auto-configures the adapter serialization from the Jackson 3 mapper available in the Spring Boot 4 ecosystem.
 
 ## Features in the example
 

@@ -1,4 +1,4 @@
-# Java Example to demonstrate usage of process API using Spring Boot 4
+# Java Example to demonstrate usage of process API using Spring Boot 4 with Spin and Jackson 2
 
 This example is a test that we can invoke API defined in Kotlin from Java. It utilizes the API directly and runs an
 embedded Camunda 7 engine in a Spring Boot 4 application.
@@ -10,8 +10,11 @@ must be configured by the consuming application.
 The Camunda 7.24 Spring Boot starter still references the Spring Boot 3 Hibernate JPA auto-configuration class. The
 embedded adapter starter contains a Spring Boot 4 compatibility auto-configuration that replaces that failing Camunda
 auto-configuration path. The example also adds `spring-boot-starter-jdbc`, because the embedded engine needs a
-`DataSource` and transaction manager, and Camunda Spin with the JSON-Jackson data format, because the sample process
-stores JSON object variables.
+`DataSource` and transaction manager.
+
+This variant keeps Camunda Spin with the JSON-Jackson data format on the classpath. Because Spin still depends on the
+Jackson 2 ecosystem, the application provides an explicit `AdapterDataConverter` bean backed by a Jackson 2
+`ObjectMapper`. That keeps the adapter serialization path aligned with Spin for the embedded Boot 4 setup.
 
 ## Features in the example
 

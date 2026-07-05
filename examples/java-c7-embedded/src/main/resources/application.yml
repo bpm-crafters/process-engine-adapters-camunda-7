@@ -44,5 +44,5 @@ camunda:
 
 logging:
   level:
-    dev.bpmcrafters.processengineapi: TRACE
-    dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot: TRACE
+    dev.bpmcrafters.processengineapi: INFO
+    dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot: INFO

@@ -12,6 +12,7 @@ This repository contains the Camunda 7 implementation of the BPM Crafters Proces
 - `docs`: user-facing adapter documentation, including quickstarts and embedded/remote reference guides.
 - `engine-adapter`: main library modules.
   - `adapter-testing`: shared Kotlin test support and JGiven-based integration test utilities.
+  - `c7-adapter-common`: shared functionality used by both implementations.
   - `c7-embedded-core`: embedded Camunda 7 adapter implementation, grouped by concerns such as process, task, decision, deploy, correlation, and shared engine helpers.
   - `c7-embedded-spring-boot-starter`: Spring Boot auto-configuration and scheduling/bootstrap wiring for the embedded adapter.
   - `c7-remote-core`: remote Camunda 7 adapter implementation, mirroring the embedded core structure where possible.
@@ -21,6 +22,7 @@ This repository contains the Camunda 7 implementation of the BPM Crafters Proces
   - `java-c7-embedded`: embedded example application and tests.
   - `java-c7-remote`: remote example application.
   - `java-c7-remote-sb4`: remote example variant for newer Spring Boot setup.
+- `features`: project feature implementation plans, named with an issue number follwed by caption.
 - `mvnw`: project Maven wrapper entrypoint.
 - `pom.xml`: root aggregator POM, shared dependency management, build plugin defaults, and example profile activation.
 

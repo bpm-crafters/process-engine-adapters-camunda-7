@@ -1,20 +1,20 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.remote.decision
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import dev.bpmcrafters.processengineapi.adapter.c7.common.serialization.AdapterDataConverter
 import dev.bpmcrafters.processengineapi.decision.DecisionEvaluationOutput
 import dev.bpmcrafters.processengineapi.decision.DecisionEvaluationResult
 import org.camunda.bpm.engine.variable.VariableMap
 
 data class DelegatingDmnDecisionResult(
   private val dmnDecisionResult: List<VariableMap>,
-  private val objectMapper: ObjectMapper
+  private val dataConverter: AdapterDataConverter
 ) : DecisionEvaluationResult {
   override fun asSingle(): DecisionEvaluationOutput {
-    return VariableMapDmnDecisionEvaluationOutput(dmnDecisionResult.single(), objectMapper)
+    return VariableMapDmnDecisionEvaluationOutput(dmnDecisionResult.single(), dataConverter)
   }
 
   override fun asList(): List<DecisionEvaluationOutput> {
-    return dmnDecisionResult.filter { it.isNotEmpty() }.map { VariableMapDmnDecisionEvaluationOutput(it, objectMapper) }
+    return dmnDecisionResult.filter { it.isNotEmpty() }.map { VariableMapDmnDecisionEvaluationOutput(it, dataConverter) }
   }
 
   override fun meta(): Map<String, String> = mapOf(

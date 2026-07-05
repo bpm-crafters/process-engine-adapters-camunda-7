@@ -1,6 +1,6 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.remote.decision
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import dev.bpmcrafters.processengineapi.adapter.c7.common.serialization.AdapterDataConverter
 import dev.bpmcrafters.processengineapi.decision.DecisionEvaluationOutput
 import org.camunda.bpm.engine.variable.VariableMap
 
@@ -9,7 +9,7 @@ import org.camunda.bpm.engine.variable.VariableMap
  */
 data class VariableMapDmnDecisionEvaluationOutput(
   val entries: VariableMap,
-  val objectMapper: ObjectMapper
+  val dataConverter: AdapterDataConverter
 ) : DecisionEvaluationOutput {
 
   override fun <T : Any> asType(type: Class<T>): T? {
@@ -18,9 +18,9 @@ data class VariableMapDmnDecisionEvaluationOutput(
         if (entries.values.first() == null) {
           return null
         }
-        return objectMapper.convertValue(entries.values.first(), type)
+        return dataConverter.convert(entries.values.first(), type)
       }
-      return objectMapper.convertValue(entries, type)
+      return dataConverter.convert(entries, type)
     } catch (e: Exception) {
       throw IllegalStateException("Can't deserialize into ${type.name} decision output: ${asMap()}", e)
     }
