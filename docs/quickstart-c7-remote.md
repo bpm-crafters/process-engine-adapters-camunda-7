@@ -32,6 +32,17 @@ you need a Camunda 7 REST client on the classpath. The current examples use the 
 
 If you build on Spring Boot 4, use `io.holunda.c7:c7-rest-client-spring-boot-starter-feign-4` instead of `...-feign`.
 
+## Jackson and Spin combinations
+
+For the remote adapter, Jackson 3 is the straightforward Spring Boot 4 path.
+
+- The remote adapter does not depend on embedded Camunda Spin.
+- Jackson 3 can therefore be used without the embedded Spin limitation.
+- The main Spin restriction applies to embedded Camunda 7 JSON variable serialization, not to the remote adapter itself.
+
+If you need Spin-based JSON variable serialization, that restriction remains on the remote engine side. The adapter's
+own serialization can still follow the Spring Boot ecosystem used by the remote application.
+
 And finally, add the following configuration to your configuration properties. Here is a version for `application.yaml`:
 
 ```yaml 

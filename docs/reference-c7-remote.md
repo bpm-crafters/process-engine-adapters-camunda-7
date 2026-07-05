@@ -38,6 +38,18 @@ For Spring Boot 4 use the Boot-4 specific variant:
 </dependency>
 ```
 
+### Jackson compatibility
+
+The remote adapter starter supports both Jackson 2 and Jackson 3 for adapter-side serialization.
+
+- Spring Boot 3 applications typically resolve to Jackson 2.
+- Spring Boot 4 applications typically resolve to Jackson 3.
+- The remote adapter does not require embedded Camunda Spin, so the embedded Spin limitation does not apply to the adapter runtime here.
+
+That means Jackson 3 is a supported and expected choice for remote Spring Boot 4 applications. If the remote Camunda 7
+engine itself uses Spin for JSON variables, that remains a concern of the remote engine runtime, not of the adapter
+starter.
+
 ### Feign client vs official external client for service tasks
 
 | Topic | Feign client | Official external client |
