@@ -145,6 +145,7 @@ class PullServiceTaskDelivery(
             errorMessage = e.message
           }
         )
+        cleanupFailedDelivery(lockedTask.id!!)
         logger.error { "PROCESS-ENGINE-C7-REMOTE-034: successfully failed delivering task ${lockedTask.id}: ${e.message}" }
       } finally {
         metrics.recordTaskExecutionTime(lockedTask.topicName!!, Duration.between(start, OffsetDateTime.now()))
@@ -208,6 +209,19 @@ class PullServiceTaskDelivery(
         ).withReason(TaskInformation.DELETE)
       )
       metrics.incrementTerminatedTasksCounter(taskSubscriptionHandle.taskDescriptionKey ?: "?")
+    }
+  }
+
+  private fun cleanupFailedDelivery(taskId: String) {
+    val taskSubscriptionHandle = subscriptionRepository.deactivateSubscriptionForTask(taskId)
+    if (taskSubscriptionHandle != null) {
+      try {
+        taskSubscriptionHandle.termination.accept(
+          TaskInformation(taskId = taskId, meta = emptyMap()).withReason(TaskInformation.DELETE)
+        )
+      } catch (terminationError: Exception) {
+        logger.error { "PROCESS-ENGINE-C7-REMOTE-046: failed cleaning up delivery state for task $taskId: ${terminationError.message}" }
+      }
     }
   }
 

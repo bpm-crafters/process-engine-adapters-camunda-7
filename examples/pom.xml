@@ -5,7 +5,7 @@
   <parent>
     <groupId>dev.bpm-crafters.process-engine-adapters</groupId>
     <artifactId>process-engine-adapter-camunda-platform-c7-root</artifactId>
-    <version>2026.06.2</version>
+    <version>2026.07.1</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
@@ -25,6 +25,8 @@
   <modules>
     <module>java-common-fixture</module>
     <module>java-c7-embedded</module>
+    <module>java-c7-embedded-sb4</module>
+    <module>java-c7-embedded-sb4-jackson3</module>
     <module>java-c7-remote</module>
     <module>java-c7-remote-sb4</module>
   </modules>

@@ -1,3 +1,4 @@
+dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.C7RemoteSerializationAutoConfiguration
 dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.feign.FeignClientAutoConfiguration
 dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.C7RemoteAdapterAutoConfiguration
 dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.C7RemotePullServicesAutoConfiguration

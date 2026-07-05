@@ -45,4 +45,4 @@ feign:
 logging:
   level:
     dev.bpmcrafters.processengineapi: INFO
-    dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot: TRACE
+    dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot: INFO

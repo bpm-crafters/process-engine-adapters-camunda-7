@@ -1,6 +1,6 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.remote.decision
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import dev.bpmcrafters.processengineapi.adapter.c7.common.serialization.AdapterDataConverter
 import dev.bpmcrafters.processengineapi.CommonRestrictions
 import dev.bpmcrafters.processengineapi.MetaInfo
 import dev.bpmcrafters.processengineapi.MetaInfoAware
@@ -17,7 +17,7 @@ private val logger = KotlinLogging.logger {}
 class EvaluateDecisionApiImpl(
   private val decisionDefinitionApiClient: DecisionDefinitionApiClient,
   private val valueMapper: ValueMapper,
-  private val objectMapper: ObjectMapper
+  private val dataConverter: AdapterDataConverter
 ) : EvaluateDecisionApi {
 
   override fun evaluateDecision(command: DecisionEvaluationCommand): CompletableFuture<DecisionEvaluationResult> {
@@ -74,7 +74,7 @@ class EvaluateDecisionApiImpl(
     return if (this.isEmpty()) {
       NoDecisionResult
     } else {
-      DelegatingDmnDecisionResult(this.map { valueMapper.mapDtos(it) }, objectMapper)
+      DelegatingDmnDecisionResult(this.map { valueMapper.mapDtos(it) }, dataConverter)
     }
   }
 

@@ -1,11 +1,11 @@
 package dev.bpmcrafters.example.common.adapter.in.process;
 
+import java.io.Serializable;
+import java.time.LocalDateTime;
 import lombok.Data;
 
-import java.time.LocalDateTime;
-
 @Data
-public class EntryValue {
+public class EntryValue implements Serializable {
 
     private LocalDateTime time;
     private String taskId;

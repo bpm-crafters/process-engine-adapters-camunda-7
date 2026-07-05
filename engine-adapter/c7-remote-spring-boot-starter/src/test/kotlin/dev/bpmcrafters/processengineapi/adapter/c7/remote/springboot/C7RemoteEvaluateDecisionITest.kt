@@ -27,6 +27,7 @@ class C7RemoteEvaluateDecisionITest : AbstractC7RemoteApiITestBase() {
   }
 
   @Test
+  @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
   fun `should be casted successfully evaluation decision returning single hit single-output result`() {
     WHEN
       .`evaluate decision by ref key with payload`("SingleSOutputDecision", mapOf("id" to 99, "amount" to 5000))
@@ -37,6 +38,7 @@ class C7RemoteEvaluateDecisionITest : AbstractC7RemoteApiITestBase() {
   }
 
   @Test
+  @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
   fun `should be casted successfully to nullable if single hit decision gives no result`() {
     WHEN
       .`evaluate decision by ref key with payload`("SingleSOutputDecision", mapOf("id" to 1000, "amount" to 5000))
@@ -61,6 +63,7 @@ class C7RemoteEvaluateDecisionITest : AbstractC7RemoteApiITestBase() {
   }
 
   @Test
+  @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
   fun `should be casted successfully to list if multi hit decision gives one or more results`() {
     WHEN
       .`evaluate decision by ref key with payload`("CollectMOutputDecision", mapOf("id" to 99, "amount" to 5000))
