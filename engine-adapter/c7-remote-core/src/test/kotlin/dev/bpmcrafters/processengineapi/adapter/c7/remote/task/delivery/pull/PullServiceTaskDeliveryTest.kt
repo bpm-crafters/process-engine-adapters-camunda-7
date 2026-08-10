@@ -13,6 +13,8 @@ import dev.bpmcrafters.processengineapi.task.TaskInformation.Companion.CREATE
 import dev.bpmcrafters.processengineapi.task.TaskInformation.Companion.DELETE
 import dev.bpmcrafters.processengineapi.task.TaskInformation.Companion.REASON
 import dev.bpmcrafters.processengineapi.task.TaskType
+import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.camunda.bpm.engine.variable.Variables
 import org.camunda.community.rest.client.api.ExternalTaskApiClient
 import org.camunda.community.rest.client.model.*
@@ -347,6 +349,51 @@ internal class PullServiceTaskDeliveryTest {
     verify(metrics).recordTaskExecutionTime(eq(lockedTask.topicName!!), durationCaptor.capture())
     val executionTime = durationCaptor.secondValue.toMillis()
     assertTrue(executionTime >= 0, "Expected execution time to be >= 0")
+  }
+
+  @Test
+  fun `taskActionHandlerCallable makes application classes visible despite isolated worker class loader`() {
+    val lockedTask = mockLockedExternalTaskDto("1")
+    val applicationClassName = javaClass.name
+    var handlerCompleted = false
+    val activeSubscription = mockTaskSubscriptionHandle().copy(
+      action = { _, _ ->
+        Thread.currentThread().contextClassLoader.loadClass(applicationClassName)
+        handlerCompleted = true
+      }
+    )
+    val variables = Variables.createVariables()
+    lockedTask.variables!!.entries.forEach {
+      variables[it.key] = it.value.value
+    }
+    doNothing()
+      .whenever(subscriptionRepository)
+      .activateSubscriptionForTask("1", activeSubscription)
+    doReturn(variables)
+      .whenever(valueMapper)
+      .mapDtos(lockedTask.variables!!)
+    doReturn(mockTaskInformation("1"))
+      .whenever(taskDelivery)
+      .toTaskInformation(lockedTask)
+    val callable = taskDelivery.createTaskActionHandlerCallable(lockedTask, activeSubscription)
+    val thread = Thread.currentThread()
+    val originalContextClassLoader = thread.contextClassLoader
+    val workerContextClassLoader = object : ClassLoader(null) {}
+
+    try {
+      thread.contextClassLoader = workerContextClassLoader
+
+      assertThatThrownBy {
+        Thread.currentThread().contextClassLoader.loadClass(applicationClassName)
+      }.isInstanceOf(ClassNotFoundException::class.java)
+
+      callable.call()
+
+      assertThat(handlerCompleted).isTrue()
+      assertThat(thread.contextClassLoader).isSameAs(workerContextClassLoader)
+    } finally {
+      thread.contextClassLoader = originalContextClassLoader
+    }
   }
 
   @Test

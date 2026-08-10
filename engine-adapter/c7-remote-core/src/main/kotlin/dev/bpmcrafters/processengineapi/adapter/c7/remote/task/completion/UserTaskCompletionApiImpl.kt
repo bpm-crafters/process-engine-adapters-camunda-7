@@ -1,6 +1,7 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.remote.task.completion
 
 import dev.bpmcrafters.processengineapi.Empty
+import dev.bpmcrafters.processengineapi.adapter.c7.common.threading.withThreadContextClassLoader
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import dev.bpmcrafters.processengineapi.task.CompleteTaskByErrorCmd
 import dev.bpmcrafters.processengineapi.task.CompleteTaskCmd
@@ -33,7 +34,9 @@ class UserTaskCompletionApiImpl(
       }
     )
     subscriptionRepository.deactivateSubscriptionForTask(cmd.taskId)?.apply {
-      termination.accept(TaskInformation(cmd.taskId, emptyMap()).withReason(TaskInformation.COMPLETE))
+      withThreadContextClassLoader(termination) {
+        termination.accept(TaskInformation(cmd.taskId, emptyMap()).withReason(TaskInformation.COMPLETE))
+      }
       logger.debug { "PROCESS-ENGINE-C7-REMOTE-012: successfully completed user task ${cmd.taskId}." }
     }
     return CompletableFuture.completedFuture(Empty)
@@ -50,7 +53,9 @@ class UserTaskCompletionApiImpl(
       }
     )
     subscriptionRepository.deactivateSubscriptionForTask(cmd.taskId)?.apply {
-      termination.accept(TaskInformation(cmd.taskId, emptyMap()).withReason(TaskInformation.COMPLETE))
+      withThreadContextClassLoader(termination) {
+        termination.accept(TaskInformation(cmd.taskId, emptyMap()).withReason(TaskInformation.COMPLETE))
+      }
       logger.debug { "PROCESS-ENGINE-C7-REMOTE-014: successfully thrown error on user task ${cmd.taskId}." }
     }
     return CompletableFuture.completedFuture(Empty)
