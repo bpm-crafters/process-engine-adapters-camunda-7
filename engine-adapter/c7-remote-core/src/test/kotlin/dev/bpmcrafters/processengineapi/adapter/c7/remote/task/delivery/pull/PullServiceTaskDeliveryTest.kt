@@ -351,45 +351,55 @@ internal class PullServiceTaskDeliveryTest {
     assertTrue(executionTime >= 0, "Expected execution time to be >= 0")
   }
 
+  /**
+   * Reproduces the class loader bug: an external task worker thread runs with an isolated context class loader
+   * that cannot see application classes. The task handler (subscription action), however, needs to load
+   * application classes (e.g. for JSON deserialization). The delivery must therefore run the handler with the
+   * handler's own class loader as the thread context class loader and restore the worker's class loader afterwards.
+   */
   @Test
   fun `taskActionHandlerCallable makes application classes visible despite isolated worker class loader`() {
-    val lockedTask = mockLockedExternalTaskDto("1")
+    // An application class that the handler tries to load; it is only visible via the application class loader.
     val applicationClassName = javaClass.name
-    var handlerCompleted = false
+    var handlerLoadedApplicationClass = false
+
+    // The subscription action simulates an application task handler that needs an application class at runtime.
     val activeSubscription = mockTaskSubscriptionHandle().copy(
       action = { _, _ ->
         Thread.currentThread().contextClassLoader.loadClass(applicationClassName)
-        handlerCompleted = true
+        handlerLoadedApplicationClass = true
       }
     )
-    val variables = Variables.createVariables()
-    lockedTask.variables!!.entries.forEach {
-      variables[it.key] = it.value.value
+
+    // Wire up the collaborators so the callable reaches the handler invocation.
+    val lockedTask = mockLockedExternalTaskDto("1")
+    val variables = Variables.createVariables().apply {
+      lockedTask.variables!!.forEach { (key, value) -> this[key] = value.value }
     }
-    doNothing()
-      .whenever(subscriptionRepository)
-      .activateSubscriptionForTask("1", activeSubscription)
-    doReturn(variables)
-      .whenever(valueMapper)
-      .mapDtos(lockedTask.variables!!)
-    doReturn(mockTaskInformation("1"))
-      .whenever(taskDelivery)
-      .toTaskInformation(lockedTask)
+    doNothing().whenever(subscriptionRepository).activateSubscriptionForTask("1", activeSubscription)
+    doReturn(variables).whenever(valueMapper).mapDtos(lockedTask.variables!!)
+    doReturn(mockTaskInformation("1")).whenever(taskDelivery).toTaskInformation(lockedTask)
+
     val callable = taskDelivery.createTaskActionHandlerCallable(lockedTask, activeSubscription)
+
     val thread = Thread.currentThread()
     val originalContextClassLoader = thread.contextClassLoader
+    // An isolated class loader (no parent) that cannot see application classes, emulating the worker thread.
     val workerContextClassLoader = object : ClassLoader(null) {}
 
     try {
       thread.contextClassLoader = workerContextClassLoader
 
+      // Precondition: with the isolated worker class loader, application classes are NOT visible.
       assertThatThrownBy {
         Thread.currentThread().contextClassLoader.loadClass(applicationClassName)
       }.isInstanceOf(ClassNotFoundException::class.java)
 
+      //Call our handler that has the correct contextClassLoader applied
       callable.call()
-
-      assertThat(handlerCompleted).isTrue()
+      // The handler could load the application class, i.e. the delivery temporarily switched to the handler's class loader.
+      assertThat(handlerLoadedApplicationClass).isTrue()
+      // After execution the worker's isolated class loader is restored.
       assertThat(thread.contextClassLoader).isSameAs(workerContextClassLoader)
     } finally {
       thread.contextClassLoader = originalContextClassLoader
