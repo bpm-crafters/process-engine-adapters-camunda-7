@@ -30,7 +30,7 @@
     <jgiven.version>2.0.2</jgiven.version>
     <awaitility.version>4.3.0</awaitility.version>
     <mockk.version>1.14.11</mockk.version>
-    <logback.version>1.6.1</logback.version>
+    <logback.version>1.6.3</logback.version>
   </properties>
 
   <modules>
