@@ -20,7 +20,7 @@
   <properties>
     <!-- COMMON GLOBAL -->
     <spring-boot.version>3.5.16</spring-boot.version>
-    <jackson3.version>3.2.1</jackson3.version>
+    <jackson3.version>3.2.2</jackson3.version>
     <process-engine-api.version>1.7</process-engine-api.version>
     <c7.version>2026.04.2</c7.version>
     <!-- TEST -->
