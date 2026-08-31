@@ -1,6 +1,7 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.completion
 
 import dev.bpmcrafters.processengineapi.Empty
+import dev.bpmcrafters.processengineapi.adapter.c7.common.threading.withThreadContextClassLoader
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.shared.EngineCommandExecutor
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import dev.bpmcrafters.processengineapi.task.CompleteTaskByErrorCmd
@@ -31,7 +32,9 @@ class C7UserTaskCompletionApiImpl(
         cmd.get()
       )
       subscriptionRepository.deactivateSubscriptionForTask(cmd.taskId)?.apply {
-        termination.accept(TaskInformation(cmd.taskId, emptyMap()).withReason(TaskInformation.COMPLETE))
+        withThreadContextClassLoader(termination) {
+          termination.accept(TaskInformation(cmd.taskId, emptyMap()).withReason(TaskInformation.COMPLETE))
+        }
         logger.debug { "PROCESS-ENGINE-C7-EMBEDDED-012: successfully completed user task ${cmd.taskId}." }
       }
       Empty
@@ -46,7 +49,9 @@ class C7UserTaskCompletionApiImpl(
         cmd.errorCode
       )
       subscriptionRepository.deactivateSubscriptionForTask(cmd.taskId)?.apply {
-        termination.accept(TaskInformation(cmd.taskId, emptyMap()).withReason(TaskInformation.COMPLETE))
+        withThreadContextClassLoader(termination) {
+          termination.accept(TaskInformation(cmd.taskId, emptyMap()).withReason(TaskInformation.COMPLETE))
+        }
         logger.debug { "PROCESS-ENGINE-C7-EMBEDDED-014: successfully thrown error on user task ${cmd.taskId}." }
       }
       Empty

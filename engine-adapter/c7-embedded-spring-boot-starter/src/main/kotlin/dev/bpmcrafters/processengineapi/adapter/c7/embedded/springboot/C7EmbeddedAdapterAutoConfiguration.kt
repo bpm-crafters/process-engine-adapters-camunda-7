@@ -1,6 +1,7 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot
 
 import dev.bpmcrafters.processengineapi.adapter.c7.common.serialization.AdapterDataConverter
+import dev.bpmcrafters.processengineapi.adapter.c7.common.threading.ThreadContextClassLoaderThreadFactory
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.correlation.CorrelationApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.correlation.SignalApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.decision.EvaluateDecisionApiImpl
@@ -200,7 +201,10 @@ class C7EmbeddedAdapterAutoConfiguration {
   @Bean("c7embedded-service-task-worker-executor")
   @ConditionalOnMissingQualifiedBean(beanClass = ExecutorService::class, qualifier = "c7embedded-service-task-worker-executor")
   @Qualifier("c7embedded-service-task-worker-executor")
-  fun serviceTaskWorkerExecutor(): ExecutorService = Executors.newFixedThreadPool(10)
+  fun serviceTaskWorkerExecutor(): ExecutorService = Executors.newFixedThreadPool(
+    10,
+    ThreadContextClassLoaderThreadFactory(C7EmbeddedAdapterAutoConfiguration::class.java.classLoader),
+  )
 
   /**
    * Creates a default fixed thread pool for 10 threads used for process engine worker executions.
@@ -209,6 +213,9 @@ class C7EmbeddedAdapterAutoConfiguration {
   @Bean("c7embedded-user-task-worker-executor")
   @ConditionalOnMissingQualifiedBean(beanClass = ExecutorService::class, qualifier = "c7embedded-user-task-worker-executor")
   @Qualifier("c7embedded-user-task-worker-executor")
-  fun userTaskWorkerExecutor(): ExecutorService = Executors.newFixedThreadPool(10)
+  fun userTaskWorkerExecutor(): ExecutorService = Executors.newFixedThreadPool(
+    10,
+    ThreadContextClassLoaderThreadFactory(C7EmbeddedAdapterAutoConfiguration::class.java.classLoader),
+  )
 
 }
