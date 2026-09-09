@@ -13,16 +13,26 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import java.util.Date
+import java.util.concurrent.BlockingQueue
+import java.util.concurrent.ThreadPoolExecutor
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 internal class EmbeddedPullServiceTaskDeliveryTest {
 
   private val externalTaskService: ExternalTaskService = mock()
+  private val queue: BlockingQueue<Runnable> = mock()
+  private val executor: ThreadPoolExecutor = mock()
+
+  init {
+    whenever(queue.remainingCapacity()).thenReturn(10)
+    whenever(executor.queue).thenReturn(queue)
+  }
+
   private val taskDelivery = EmbeddedPullServiceTaskDelivery(
     externalTaskService = externalTaskService,
     subscriptionRepository = mock(),
-    executor = mock(),
+    executor = executor,
     lockDurationInSeconds = 30,
     workerId = "worker",
     maxTasks = 10,
@@ -73,7 +83,7 @@ internal class EmbeddedPullServiceTaskDeliveryTest {
     val delivery = EmbeddedPullServiceTaskDelivery(
       externalTaskService = externalTaskService,
       subscriptionRepository = subscriptionRepository,
-      executor = mock(),
+      executor = executor,
       lockDurationInSeconds = 30,
       workerId = "worker",
       maxTasks = 10,
