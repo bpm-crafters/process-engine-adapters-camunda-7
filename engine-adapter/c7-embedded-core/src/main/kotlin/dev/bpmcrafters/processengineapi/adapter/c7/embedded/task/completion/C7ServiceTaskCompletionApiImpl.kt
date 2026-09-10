@@ -1,6 +1,7 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.completion
 
 import dev.bpmcrafters.processengineapi.Empty
+import dev.bpmcrafters.processengineapi.adapter.c7.common.threading.withThreadContextClassLoader
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.shared.EngineCommandExecutor
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import dev.bpmcrafters.processengineapi.task.*
@@ -31,7 +32,9 @@ class C7ServiceTaskCompletionApiImpl(
         cmd.get()
       )
       subscriptionRepository.deactivateSubscriptionForTask(cmd.taskId)?.apply {
-        termination.accept(TaskInformation(cmd.taskId, emptyMap()).withReason(TaskInformation.COMPLETE))
+        withThreadContextClassLoader(termination) {
+          termination.accept(TaskInformation(cmd.taskId, emptyMap()).withReason(TaskInformation.COMPLETE))
+        }
         logger.debug { "PROCESS-ENGINE-C7-EMBEDDED-007: successfully completed service task ${cmd.taskId}." }
       }
       Empty
@@ -49,7 +52,9 @@ class C7ServiceTaskCompletionApiImpl(
         cmd.get()
       )
       subscriptionRepository.deactivateSubscriptionForTask(cmd.taskId)?.apply {
-        termination.accept(TaskInformation(cmd.taskId, emptyMap()).withReason(TaskInformation.COMPLETE))
+        withThreadContextClassLoader(termination) {
+          termination.accept(TaskInformation(cmd.taskId, emptyMap()).withReason(TaskInformation.COMPLETE))
+        }
         logger.debug { "PROCESS-ENGINE-C7-EMBEDDED-009: successfully thrown error in service task ${cmd.taskId}." }
       }
       Empty
@@ -70,7 +75,9 @@ class C7ServiceTaskCompletionApiImpl(
         retryTimeoutInMillis
       )
       subscriptionRepository.deactivateSubscriptionForTask(cmd.taskId)?.apply {
-        termination.accept(TaskInformation(cmd.taskId, emptyMap()).withReason(TaskInformation.COMPLETE))
+        withThreadContextClassLoader(termination) {
+          termination.accept(TaskInformation(cmd.taskId, emptyMap()).withReason(TaskInformation.COMPLETE))
+        }
         logger.debug { "PROCESS-ENGINE-C7-EMBEDDED-011: successfully failed service task ${cmd.taskId} handling." }
       }
       Empty

@@ -1,6 +1,7 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot
 
 import dev.bpmcrafters.processengineapi.adapter.c7.common.serialization.AdapterDataConverter
+import dev.bpmcrafters.processengineapi.adapter.c7.common.threading.ThreadContextClassLoaderThreadFactory
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.correlation.CorrelationApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.correlation.SignalApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.decision.EvaluateDecisionApiImpl
@@ -119,7 +120,8 @@ class C7RemoteAdapterAutoConfiguration {
       c7AdapterProperties.serviceTasks.workerThreadPoolSize,
       c7AdapterProperties.serviceTasks.workerThreadPoolSize,
       0L, TimeUnit.MILLISECONDS,
-      LinkedBlockingQueue(c7AdapterProperties.serviceTasks.workerThreadPoolQueueCapacity)
+      LinkedBlockingQueue(c7AdapterProperties.serviceTasks.workerThreadPoolQueueCapacity),
+      ThreadContextClassLoaderThreadFactory(C7RemoteAdapterAutoConfiguration::class.java.classLoader),
     )
 
   @Bean
@@ -140,7 +142,10 @@ class C7RemoteAdapterAutoConfiguration {
   @Bean("c7remote-user-task-worker-executor")
   @Qualifier("c7remote-user-task-worker-executor")
   @ConditionalOnMissingQualifiedBean(beanClass = ExecutorService::class, qualifier = "c7remote-user-task-worker-executor")
-  fun userTaskWorkerExecutor(): ExecutorService = Executors.newFixedThreadPool(10)
+  fun userTaskWorkerExecutor(): ExecutorService = Executors.newFixedThreadPool(
+    10,
+    ThreadContextClassLoaderThreadFactory(C7RemoteAdapterAutoConfiguration::class.java.classLoader),
+  )
 
   /**
    * Failure retry supplier.

@@ -1,6 +1,7 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.remote.task.completion
 
 import dev.bpmcrafters.processengineapi.Empty
+import dev.bpmcrafters.processengineapi.adapter.c7.common.threading.withThreadContextClassLoader
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import dev.bpmcrafters.processengineapi.task.*
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -29,9 +30,11 @@ class OfficialClientServiceTaskCompletionApiImpl(
         mapOf()
       )
     subscriptionRepository.deactivateSubscriptionForTask(cmd.taskId)?.apply {
-      termination.accept(
-        TaskInformation(cmd.taskId, mapOf()).withReason(TaskInformation.COMPLETE)
-      )
+      withThreadContextClassLoader(termination) {
+        termination.accept(
+          TaskInformation(cmd.taskId, mapOf()).withReason(TaskInformation.COMPLETE)
+        )
+      }
       logger.debug { "PROCESS-ENGINE-C7-REMOTE-007: successfully completed service task ${cmd.taskId}." }
     }
     return CompletableFuture.completedFuture(Empty)
@@ -47,9 +50,11 @@ class OfficialClientServiceTaskCompletionApiImpl(
         cmd.get()
       )
     subscriptionRepository.deactivateSubscriptionForTask(cmd.taskId)?.apply {
-      termination.accept(
-        TaskInformation(cmd.taskId, mapOf()).withReason(TaskInformation.COMPLETE)
-      )
+      withThreadContextClassLoader(termination) {
+        termination.accept(
+          TaskInformation(cmd.taskId, mapOf()).withReason(TaskInformation.COMPLETE)
+        )
+      }
       logger.debug { "PROCESS-ENGINE-C7-REMOTE-009: successfully thrown error in service task ${cmd.taskId}." }
     }
     return CompletableFuture.completedFuture(Empty)
@@ -68,9 +73,11 @@ class OfficialClientServiceTaskCompletionApiImpl(
         retryTimeoutInMillis
       )
     subscriptionRepository.deactivateSubscriptionForTask(cmd.taskId)?.apply {
-      termination.accept(
-        TaskInformation(cmd.taskId, mapOf()).withReason(TaskInformation.COMPLETE)
-      )
+      withThreadContextClassLoader(termination) {
+        termination.accept(
+          TaskInformation(cmd.taskId, mapOf()).withReason(TaskInformation.COMPLETE)
+        )
+      }
       logger.debug { "PROCESS-ENGINE-C7-REMOTE-011: successfully failed service task ${cmd.taskId} handling." }
     }
     return CompletableFuture.completedFuture(Empty)

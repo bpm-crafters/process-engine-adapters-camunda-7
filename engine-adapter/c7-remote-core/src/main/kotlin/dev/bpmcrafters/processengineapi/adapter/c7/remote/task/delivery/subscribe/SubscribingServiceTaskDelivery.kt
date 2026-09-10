@@ -1,6 +1,7 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.subscribe
 
 import dev.bpmcrafters.processengineapi.CommonRestrictions
+import dev.bpmcrafters.processengineapi.adapter.c7.common.threading.withThreadContextClassLoader
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.ServiceTaskDelivery
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import dev.bpmcrafters.processengineapi.impl.task.TaskSubscriptionHandle
@@ -47,7 +48,9 @@ class SubscribingServiceTaskDelivery(
                     subscriptionRepository.activateSubscriptionForTask(externalTask.id, subscription)
                     val variables = externalTask.allVariables.filterBySubscription(subscription)
                     logger.debug { "PROCESS-ENGINE-C7-REMOTE-031: delivering service task ${externalTask.id}." }
-                    subscription.action.accept(externalTask.toTaskInformation().withReason(TaskInformation.CREATE), variables)
+                    withThreadContextClassLoader(subscription.action) {
+                      subscription.action.accept(externalTask.toTaskInformation().withReason(TaskInformation.CREATE), variables)
+                    }
                     logger.debug { "PROCESS-ENGINE-C7-REMOTE-032: successfully delivered service task ${externalTask.id}." }
                   } catch (e: Exception) {
                     val jobRetries: Int = externalTask.retries?.minus(1) ?: retries
@@ -133,9 +136,11 @@ class SubscribingServiceTaskDelivery(
     val taskSubscriptionHandle = subscriptionRepository.deactivateSubscriptionForTask(taskId = taskId)
     if (taskSubscriptionHandle != null) {
       try {
-        taskSubscriptionHandle.termination.accept(
-          TaskInformation(taskId = taskId, meta = emptyMap()).withReason(TaskInformation.DELETE)
-        )
+        withThreadContextClassLoader(taskSubscriptionHandle.termination) {
+          taskSubscriptionHandle.termination.accept(
+            TaskInformation(taskId = taskId, meta = emptyMap()).withReason(TaskInformation.DELETE)
+          )
+        }
       } catch (terminationError: Exception) {
         logger.error { "PROCESS-ENGINE-C7-REMOTE-046: failed cleaning up delivery state for task $taskId: ${terminationError.message}" }
       }

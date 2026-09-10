@@ -1,6 +1,7 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.delivery.pull
 
 import dev.bpmcrafters.processengineapi.CommonRestrictions
+import dev.bpmcrafters.processengineapi.adapter.c7.common.threading.withThreadContextClassLoader
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.delivery.ExternalServiceTaskDelivery
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.delivery.pull.EmbeddedPullServiceTaskDeliveryMetrics.DropReason.EXPIRED_WHILE_IN_QUEUE
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.delivery.pull.EmbeddedPullServiceTaskDeliveryMetrics.DropReason.NO_MATCHING_SUBSCRIPTIONS
@@ -120,7 +121,9 @@ class EmbeddedPullServiceTaskDelivery(
             subscriptionRepository.activateSubscriptionForTask(lockedTask.id, activeSubscription)
             val variables = lockedTask.variables.filterBySubscription(activeSubscription)
             logger.debug { "PROCESS-ENGINE-C7-EMBEDDED-031: delivering service task ${lockedTask.id}." }
-            activeSubscription.action.accept(taskInformation, variables)
+            withThreadContextClassLoader(activeSubscription.action) {
+              activeSubscription.action.accept(taskInformation, variables)
+            }
             logger.debug { "PROCESS-ENGINE-C7-EMBEDDED-032: successfully delivered service task ${lockedTask.id}." }
           }
           logger.debug { "PROCESS-ENGINE-C7-REMOTE-032: successfully delivered service task ${lockedTask.id}." }
@@ -177,12 +180,14 @@ class EmbeddedPullServiceTaskDelivery(
     // deactivate active subscription and handle termination
     val taskSubscriptionHandle = subscriptionRepository.deactivateSubscriptionForTask(taskId)
     if (taskSubscriptionHandle != null) {
-      taskSubscriptionHandle.termination.accept(
-        TaskInformation(
-          taskId = taskId,
-          meta = emptyMap()
-        ).withReason(TaskInformation.DELETE)
-      )
+      withThreadContextClassLoader(taskSubscriptionHandle.termination) {
+        taskSubscriptionHandle.termination.accept(
+          TaskInformation(
+            taskId = taskId,
+            meta = emptyMap()
+          ).withReason(TaskInformation.DELETE)
+        )
+      }
       metrics.incrementTerminatedTasksCounter(taskSubscriptionHandle.taskDescriptionKey ?: "?")
     }
   }
@@ -191,9 +196,11 @@ class EmbeddedPullServiceTaskDelivery(
     val taskSubscriptionHandle = subscriptionRepository.deactivateSubscriptionForTask(taskId = taskId)
     if (taskSubscriptionHandle != null) {
       try {
-        taskSubscriptionHandle.termination.accept(
-          TaskInformation(taskId = taskId, meta = emptyMap()).withReason(TaskInformation.DELETE)
-        )
+        withThreadContextClassLoader(taskSubscriptionHandle.termination) {
+          taskSubscriptionHandle.termination.accept(
+            TaskInformation(taskId = taskId, meta = emptyMap()).withReason(TaskInformation.DELETE)
+          )
+        }
       } catch (terminationError: Exception) {
         logger.error { "PROCESS-ENGINE-C7-EMBEDDED-046: failed cleaning up delivery state for task $taskId: ${terminationError.message}" }
       }
