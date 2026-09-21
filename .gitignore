@@ -45,3 +45,4 @@ build/
 _tmp/
 .repository/
 .DS_Store
+.claude/logs/

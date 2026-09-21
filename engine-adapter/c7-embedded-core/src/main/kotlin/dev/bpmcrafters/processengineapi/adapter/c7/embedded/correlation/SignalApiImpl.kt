@@ -45,15 +45,15 @@ class SignalApiImpl(
       .forEach { (key, value) ->
         when (key) {
           CommonRestrictions.TENANT_ID -> this.tenantId(value).apply {
-            require(restrictions.containsKey(CommonRestrictions.WITHOUT_TENANT_ID)) {
-              "Illegal restriction combination. ${CommonRestrictions.WITHOUT_TENANT_ID} " +
+            require(!restrictions.containsKey(CommonRestrictions.WITHOUT_TENANT_ID)) {
+              "Illegal restriction combination. ${CommonRestrictions.TENANT_ID} " +
                 "and ${CommonRestrictions.WITHOUT_TENANT_ID} can't be provided in the same time because they are mutually exclusive."
             }
           }
 
           CommonRestrictions.WITHOUT_TENANT_ID -> this.withoutTenantId().apply {
-            require(restrictions.containsKey(CommonRestrictions.TENANT_ID)) {
-              "Illegal restriction combination. ${CommonRestrictions.WITHOUT_TENANT_ID} " +
+            require(!restrictions.containsKey(CommonRestrictions.TENANT_ID)) {
+              "Illegal restriction combination. ${CommonRestrictions.TENANT_ID} " +
                 "and ${CommonRestrictions.WITHOUT_TENANT_ID} can't be provided in the same time because they are mutually exclusive."
             }
           }
