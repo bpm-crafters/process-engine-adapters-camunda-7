@@ -46,7 +46,9 @@ class C7UserTaskCompletionApiImpl(
     return commandExecutor.execute {
       taskService.handleBpmnError(
         cmd.taskId,
-        cmd.errorCode
+        cmd.errorCode,
+        cmd.errorMessage,
+        cmd.get()
       )
       subscriptionRepository.deactivateSubscriptionForTask(cmd.taskId)?.apply {
         withThreadContextClassLoader(termination) {
