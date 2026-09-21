@@ -2,6 +2,7 @@ package dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot
 
 import com.tngtech.jgiven.integration.spring.EnableJGiven
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot.C7EmbeddedAdapterProperties.ExternalServiceTaskDeliveryStrategy.EMBEDDED_SCHEDULED
+import dev.bpmcrafters.processengineapi.adapter.c7.embedded.process.ProcessDefinitionMetaDataResolver
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.delivery.pull.EmbeddedPullServiceTaskDelivery
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.delivery.pull.EmbeddedPullUserTaskDelivery
 import dev.bpmcrafters.processengineapi.decision.EvaluateDecisionApi
@@ -36,6 +37,7 @@ class C7EmbeddedTestApplication {
     serviceTaskCompletionApi: ServiceTaskCompletionApi,
     subscriptionRepository: SubscriptionRepository,
     evaluateDecisionApi: EvaluateDecisionApi,
+    processDefinitionMetaDataResolver: ProcessDefinitionMetaDataResolver,
   ): ProcessTestHelper = C7EmbeddedSpringProcessTestHelper(
     runtimeService = runtimeService,
     startProcessApi = startProcessApi,
@@ -45,7 +47,8 @@ class C7EmbeddedTestApplication {
     userTaskCompletionApi = userTaskCompletionApi,
     serviceTaskCompletionApi = serviceTaskCompletionApi,
     subscriptionRepository = subscriptionRepository,
-    evaluateDecisionApi = evaluateDecisionApi
+    evaluateDecisionApi = evaluateDecisionApi,
+    processDefinitionMetaDataResolver = processDefinitionMetaDataResolver,
   )
 
 }
