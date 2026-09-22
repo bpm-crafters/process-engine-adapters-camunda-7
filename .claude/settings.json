@@ -1,0 +1,13 @@
+{
+  "extraKnownMarketplaces": {
+    "bpm-crafters": {
+      "source": {
+        "source": "github",
+        "repo": "bpm-crafters/.github"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "maintainer-tools@bpm-crafters": true
+  }
+}

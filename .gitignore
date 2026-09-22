@@ -45,4 +45,5 @@ build/
 _tmp/
 .repository/
 .DS_Store
-.claude/logs/
+.claude/*
+!.claude/settings.json
