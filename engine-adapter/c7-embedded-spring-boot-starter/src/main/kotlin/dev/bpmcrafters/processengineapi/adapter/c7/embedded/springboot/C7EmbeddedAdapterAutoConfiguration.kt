@@ -6,6 +6,7 @@ import dev.bpmcrafters.processengineapi.adapter.c7.embedded.correlation.Correlat
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.correlation.SignalApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.decision.EvaluateDecisionApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.deploy.DeploymentApiImpl
+import dev.bpmcrafters.processengineapi.adapter.c7.embedded.process.CachingProcessDefinitionMetaDataResolver
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.process.StartProcessApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.shared.EngineCommandExecutor
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot.schedule.DefaultPullServiceTaskDeliveryMetrics
@@ -76,6 +77,7 @@ class C7EmbeddedAdapterAutoConfiguration {
     runtimeService = runtimeService,
     repositoryService = repositoryService,
     commandExecutor = commandExecutor,
+    processDefinitionMetaDataResolver = CachingProcessDefinitionMetaDataResolver(repositoryService = repositoryService),
   )
 
   @Bean("c7embedded-task-subscription-api")
