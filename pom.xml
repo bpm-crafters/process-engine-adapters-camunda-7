@@ -24,7 +24,7 @@
     <process-engine-api.version>1.7</process-engine-api.version>
     <c7.version>2026.04.2</c7.version>
     <!-- TEST -->
-    <mockito.version>6.3.0</mockito.version>
+    <mockito.version>6.4.0</mockito.version>
     <assertj.version>3.27.7</assertj.version>
     <junit5.version>5.13.3</junit5.version>
     <jgiven.version>2.0.2</jgiven.version>
