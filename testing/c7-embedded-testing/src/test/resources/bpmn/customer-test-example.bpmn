@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" targetNamespace="process-test-example" exporter="Camunda Modeler" exporterVersion="5.46.1">
+  <bpmn:process id="customer-test-example" name="Request approval" isExecutable="true" camunda:historyTimeToLive="1">
+    <bpmn:startEvent id="start" name="Request submitted">
+      <bpmn:outgoing>toApprove</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="toApprove" sourceRef="start" targetRef="user_approve" />
+    <bpmn:userTask id="user_approve" name="Approve request">
+      <bpmn:incoming>toApprove</bpmn:incoming>
+      <bpmn:outgoing>toEnd</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:sequenceFlow id="toEnd" sourceRef="user_approve" targetRef="end" />
+    <bpmn:endEvent id="end" name="Request processed">
+      <bpmn:incoming>toEnd</bpmn:incoming>
+    </bpmn:endEvent>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="CustomerTestExampleDiagram">
+    <bpmndi:BPMNPlane id="CustomerTestExamplePlane" bpmnElement="customer-test-example">
+      <bpmndi:BPMNShape id="StartShape" bpmnElement="start">
+        <dc:Bounds x="142" y="120" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="136" y="163" width="48" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ApproveShape" bpmnElement="user_approve">
+        <dc:Bounds x="220" y="98" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndShape" bpmnElement="end">
+        <dc:Bounds x="362" y="120" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="355" y="163" width="51" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="ToApproveEdge" bpmnElement="toApprove">
+        <di:waypoint x="178" y="138" />
+        <di:waypoint x="220" y="138" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ToEndEdge" bpmnElement="toEnd">
+        <di:waypoint x="320" y="138" />
+        <di:waypoint x="362" y="138" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

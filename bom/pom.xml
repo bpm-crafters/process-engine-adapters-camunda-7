@@ -26,12 +26,22 @@
       </dependency>
       <dependency>
         <groupId>dev.bpm-crafters.process-engine-adapters</groupId>
+        <artifactId>process-engine-adapter-camunda-platform-c7-embedded-testing</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>dev.bpm-crafters.process-engine-adapters</groupId>
         <artifactId>process-engine-adapter-camunda-platform-c7-embedded-spring-boot-starter</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>dev.bpm-crafters.process-engine-adapters</groupId>
         <artifactId>process-engine-adapter-camunda-platform-c7-remote-core</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>dev.bpm-crafters.process-engine-adapters</groupId>
+        <artifactId>process-engine-adapter-camunda-platform-c7-remote-testing</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
