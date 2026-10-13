@@ -21,6 +21,8 @@ import org.camunda.bpm.engine.externaltask.LockedExternalTask
 import java.time.Duration
 import java.time.OffsetDateTime
 import java.util.concurrent.Callable
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -44,6 +46,8 @@ class EmbeddedPullServiceTaskDelivery(
 
   internal val stillLockedTasksGauge = AtomicInteger()
 
+  private val runningTaskIds = ConcurrentHashMap.newKeySet<String>()
+
   init {
     metrics.registerExecutorThreadsUsedGauge(executor::getActiveCount)
     metrics.registerExecutorQueueCapacityGauge(executor.queue::remainingCapacity)
@@ -66,9 +70,10 @@ class EmbeddedPullServiceTaskDelivery(
       return
     }
 
-    val tasksToFetch = maxTasks.coerceAtMost(executor.queue.remainingCapacity())
-    if (tasksToFetch == 0) {
-      logger.trace { "PROCESS-ENGINE-C7-EMBEDDED-044: Task executor queue is full, skipping task fetch" }
+    val freeWorkerThreads = executor.maximumPoolSize - runningTaskIds.size
+    val tasksToFetch = maxTasks.coerceAtMost(freeWorkerThreads)
+    if (tasksToFetch <= 0) {
+      logger.trace { "PROCESS-ENGINE-C7-EMBEDDED-044: No free worker thread, skipping task fetch" }
       metrics.incrementFetchAndLockTasksSkippedCounter(QUEUE_FULL)
       return
     }
@@ -84,7 +89,7 @@ class EmbeddedPullServiceTaskDelivery(
       .groupBy { it.topicName }
       .forEach { (topic, tasks) -> metrics.incrementFetchedAndLockedTasksCounter(topic!!, tasks.size) }
 
-    val taskActionHandlerCallables = lockedTasks
+    lockedTasks
       .asSequence()
       .mapNotNull { lockedTask ->
         val subscription = subscriptions.firstOrNull { subscription -> subscription.matches(lockedTask) }
@@ -94,13 +99,28 @@ class EmbeddedPullServiceTaskDelivery(
           metrics.incrementDroppedTasksCounter(lockedTask.topicName!!, NO_MATCHING_SUBSCRIPTIONS)
           null
         }
-      }.map { (lockedTask, activeSubscription) -> createTaskActionHandlerCallable(lockedTask, activeSubscription) }
-      .toList()
+      }.forEach { (lockedTask, activeSubscription) -> submitUnlessRunning(lockedTask, activeSubscription) }
+  }
 
-    taskActionHandlerCallables
-      .map { executor.submit(it) }
-      .forEach { it.get() }
-
+  private fun submitUnlessRunning(lockedTask: LockedExternalTask, activeSubscription: TaskSubscriptionHandle) {
+    val taskId = lockedTask.id
+    if (!runningTaskIds.add(taskId)) {
+      logger.trace { "PROCESS-ENGINE-C7-EMBEDDED-047: skipping task $taskId since it is still running." }
+      return
+    }
+    val taskActionHandlerCallable = createTaskActionHandlerCallable(lockedTask, activeSubscription)
+    try {
+      executor.submit {
+        try {
+          taskActionHandlerCallable.call()
+        } finally {
+          runningTaskIds.remove(taskId)
+        }
+      }
+    } catch (e: RejectedExecutionException) {
+      runningTaskIds.remove(taskId)
+      throw e
+    }
   }
 
   internal fun createTaskActionHandlerCallable(lockedTask: LockedExternalTask, activeSubscription: TaskSubscriptionHandle): Callable<Unit> =
@@ -171,9 +191,7 @@ class EmbeddedPullServiceTaskDelivery(
     // the remaining tasks don't exist in the engine, lets handle them
     val taskTerminationHandlerCallables = deliveredTaskIdsMissingInEngine.map { createTaskTerminationHandlerCallable(it) }
 
-    taskTerminationHandlerCallables
-      .map { executor.submit(it) }
-      .forEach { it.get() }
+    taskTerminationHandlerCallables.forEach { executor.submit(it) }
   }
 
   internal fun createTaskTerminationHandlerCallable(taskId: String): Callable<Unit> = Callable {
