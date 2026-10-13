@@ -40,6 +40,8 @@
     <module>engine-adapter/c7-embedded-spring-boot-starter</module>
     <module>engine-adapter/c7-remote-core</module>
     <module>engine-adapter/c7-remote-spring-boot-starter</module>
+    <module>testing/c7-embedded-testing</module>
+    <module>testing/c7-remote-testing</module>
     <module>bom</module>
     <!-- more modules see profiles -->
   </modules>
