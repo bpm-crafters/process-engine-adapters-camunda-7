@@ -7,6 +7,7 @@ import dev.bpmcrafters.processengineapi.testing.api.ProcessTestQueryApi
 import dev.bpmcrafters.processengineapi.testing.config.ProcessTestPollingConfiguration
 import org.awaitility.Awaitility.await
 import org.camunda.bpm.engine.ProcessEngine
+import java.util.concurrent.Callable
 import java.util.function.Predicate
 
 internal class C7EmbeddedProcessTestAssertApi(
@@ -85,7 +86,11 @@ internal class C7EmbeddedProcessTestAssertApi(
   }
 
   private fun <T> eventually(description: String, supplier: () -> T): T =
-    await().pollInterval(polling.pollInterval).atMost(polling.timeout).until({ supplier() }, Predicate { true })
+    await()
+      .pollInterval(polling.pollInterval)
+      .atMost(polling.timeout)
+      .ignoreExceptionsInstanceOf(IllegalArgumentException::class.java)
+      .until(Callable { supplier() }, Predicate { true })
 
   private fun selected(tasks: List<TaskInformation>): TaskInformation {
     require(tasks.size == 1) { "Expected exactly one task but found ${tasks.size}: $tasks" }; return tasks.single()

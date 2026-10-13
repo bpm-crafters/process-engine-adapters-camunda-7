@@ -1,6 +1,7 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.remote.testing
 
 import dev.bpmcrafters.processengineapi.CommonRestrictions
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.process.ProcessDefinitionMetaDataResolver
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.process.toProcessInformation
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.toTaskInformation
 import dev.bpmcrafters.processengineapi.process.ProcessInformation
@@ -22,6 +23,7 @@ internal class C7RemoteProcessTestQueryApi(application: ConfigurableApplicationC
   private val tasks = application.getBean<TaskApiClient>()
   private val externalTasks = application.getBean<ExternalTaskApiClient>()
   private val processes = application.getBean<ProcessInstanceApiClient>()
+  private val metadata = application.getBean<ProcessDefinitionMetaDataResolver>()
   override fun getSupportedRestrictions() = SUPPORTED_RESTRICTIONS
   override fun findUserTasks(taskDescriptionKey: String?, restrictions: Map<String, String>, predicate: Predicate<TaskInformation>?): List<TaskInformation> {
     ensureSupported(restrictions);
@@ -30,7 +32,7 @@ internal class C7RemoteProcessTestQueryApi(application: ConfigurableApplicationC
       0,
       1_000,
       query
-    ).body.orEmpty().map { it.toTaskInformation(tasks.getIdentityLinks(it.id!!, "candidate").body.orEmpty().toSet(), NoOpMetadataResolver) }
+    ).body.orEmpty().map { it.toTaskInformation(tasks.getIdentityLinks(it.id!!, "candidate").body.orEmpty().toSet(), metadata) }
       .filter { predicate?.test(it) ?: true }
   }
 
@@ -49,7 +51,7 @@ internal class C7RemoteProcessTestQueryApi(application: ConfigurableApplicationC
             300_000
           )
         )
-      ).body.orEmpty().filter { locked -> selected.any { it.id == locked.id } }.map { it.toTaskInformation(NoOpMetadataResolver) }
+      ).body.orEmpty().filter { locked -> selected.any { it.id == locked.id } }.map { it.toTaskInformation(metadata) }
     }.filter { predicate?.test(it) ?: true }
   }
 
@@ -63,9 +65,11 @@ internal class C7RemoteProcessTestQueryApi(application: ConfigurableApplicationC
 private fun TaskQueryDto.applyRestrictions(restrictions: Map<String, String>) = apply {
   restrictions.forEach { (key, value) ->
     when (key) {
-      CommonRestrictions.PROCESS_INSTANCE_ID -> processInstanceId(value); CommonRestrictions.PROCESS_DEFINITION_ID -> processDefinitionId(value); CommonRestrictions.ACTIVITY_ID -> taskDefinitionKey(
-      value
-    ); CommonRestrictions.TENANT_ID -> tenantIdIn(listOf(value))
+      CommonRestrictions.PROCESS_INSTANCE_ID -> processInstanceId(value)
+      CommonRestrictions.PROCESS_DEFINITION_ID -> processDefinitionId(value)
+      CommonRestrictions.PROCESS_DEFINITION_KEY -> processDefinitionKey(value)
+      CommonRestrictions.ACTIVITY_ID -> taskDefinitionKey(value)
+      CommonRestrictions.TENANT_ID -> tenantIdIn(listOf(value))
     }
   }
 }

@@ -11,9 +11,13 @@ import org.camunda.community.rest.client.api.IncidentApiClient
 import org.camunda.community.rest.client.api.ProcessInstanceApiClient
 import org.camunda.community.rest.client.model.ActivityInstanceDto
 import org.camunda.community.rest.client.model.HistoricActivityInstanceQueryDto
+import org.camunda.community.rest.client.model.HistoricActivityInstanceQueryDtoSortingInner
+import org.camunda.community.rest.client.model.HistoricActivityInstanceQueryDtoSortingInner.SortByEnum
+import org.camunda.community.rest.client.model.HistoricActivityInstanceQueryDtoSortingInner.SortOrderEnum
 import org.camunda.community.rest.client.model.HistoricProcessInstanceQueryDto
 import org.springframework.beans.factory.getBean
 import org.springframework.context.ConfigurableApplicationContext
+import java.util.concurrent.Callable
 import java.util.function.Predicate
 
 internal class C7RemoteProcessTestAssertApi(
@@ -95,8 +99,11 @@ internal class C7RemoteProcessTestAssertApi(
 
   private fun assertHistory(instanceId: String, ordered: Boolean, expected: Boolean, ids: Array<out String>) {
     require(ids.isNotEmpty()) { "At least one element id is required." };
-    val passed = history.queryHistoricActivityInstances(0, 1_000, HistoricActivityInstanceQueryDto().processInstanceId(instanceId)).body.orEmpty()
-      .sortedBy { it.startTime }.mapNotNull { it.activityId }; if (expected) {
+    val historyQuery = HistoricActivityInstanceQueryDto()
+      .processInstanceId(instanceId)
+      .addSortingItem(ascendingBy(SortByEnum.START_TIME))
+      .addSortingItem(ascendingBy(SortByEnum.OCCURRENCE))
+    val passed = history.queryHistoricActivityInstances(0, 1_000, historyQuery).body.orEmpty().mapNotNull { it.activityId }; if (expected) {
       require(ids.all { it in passed }) { "Expected $ids to be passed; actual: $passed" }; if (ordered) ids.fold(0) { index, id ->
         passed.indexOfFirstFrom(
           index,
@@ -106,7 +113,15 @@ internal class C7RemoteProcessTestAssertApi(
     } else require(ids.none { it in passed }) { "Expected $ids not to be passed; actual: $passed" }
   }
 
-  private fun <T> eventually(supplier: () -> T): T = await().pollInterval(polling.pollInterval).atMost(polling.timeout).until(supplier, Predicate { true })
+  private fun ascendingBy(sortBy: SortByEnum) = HistoricActivityInstanceQueryDtoSortingInner().sortBy(sortBy).sortOrder(SortOrderEnum.ASC)
+
+  private fun <T> eventually(supplier: () -> T): T =
+    await()
+      .pollInterval(polling.pollInterval)
+      .atMost(polling.timeout)
+      .ignoreExceptionsInstanceOf(IllegalArgumentException::class.java)
+      .until(Callable { supplier() }, Predicate { true })
+
   private fun selected(tasks: List<TaskInformation>): TaskInformation =
     requireNotNull(tasks.singleOrNull()) { "Expected exactly one task but found ${tasks.size}: $tasks" }
 }

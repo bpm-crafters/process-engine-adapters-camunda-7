@@ -7,10 +7,9 @@ import java.time.Duration
 import java.util.*
 
 internal class C7EmbeddedProcessTestCapabilities(private val engine: ProcessEngine) : ProcessTestCapabilities {
-  private var currentTime = Date()
   override fun supportsTimeTravel() = true
   override fun timePasses(duration: Duration) {
-    currentTime = Date.from(currentTime.toInstant().plus(duration)); ClockUtil.setCurrentTime(currentTime); engine.managementService.createJobQuery()
-      .executable().list().forEach { engine.managementService.executeJob(it.id) }
+    ClockUtil.setCurrentTime(Date.from(ClockUtil.getCurrentTime().toInstant().plus(duration)))
+    engine.managementService.createJobQuery().executable().list().forEach { engine.managementService.executeJob(it.id) }
   }
 }
