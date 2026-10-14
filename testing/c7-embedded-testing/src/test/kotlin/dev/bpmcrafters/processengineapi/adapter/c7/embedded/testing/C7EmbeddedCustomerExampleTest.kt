@@ -1,13 +1,13 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.embedded.testing
 
-import dev.bpmcrafters.processengineapi.adapter.c7.embedded.testing.C7EmbeddedCustomerTestExample.Actions
-import dev.bpmcrafters.processengineapi.adapter.c7.embedded.testing.C7EmbeddedCustomerTestExample.Assertions
+import dev.bpmcrafters.processengineapi.adapter.c7.embedded.testing.C7EmbeddedCustomerExampleTest.Actions
+import dev.bpmcrafters.processengineapi.adapter.c7.embedded.testing.C7EmbeddedCustomerExampleTest.Assertions
 import dev.bpmcrafters.processengineapi.testing.config.UseProcessTestInitializer
 import dev.bpmcrafters.processengineapi.testing.jgiven.*
 import org.junit.jupiter.api.Test
 
 @UseProcessTestInitializer(C7EmbeddedProcessTestInitializer.QUALIFIER)
-class C7EmbeddedCustomerTestExample : ProcessScenarioTest<Actions, Assertions>() {
+class C7EmbeddedCustomerExampleTest : ProcessScenarioTest<Actions, Assertions>() {
 
   @Test
   fun `a customer test can deploy start complete and assert a process`() {
