@@ -11,7 +11,7 @@
 
   <groupId>dev.bpm-crafters.process-engine-adapters</groupId>
   <artifactId>process-engine-adapter-camunda-platform-c7-root</artifactId>
-  <version>2026.09.2</version>
+  <version>2026.10.1</version>
   <name>POM: Camunda 7 Adapter Project root</name>
   <description>Process Engine Adapters Camunda 7</description>
   <url>https://github.com/bpm-crafters/process-engine-adapters-camunda-7/</url>
@@ -20,17 +20,17 @@
   <properties>
     <!-- COMMON GLOBAL -->
     <spring-boot.version>3.5.16</spring-boot.version>
-    <jackson3.version>3.2.2</jackson3.version>
+    <jackson3.version>3.2.3</jackson3.version>
     <process-engine-api.version>1.7</process-engine-api.version>
     <c7.version>2026.04.2</c7.version>
     <!-- TEST -->
-    <mockito.version>6.3.0</mockito.version>
+    <mockito.version>6.4.0</mockito.version>
     <assertj.version>3.27.7</assertj.version>
     <junit5.version>5.13.3</junit5.version>
     <jgiven.version>2.0.2</jgiven.version>
     <awaitility.version>4.3.0</awaitility.version>
     <mockk.version>1.14.11</mockk.version>
-    <logback.version>1.6.3</logback.version>
+    <logback.version>1.6.5</logback.version>
   </properties>
 
   <modules>
@@ -40,6 +40,8 @@
     <module>engine-adapter/c7-embedded-spring-boot-starter</module>
     <module>engine-adapter/c7-remote-core</module>
     <module>engine-adapter/c7-remote-spring-boot-starter</module>
+    <module>testing/c7-embedded-testing</module>
+    <module>testing/c7-remote-testing</module>
     <module>bom</module>
     <!-- more modules see profiles -->
   </modules>
@@ -98,7 +100,7 @@
       <dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-api</artifactId>
-        <version>2.0.19</version>
+        <version>2.0.20</version>
       </dependency>
       <dependency>
         <groupId>ch.qos.logback</groupId>

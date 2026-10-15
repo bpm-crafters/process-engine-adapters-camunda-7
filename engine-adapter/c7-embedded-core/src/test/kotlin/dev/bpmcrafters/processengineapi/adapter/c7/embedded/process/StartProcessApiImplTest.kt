@@ -15,6 +15,7 @@ import org.camunda.community.mockito.QueryMocks
 import org.camunda.community.mockito.process.ProcessDefinitionFake
 import org.camunda.community.mockito.process.ProcessInstanceFake
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -250,6 +251,38 @@ class StartProcessApiImplTest {
     verify(modificationBuilder).processInstanceIds("instance-123")
     verify(modificationBuilder).startBeforeActivity("user-perform-task")
     verify(modificationBuilder).execute()
+  }
+
+  @Test
+  fun `should reject start via definition when definition key restriction does not match`() {
+    // given
+    val cmd = StartProcessByDefinitionCmd(
+      "definitionKey",
+      { emptyMap() },
+      mapOf(CommonRestrictions.PROCESS_DEFINITION_KEY to "otherDefinitionKey")
+    )
+
+    // when
+    val start = startProcessApi.startProcess(cmd)
+
+    // then
+    assertThatThrownBy { start.get() }
+      .hasCauseInstanceOf(IllegalArgumentException::class.java)
+      .hasMessageContaining("otherDefinitionKey")
+    verifyNoInteractions(runtimeService)
+  }
+
+  @Test
+  fun `should return process instance id in meta`() {
+    // given
+    val processInstance: ProcessInstance = ProcessInstanceFake.builder().id("someId").build()
+    whenever(runtimeService.startProcessInstanceByKey(anyString(), anyOrNull(), anyMap())).thenReturn(processInstance)
+
+    // when
+    val info = startProcessApi.startProcess(StartProcessByDefinitionCmd("definitionKey", { emptyMap() })).get()
+
+    // then
+    assertThat(info.meta[CommonRestrictions.PROCESS_INSTANCE_ID]).isEqualTo("someId")
   }
 
   private fun processInstanceMock(processDefinitionId: String): ProcessInstance =

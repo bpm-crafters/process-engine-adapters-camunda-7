@@ -143,4 +143,32 @@ class StartProcessApiImplByDefinitionTest {
     assertThat(exception.cause!!.message).isEqualTo("Only $expected are supported but businessKey were found.")
   }
 
+  @Test
+  fun `rejects definition key restriction not matching the requested definition`() {
+    val exception = assertThrows<ExecutionException> {
+      startProcessApi.startProcess(
+        StartProcessByDefinitionCmd(
+          "definitionKey",
+          { emptyMap() },
+          mapOf(CommonRestrictions.PROCESS_DEFINITION_KEY to "otherDefinitionKey")
+        )
+      ).get()
+    }
+    assertThat(exception.cause).isInstanceOf(IllegalArgumentException::class.java).hasMessageContaining("otherDefinitionKey")
+    verify(processDefinitionApiClient, never()).startProcessInstanceByKey(anyString(), any())
+    verify(processDefinitionApiClient, never()).startProcessInstance(anyString(), any())
+  }
+
+  @Test
+  fun `should return process instance id in meta`() {
+    // given
+    val startProcessByDefinitionCmd = StartProcessByDefinitionCmd("definitionKey", { emptyMap() }, mapOf())
+
+    // when
+    val info = startProcessApi.startProcess(startProcessByDefinitionCmd).get()
+
+    // then
+    assertThat(info.meta[CommonRestrictions.PROCESS_INSTANCE_ID]).isEqualTo("instanceId")
+  }
+
 }
