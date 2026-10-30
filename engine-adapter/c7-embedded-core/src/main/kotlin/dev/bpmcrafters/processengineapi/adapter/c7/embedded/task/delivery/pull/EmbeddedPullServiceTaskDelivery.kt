@@ -99,7 +99,8 @@ class EmbeddedPullServiceTaskDelivery(
           metrics.incrementDroppedTasksCounter(lockedTask.topicName!!, NO_MATCHING_SUBSCRIPTIONS)
           null
         }
-      }.forEach { (lockedTask, activeSubscription) -> submitUnlessRunning(lockedTask, activeSubscription) }
+      }
+      .forEach { (lockedTask, activeSubscription) -> submitUnlessRunning(lockedTask, activeSubscription) }
   }
 
   private fun submitUnlessRunning(lockedTask: LockedExternalTask, activeSubscription: TaskSubscriptionHandle) {
