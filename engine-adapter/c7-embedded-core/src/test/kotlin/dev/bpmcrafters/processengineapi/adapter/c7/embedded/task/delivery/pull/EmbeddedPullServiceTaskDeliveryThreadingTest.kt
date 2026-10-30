@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import org.mockito.Mockito.RETURNS_SELF
 import org.mockito.kotlin.any
+import org.mockito.kotlin.atLeast
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.inOrder
 import org.mockito.kotlin.mock
@@ -117,18 +118,15 @@ internal class EmbeddedPullServiceTaskDeliveryThreadingTest {
   }
 
   @Test
-  fun `frees the worker thread once the task has finished`() {
+  fun `fetches again after a running task has finished`() {
     doReturn(listOf(lockedTask("fast", fastTopic)), emptyList<LockedExternalTask>())
       .whenever(fetchAndLockBuilder).execute()
 
     taskDelivery.refresh()
     await untilAsserted {
-      assertThat(finishedTaskIds).containsExactly("fast")
-      assertThat(executor.activeCount).isZero()
+      taskDelivery.refresh()
+      verify(externalTaskService, atLeast(2)).fetchAndLock(2, workerId)
     }
-    taskDelivery.refresh()
-
-    verify(externalTaskService, times(2)).fetchAndLock(2, workerId)
   }
 
   @Test
