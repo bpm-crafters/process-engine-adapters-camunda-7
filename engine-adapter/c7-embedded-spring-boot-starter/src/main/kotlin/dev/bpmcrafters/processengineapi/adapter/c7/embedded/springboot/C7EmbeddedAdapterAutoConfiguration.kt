@@ -43,6 +43,9 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Conditional
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.ThreadPoolExecutor
+import java.util.concurrent.TimeUnit
 
 private val logger = KotlinLogging.logger {}
 
@@ -203,9 +206,13 @@ class C7EmbeddedAdapterAutoConfiguration {
   @Bean("c7embedded-service-task-worker-executor")
   @ConditionalOnMissingQualifiedBean(beanClass = ExecutorService::class, qualifier = "c7embedded-service-task-worker-executor")
   @Qualifier("c7embedded-service-task-worker-executor")
-  fun serviceTaskWorkerExecutor(): ExecutorService = Executors.newFixedThreadPool(
-    10,
-    ThreadContextClassLoaderThreadFactory(C7EmbeddedAdapterAutoConfiguration::class.java.classLoader),
+  fun serviceTaskWorkerExecutor(): ThreadPoolExecutor = ThreadPoolExecutor(
+    /* corePoolSize = */ 10,
+    /* maximumPoolSize = */ 10,
+    /* keepAliveTime = */ 0L,
+    /* unit = */ TimeUnit.MILLISECONDS,
+    /* workQueue = */ LinkedBlockingQueue(),
+    /* threadFactory = */ ThreadContextClassLoaderThreadFactory(C7EmbeddedAdapterAutoConfiguration::class.java.classLoader),
   )
 
   /**
