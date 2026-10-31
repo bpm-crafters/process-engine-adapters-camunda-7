@@ -2,8 +2,11 @@ package dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot
 
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot.C7EmbeddedAdapterProperties.Companion.DEFAULT_PREFIX
 import org.springframework.boot.context.properties.ConfigurationProperties
+import org.springframework.boot.context.properties.DeprecatedConfigurationProperty
 import org.springframework.boot.context.properties.NestedConfigurationProperty
 import org.springframework.validation.annotation.Validated
+
+import java.time.Duration
 
 @ConfigurationProperties(prefix = DEFAULT_PREFIX)
 @Validated
@@ -40,12 +43,21 @@ class C7EmbeddedAdapterProperties(
     /**
      * Fixed rate for scheduled user task delivery.
      */
+    @Deprecated("Use scheduleDeliveryFixedRate instead.", ReplaceWith("scheduleDeliveryFixedRate"))
+    @get:DeprecatedConfigurationProperty(replacement = "$DEFAULT_PREFIX.user-tasks.schedule-delivery-fixed-rate")
     val scheduleDeliveryFixedRateInSeconds: Long = 5L,
     /**
      * Should an initial pull be executed on startup.
      */
     val executeInitialPullOnStartup: Boolean = true,
-  )
+    /**
+     * Delay between scheduled deliveries, e.g. `200ms`. Takes precedence over [scheduleDeliveryFixedRateInSeconds].
+     */
+    val scheduleDeliveryFixedRate: Duration? = null,
+  ) {
+    val scheduleDeliveryIntervalInMilliseconds: Long
+      get() = (scheduleDeliveryFixedRate ?: Duration.ofSeconds(scheduleDeliveryFixedRateInSeconds)).toMillis()
+  }
 
 
   /**
@@ -71,6 +83,8 @@ class C7EmbeddedAdapterProperties(
     /**
      * Fixed rate for scheduled user task delivery.
      */
+    @Deprecated("Use scheduleDeliveryFixedRate instead.", ReplaceWith("scheduleDeliveryFixedRate"))
+    @get:DeprecatedConfigurationProperty(replacement = "$DEFAULT_PREFIX.service-tasks.schedule-delivery-fixed-rate")
     val scheduleDeliveryFixedRateInSeconds: Long = 13L,
     /**
      * Delivery strategy for external service tasks.
@@ -83,8 +97,15 @@ class C7EmbeddedAdapterProperties(
     /**
      * Default initial number of retries.
      */
-    val retries: Int = 3
-  )
+    val retries: Int = 3,
+    /**
+     * Delay between scheduled deliveries, e.g. `200ms`. Takes precedence over [scheduleDeliveryFixedRateInSeconds].
+     */
+    val scheduleDeliveryFixedRate: Duration? = null,
+  ) {
+    val scheduleDeliveryIntervalInMilliseconds: Long
+      get() = (scheduleDeliveryFixedRate ?: Duration.ofSeconds(scheduleDeliveryFixedRateInSeconds)).toMillis()
+  }
 
   /**
    * Strategy how the user tasks are delivered to subscriptions.
