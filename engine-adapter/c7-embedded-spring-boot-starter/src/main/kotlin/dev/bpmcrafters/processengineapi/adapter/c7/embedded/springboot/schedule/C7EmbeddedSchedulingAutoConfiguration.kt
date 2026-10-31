@@ -121,7 +121,7 @@ class C7EmbeddedSchedulingAutoConfiguration {
     @Qualifier("c7embedded-process-definition-meta-data-resolver")
     processDefinitionMetaDataResolver: ProcessDefinitionMetaDataResolver,
     c7AdapterProperties: C7EmbeddedAdapterProperties,
-    @Qualifier("c7embedded-service-task-worker-executor")
+    @Qualifier("c7embedded-user-task-worker-executor")
     executorService: ExecutorService
   ): EmbeddedPullUserTaskDelivery {
     return EmbeddedPullUserTaskDelivery(
