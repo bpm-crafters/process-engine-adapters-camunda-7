@@ -119,8 +119,8 @@ Turns the embedded adapter on or off. Default: `true`.
 | Property | Default | Description |
 |----------|---------|-------------|
 | `worker-id` | required | Worker id used for fetch-and-lock and completion calls. |
-| `max-task-count` | `100` | Maximum number of external tasks fetched per pull cycle. |
-| `lock-time-in-seconds` | `10` | Lock duration for fetched external tasks. |
+| `max-task-count` | `100` | Maximum number of external tasks fetched per pull cycle. A pull cycle never fetches more tasks than worker threads are free. |
+| `lock-time-in-seconds` | `10` | Lock duration for fetched external tasks. Must exceed the runtime of the slowest worker, otherwise the task is delivered again (at-least-once). Can be overridden per subscription with the `workerLockDurationInMilliseconds` restriction. |
 | `retry-timeout-in-seconds` | `10` | Timeout used by the default failure retry supplier. |
 | `retries` | `3` | Initial retry count used by the default failure retry supplier. |
 | `delivery-strategy` | required | One of `embedded_scheduled`, `custom`, `disabled`. |

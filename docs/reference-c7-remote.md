@@ -142,8 +142,8 @@ Turns the remote adapter on or off. Default: `false`.
 | Property | Default | Description |
 |----------|---------|-------------|
 | `worker-id` | required | Worker id used for external task fetching and completion. |
-| `max-task-count` | `100` | Maximum number of external tasks fetched per pull cycle. |
-| `lock-time-in-seconds` | `10` | Lock duration for fetched external tasks. |
+| `max-task-count` | `100` | Maximum number of external tasks fetched per pull cycle. A pull cycle never fetches more tasks than the worker queue has free capacity. |
+| `lock-time-in-seconds` | `10` | Lock duration for fetched external tasks. Must exceed the runtime of the slowest worker, otherwise the task is delivered again (at-least-once). Can be overridden per subscription with the `workerLockDurationInMilliseconds` restriction. |
 | `retry-timeout-in-seconds` | `10` | Timeout used by the default failure retry supplier. |
 | `retries` | `3` | Initial retry count used by the default failure retry supplier. |
 | `delivery-strategy` | required | One of `remote_scheduled`, `remote_subscribed`, `custom`, `disabled`. |
