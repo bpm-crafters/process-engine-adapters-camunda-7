@@ -7,3 +7,5 @@ dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.schedule.PullServi
 dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.schedule.PullUserTaskDeliveryAutoConfiguration
 dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.client.OfficialClientServiceTaskAutoConfiguration
 dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.initial.C7RemoteInitialPullOnStartupAutoConfiguration
+dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.outbox.C7RemoteJdbcOutboxAutoConfiguration
+dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.outbox.C7RemoteOutboxAutoConfiguration

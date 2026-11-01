@@ -35,6 +35,12 @@
       <artifactId>spring-boot-configuration-processor</artifactId>
       <optional>true</optional>
     </dependency>
+    <!-- Use for the JDBC engine command outbox -->
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-jdbc</artifactId>
+      <optional>true</optional>
+    </dependency>
     <!-- Use subscription-based delivery using official Camunda client -->
     <dependency>
       <groupId>org.camunda.bpm.springboot</groupId>
@@ -52,6 +58,11 @@
     </dependency>
 
     <!-- Testing -->
+    <dependency>
+      <groupId>com.h2database</groupId>
+      <artifactId>h2</artifactId>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>dev.bpm-crafters.process-engine-adapters</groupId>
       <artifactId>process-engine-adapter-camunda-platform-c7-testing</artifactId>

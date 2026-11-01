@@ -1,5 +1,6 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot
 
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.outbox.EngineCommandOutbox
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.process.CachingProcessDefinitionMetaDataResolver
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.process.ProcessDefinitionMetaDataResolver
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.completion.FailureRetrySupplier
@@ -20,6 +21,7 @@ import org.camunda.community.rest.client.api.ExternalTaskApiClient
 import org.camunda.community.rest.client.api.ProcessDefinitionApiClient
 import org.camunda.community.rest.client.api.TaskApiClient
 import org.camunda.community.rest.variables.ValueMapper
+import org.springframework.beans.factory.ObjectProvider
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.autoconfigure.AutoConfiguration
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
@@ -92,7 +94,8 @@ class C7RemotePullServicesAutoConfiguration {
     @Qualifier("c7remote-service-task-worker-executor")
     executor: ThreadPoolExecutor,
     valueMapper: ValueMapper,
-    metrics: PullServiceTaskDeliveryMetrics
+    metrics: PullServiceTaskDeliveryMetrics,
+    outbox: ObjectProvider<EngineCommandOutbox>
   ) = PullServiceTaskDelivery(
     subscriptionRepository = subscriptionRepository,
     workerId = c7AdapterProperties.serviceTasks.workerId,
@@ -105,7 +108,8 @@ class C7RemotePullServicesAutoConfiguration {
     processDefinitionMetaDataResolver = processDefinitionMetaDataResolver,
     valueMapper = valueMapper,
     deserializeOnServer = c7AdapterProperties.serviceTasks.deserializeOnServer,
-    metrics = metrics
+    metrics = metrics,
+    outbox = outbox.ifAvailable
   )
 
   @Bean("c7remote-service-task-completion-api")
@@ -149,7 +153,8 @@ class C7RemotePullServicesAutoConfiguration {
     c7AdapterProperties: C7RemoteAdapterProperties,
     @Qualifier("c7remote-user-task-worker-executor")
     executorService: ExecutorService,
-    valueMapper: ValueMapper
+    valueMapper: ValueMapper,
+    outbox: ObjectProvider<EngineCommandOutbox>
   ): PullUserTaskDelivery {
     return PullUserTaskDelivery(
       subscriptionRepository = subscriptionRepository,
@@ -157,7 +162,8 @@ class C7RemotePullServicesAutoConfiguration {
       valueMapper = valueMapper,
       processDefinitionMetaDataResolver = processDefinitionMetaDataResolver,
       taskApiClient = taskApiClient,
-      deserializeOnServer = c7AdapterProperties.userTasks.deserializeOnServer
+      deserializeOnServer = c7AdapterProperties.userTasks.deserializeOnServer,
+      outbox = outbox.ifAvailable
     )
   }
 

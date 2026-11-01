@@ -66,13 +66,13 @@ class FeignServiceTaskCompletionApiImpl(
 
   override fun failTask(cmd: FailTaskCmd): CompletableFuture<Empty> {
     logger.debug { "PROCESS-ENGINE-C7-REMOTE-010: failing service task ${cmd.taskId}." }
-    val (retries, retryTimeoutInSeconds) = failureRetrySupplier.apply(cmd.taskId)
-    val retryTimeoutInMillis = cmd.retryBackoff?.toMillis() ?: retryTimeoutInSeconds * 1000
+    val failureRetry by lazy { failureRetrySupplier.apply(cmd.taskId) }
+    val retryTimeoutInMillis = cmd.retryBackoff?.toMillis() ?: failureRetry.retryTimeout * 1000
     externalTaskApiClient.handleFailure(
       cmd.taskId,
       ExternalTaskFailureDto().apply {
         this.workerId = this@FeignServiceTaskCompletionApiImpl.workerId
-        this.retries = cmd.retryCount ?: retries
+        this.retries = cmd.retryCount ?: failureRetry.retryCount
         this.retryTimeout = retryTimeoutInMillis
         this.errorDetails = cmd.errorDetails
         this.errorMessage = cmd.reason

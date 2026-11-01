@@ -19,7 +19,7 @@ class FeignClientAutoConfiguration {
 
   @Bean
   fun c7ErrorDecoder(): ErrorDecoder {
-    return CamundaHttpFeignErrorDecoder(
+    val decoder = CamundaHttpFeignErrorDecoder(
       httpCodes = listOf(400, 500), // current default
       defaultDecoder = ErrorDecoder.Default(),
       wrapExceptions = true, // wrap exception
@@ -28,6 +28,12 @@ class FeignClientAutoConfiguration {
         override fun create(message: String, cause: Throwable?) = C7RemoteException(message, cause)
       }
     )
+    return ErrorDecoder { methodKey, response ->
+      when (val decoded = decoder.decode(methodKey, response)) {
+        is C7RemoteException -> C7RemoteException(decoded.message.orEmpty(), decoded.cause, response.status())
+        else -> decoded
+      }
+    }
   }
 
 }

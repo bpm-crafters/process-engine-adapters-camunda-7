@@ -62,14 +62,14 @@ class OfficialClientServiceTaskCompletionApiImpl(
 
   override fun failTask(cmd: FailTaskCmd): CompletableFuture<Empty> {
     logger.debug { "PROCESS-ENGINE-C7-REMOTE-010: failing service task ${cmd.taskId}." }
-    val (retries, retryTimeoutInSeconds) = failureRetrySupplier.apply(cmd.taskId)
-    val retryTimeoutInMillis = cmd.retryBackoff?.toMillis() ?: retryTimeoutInSeconds * 1000
+    val failureRetry by lazy { failureRetrySupplier.apply(cmd.taskId) }
+    val retryTimeoutInMillis = cmd.retryBackoff?.toMillis() ?: failureRetry.retryTimeout * 1000
     externalTaskService
       .handleFailure(
         cmd.taskId,
         cmd.reason,
         cmd.errorDetails,
-        cmd.retryCount ?: retries,
+        cmd.retryCount ?: failureRetry.retryCount,
         retryTimeoutInMillis
       )
     subscriptionRepository.deactivateSubscriptionForTask(cmd.taskId)?.apply {

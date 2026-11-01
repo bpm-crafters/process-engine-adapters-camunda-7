@@ -2,6 +2,7 @@ package dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.subscri
 
 import dev.bpmcrafters.processengineapi.CommonRestrictions
 import dev.bpmcrafters.processengineapi.adapter.c7.common.threading.withThreadContextClassLoader
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.outbox.EngineCommandOutbox
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.ServiceTaskDelivery
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import dev.bpmcrafters.processengineapi.impl.task.TaskSubscriptionHandle
@@ -25,6 +26,7 @@ class SubscribingServiceTaskDelivery(
   private val lockDurationInSeconds: Long,
   private val retryTimeoutInSeconds: Long,
   private val retries: Int,
+  private val outbox: EngineCommandOutbox? = null,
 ) : ServiceTaskDelivery {
 
   private val camundaTaskListTopicSubscriptions = mutableListOf<TopicSubscription>()
@@ -43,7 +45,9 @@ class SubscribingServiceTaskDelivery(
               .subscribe(subscription.taskDescriptionKey)
               .lockDuration(lockDurationInSeconds * 1000) // millis
               .handler { externalTask, externalTaskService ->
-                if (subscription.matches(externalTask)) {
+                if (outbox?.pendingTaskIds(listOf(externalTask.id))?.isNotEmpty() == true) {
+                  logger.debug { "PROCESS-ENGINE-C7-REMOTE-124: skipping service task ${externalTask.id}, it is pending in the outbox." }
+                } else if (subscription.matches(externalTask)) {
                   try {
                     subscriptionRepository.activateSubscriptionForTask(externalTask.id, subscription)
                     val variables = externalTask.allVariables.filterBySubscription(subscription)

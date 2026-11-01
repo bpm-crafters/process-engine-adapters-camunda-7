@@ -1,5 +1,6 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.client
 
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.outbox.EngineCommandOutbox
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.C7RemoteAdapterAutoConfiguration
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.C7RemoteAdapterProperties
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.C7RemoteAdapterProperties.ExternalServiceTaskDeliveryStrategy.REMOTE_SUBSCRIBED
@@ -15,6 +16,7 @@ import org.camunda.bpm.client.ExternalTaskClient
 import org.camunda.bpm.client.impl.ExternalTaskClientImpl
 import org.camunda.bpm.client.task.ExternalTaskService
 import org.camunda.bpm.client.task.impl.ExternalTaskServiceImpl
+import org.springframework.beans.factory.ObjectProvider
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.autoconfigure.AutoConfiguration
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
@@ -47,13 +49,15 @@ class OfficialClientServiceTaskAutoConfiguration {
   fun subscribingClientExternalTaskDelivery(
     subscriptionRepository: SubscriptionRepository,
     externalTaskClient: ExternalTaskClient,
-    c7AdapterProperties: C7RemoteAdapterProperties
+    c7AdapterProperties: C7RemoteAdapterProperties,
+    outbox: ObjectProvider<EngineCommandOutbox>
   ) = SubscribingServiceTaskDelivery(
     subscriptionRepository = subscriptionRepository,
     lockDurationInSeconds = c7AdapterProperties.serviceTasks.lockTimeInSeconds,
     externalTaskClient = externalTaskClient,
     retryTimeoutInSeconds = c7AdapterProperties.serviceTasks.retryTimeoutInSeconds,
-    retries = c7AdapterProperties.serviceTasks.retries
+    retries = c7AdapterProperties.serviceTasks.retries,
+    outbox = outbox.ifAvailable
   )
 
   @Bean("c7remote-service-task-completion-api")

@@ -2,6 +2,7 @@ package dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull
 
 import dev.bpmcrafters.processengineapi.CommonRestrictions
 import dev.bpmcrafters.processengineapi.adapter.c7.common.threading.withThreadContextClassLoader
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.outbox.EngineCommandOutbox
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.process.ProcessDefinitionMetaDataResolver
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.RefreshableDelivery
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.ServiceTaskDelivery
@@ -45,6 +46,7 @@ class PullServiceTaskDelivery(
   private val valueMapper: ValueMapper,
   private val deserializeOnServer: Boolean,
   private val metrics: PullServiceTaskDeliveryMetrics,
+  private val outbox: EngineCommandOutbox? = null,
 ) : ServiceTaskDelivery, RefreshableDelivery {
 
   internal val stillLockedTasksGauge = AtomicInteger()
@@ -123,7 +125,9 @@ class PullServiceTaskDelivery(
     val start = OffsetDateTime.now()
     val timePassedSinceLockAcquisition = Duration.between(lockedTask.lockExpirationTime!!.minusSeconds(lockDurationInSeconds), start)
     metrics.recordTaskQueueTime(lockedTask.topicName!!, timePassedSinceLockAcquisition)
-    if (start.isBefore(lockedTask.lockExpirationTime)) {
+    if (outbox?.pendingTaskIds(listOf(lockedTask.id!!))?.isNotEmpty() == true) {
+      logger.debug { "PROCESS-ENGINE-C7-REMOTE-124: skipping service task ${lockedTask.id}, it is pending in the outbox." }
+    } else if (start.isBefore(lockedTask.lockExpirationTime)) {
       try {
         subscriptionRepository.activateSubscriptionForTask(lockedTask.id!!, activeSubscription)
         val variables = valueMapper.mapDtos(lockedTask.variables!!).filterBySubscription(activeSubscription)

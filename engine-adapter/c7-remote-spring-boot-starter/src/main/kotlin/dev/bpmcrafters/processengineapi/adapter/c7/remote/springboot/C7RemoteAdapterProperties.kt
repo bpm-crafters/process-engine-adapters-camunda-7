@@ -4,6 +4,7 @@ import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.C7RemoteAda
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.boot.context.properties.NestedConfigurationProperty
 import org.springframework.validation.annotation.Validated
+import java.time.Duration
 
 @Validated
 @ConfigurationProperties(prefix = DEFAULT_PREFIX)
@@ -22,12 +23,48 @@ class C7RemoteAdapterProperties(
    * Configuration of user tasks.
    */
   @NestedConfigurationProperty
-  val userTasks: UserTasks
+  val userTasks: UserTasks,
+
+  /**
+   * Configuration of the engine command outbox.
+   */
+  @NestedConfigurationProperty
+  val outbox: Outbox = Outbox()
 ) {
 
   companion object {
     const val DEFAULT_PREFIX = "dev.bpm-crafters.process-api.adapter.c7remote"
   }
+
+  /**
+   * Configuration of the engine command outbox.
+   */
+  data class Outbox(
+    /**
+     * True activates the JDBC outbox, false disables also a custom outbox bean.
+     */
+    val enabled: Boolean? = null,
+    /**
+     * Delay between relay runs, also the first retry backoff.
+     */
+    val relayInterval: Duration = Duration.ofSeconds(1),
+    /**
+     * Maximum number of commands delivered per relay run.
+     */
+    val batchSize: Int = 100,
+    /**
+     * Time a claimed command is reserved for one relay. Must exceed the REST client timeout.
+     */
+    val leaseDuration: Duration = Duration.ofSeconds(60),
+    /**
+     * Number of engine error answers until a command is marked as dead.
+     */
+    val maxAttempts: Int = 20,
+    /**
+     * Pattern of an ObjectInputFilter restricting classes read from stored commands. Empty disables the filter.
+     */
+    val deserializationFilter: String = "",
+  )
 
   /**
    * Configuration for user task handling.

@@ -162,6 +162,100 @@ Turns the remote adapter on or off. Default: `false`.
 | `execute-initial-pull-on-startup` | `true` in property binding | Enable one startup pull before the recurring scheduler takes over. Set it explicitly when you want startup delivery. |
 | `deserialize-on-server` | `false` | Requests Camunda REST variable deserialization on the server side for user-task polling. |
 
+### Engine command outbox
+
+Engine calls are REST calls and not atomic with your business transaction. With the outbox active, these calls write to
+the outbox when made inside a transaction, and are delivered after commit, at least once:
+
+- Service tasks: `completeTask`, `completeTaskByError`, `failTask`
+- User tasks: `completeTask`, `completeTaskByError`
+- `correlateMessage`
+- `sendSignal`
+
+Without a transaction they go straight to the engine and a warning is logged. `startProcess` is not covered because it
+returns the process instance synchronously. User task modifications are not covered because they are order-sensitive.
+
+Like the process-engine-worker `IdempotencyRegistry`, the outbox is off by default and replaceable by a bean:
+
+| Setup | Result |
+|-------|--------|
+| nothing | Off, no behaviour change. |
+| `outbox.enabled=true` | JDBC outbox on the application `DataSource`, delivered by the adapter relay. |
+| own `EngineCommandOutbox` bean | Your outbox is used, and you run the delivery. |
+| `outbox.enabled=false` | Off, even with an own bean. |
+
+To use an existing outbox, implement `EngineCommandOutbox` and store the `EngineCommand` in the transaction of the
+caller. `pendingTaskIds` must report undelivered task commands. Your relay passes each command to the
+`EngineCommandDelivery` bean, which returns `DELIVERED`, `UNAVAILABLE` (retry without limit) or `REJECTED` (retry a
+limited number of times).
+
+The outbox decorators are `@Primary`. Injecting an adapter API by its `c7remote-*` qualifier bypasses the outbox.
+
+| Property | Default | Description |
+|----------|---------|-------------|
+| `outbox.enabled` | unset | See above. |
+| `outbox.relay-interval` | `1s` | Delay between relay runs and first retry backoff. |
+| `outbox.batch-size` | `100` | Maximum commands delivered per relay run. |
+| `outbox.lease-duration` | `60s` | Reservation of a claimed command. Must exceed the REST client timeout. |
+| `outbox.max-attempts` | `20` | Engine error answers until a command becomes `DEAD`. |
+| `outbox.deserialization-filter` | empty | `ObjectInputFilter` pattern for stored commands. Must allow the `EngineCommand` classes. |
+
+The JDBC outbox needs `spring-jdbc` and this table:
+
+```sql
+-- Postgres; for H2 use BLOB instead of BYTEA
+CREATE TABLE c7remote_engine_outbox (
+  id              VARCHAR(36) PRIMARY KEY,
+  type            VARCHAR(32) NOT NULL,
+  task_id         VARCHAR(64),
+  payload         BYTEA NOT NULL,
+  status          VARCHAR(16) NOT NULL,
+  attempts        INT NOT NULL,
+  rejections      INT NOT NULL,
+  next_attempt_at TIMESTAMP NOT NULL,
+  lease_until     TIMESTAMP,
+  last_error      VARCHAR(4000)
+);
+CREATE INDEX c7remote_engine_outbox_due ON c7remote_engine_outbox (status, next_attempt_at);
+CREATE INDEX c7remote_engine_outbox_task ON c7remote_engine_outbox (task_id);
+```
+
+| Engine answer | Result |
+|---------------|--------|
+| 404 on a task command | Counts as delivered. |
+| No connection, 401, 403, 404 otherwise, 502, 503, 504 | Retry without limit, capped at 5 minutes. |
+| Any other failure, including 400, 500 and local mapping errors | Retry up to `max-attempts`, then `DEAD`. |
+
+Retries with backoff also cover a message whose receiver is not ready yet. A missing user task answers
+`POST /task/{id}/complete` with 500, so it ends as `DEAD` instead of being dropped.
+
+Requirements:
+
+- With process-engine-worker, set `completeTasksBeforeCommit=true` or use `Completion.BEFORE_COMMIT`. The default
+  completes after commit, outside a transaction, so the outbox is bypassed with a warning.
+- Do not call these APIs from an after-commit callback. The transaction still looks active there, so the entry would
+  be written to a finished transaction and lost.
+- All instances must share a stable `worker-id`. The engine rejects other ids with HTTP 400.
+- The table must be in the business data source, otherwise atomicity is silently lost.
+- Payload values must be `java.io.Serializable`.
+
+Limits:
+
+- A completed future and the termination callback mean handed to the outbox, not acknowledged by the engine.
+- Commands have no order, also not within one transaction.
+- A lost response or an expired lease can deliver a command twice. For task commands this is harmless. A message can
+  hit another receiver or start a second instance, and a signal reaches all receivers again, so these must tolerate
+  duplicates.
+- `failTask` retries are fixed at enqueue, so a rolled back transaction may use up one count.
+- A `DEAD` task is not pending, so the engine redelivers it. `DEAD` messages and signals are not recovered. Check
+  `last_error` and replay after fixing the cause:
+
+```sql
+UPDATE c7remote_engine_outbox
+SET status = 'PENDING', rejections = 0, next_attempt_at = CURRENT_TIMESTAMP
+WHERE status = 'DEAD' AND id = '<id>';
+```
+
 ### Example with explicit scheduling settings
 
 ```yaml

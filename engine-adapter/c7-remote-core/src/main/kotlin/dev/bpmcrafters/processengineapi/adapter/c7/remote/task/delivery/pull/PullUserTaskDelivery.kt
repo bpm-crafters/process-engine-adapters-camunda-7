@@ -1,5 +1,6 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull
 
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.outbox.EngineCommandOutbox
 import dev.bpmcrafters.processengineapi.CommonRestrictions
 import dev.bpmcrafters.processengineapi.adapter.c7.common.threading.withThreadContextClassLoader
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.process.ProcessDefinitionMetaDataResolver
@@ -29,7 +30,8 @@ class PullUserTaskDelivery(
   private val subscriptionRepository: SubscriptionRepository,
   private val executorService: ExecutorService,
   private val valueMapper: ValueMapper,
-  private val deserializeOnServer: Boolean
+  private val deserializeOnServer: Boolean,
+  private val outbox: EngineCommandOutbox? = null,
 ) : UserTaskDelivery, RefreshableDelivery {
 
   private val deliveredTasks: ConcurrentHashMap<String, TaskInformation> = ConcurrentHashMap()
@@ -64,6 +66,10 @@ class PullUserTaskDelivery(
               ?.let { activeSubscription ->
                 executorService.submit {  // in another thread
                   try {
+                    if (outbox?.pendingTaskIds(listOf(task.id!!))?.isNotEmpty() == true) {
+                      logger.debug { "PROCESS-ENGINE-C7-REMOTE-124: skipping user task ${task.id}, it is pending in the outbox." }
+                      return@submit
+                    }
                     val identityResult = taskApiClient.getIdentityLinks(task.id, null)
                     val candidates =
                       requireNotNull(identityResult.body) { "Could not retrieve identity links for task ${task.id}, status was ${identityResult.statusCode}" }.toSet()
