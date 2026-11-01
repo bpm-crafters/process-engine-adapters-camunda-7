@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" id="outbox-definitions" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="outbox-process" isExecutable="true" camunda:historyTimeToLive="1">
+    <bpmn:startEvent id="start"><bpmn:outgoing>f1</bpmn:outgoing></bpmn:startEvent>
+    <bpmn:sequenceFlow id="f1" sourceRef="start" targetRef="outbox-service" />
+    <bpmn:serviceTask id="outbox-service" camunda:type="external" camunda:topic="outbox-service"><bpmn:incoming>f1</bpmn:incoming><bpmn:outgoing>f2</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:sequenceFlow id="f2" sourceRef="outbox-service" targetRef="outbox-user" />
+    <bpmn:userTask id="outbox-user"><bpmn:incoming>f2</bpmn:incoming><bpmn:outgoing>f3</bpmn:outgoing></bpmn:userTask>
+    <bpmn:sequenceFlow id="f3" sourceRef="outbox-user" targetRef="outbox-message" />
+    <bpmn:intermediateCatchEvent id="outbox-message"><bpmn:incoming>f3</bpmn:incoming><bpmn:outgoing>f4</bpmn:outgoing><bpmn:messageEventDefinition id="med" messageRef="msg" /></bpmn:intermediateCatchEvent>
+    <bpmn:sequenceFlow id="f4" sourceRef="outbox-message" targetRef="outbox-signal" />
+    <bpmn:intermediateCatchEvent id="outbox-signal"><bpmn:incoming>f4</bpmn:incoming><bpmn:outgoing>f5</bpmn:outgoing><bpmn:signalEventDefinition id="sed" signalRef="sig" /></bpmn:intermediateCatchEvent>
+    <bpmn:sequenceFlow id="f5" sourceRef="outbox-signal" targetRef="end" />
+    <bpmn:endEvent id="end"><bpmn:incoming>f5</bpmn:incoming></bpmn:endEvent>
+  </bpmn:process>
+  <bpmn:message id="msg" name="outboxMessage" />
+  <bpmn:signal id="sig" name="outboxSignal" />
+</bpmn:definitions>
