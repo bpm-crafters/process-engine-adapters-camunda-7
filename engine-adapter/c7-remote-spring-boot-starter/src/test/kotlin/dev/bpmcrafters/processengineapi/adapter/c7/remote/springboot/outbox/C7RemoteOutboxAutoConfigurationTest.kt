@@ -1,5 +1,6 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.outbox
 
+import dev.bpmcrafters.processengineapi.Empty
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.outbox.*
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.feign.C7RemoteException
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.completion.FailureRetrySupplier
@@ -11,11 +12,14 @@ import dev.bpmcrafters.processengineapi.task.UserTaskCompletionApi
 import org.assertj.core.api.Assertions.assertThat
 import org.camunda.bpm.client.exception.RestException
 import org.junit.jupiter.api.Test
+import org.mockito.kotlin.any
+import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock
 import org.springframework.boot.autoconfigure.AutoConfigurations
 import org.springframework.boot.test.context.runner.ApplicationContextRunner
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import java.util.concurrent.CompletableFuture
 import javax.sql.DataSource
 
 internal class C7RemoteOutboxAutoConfigurationTest {
@@ -82,6 +86,26 @@ internal class C7RemoteOutboxAutoConfigurationTest {
   }
 
   @Test
+  fun `delivers signals when service tasks are disabled`() {
+    ApplicationContextRunner()
+      .withConfiguration(AutoConfigurations.of(C7RemoteJdbcOutboxAutoConfiguration::class.java, C7RemoteOutboxAutoConfiguration::class.java))
+      .withUserConfiguration(WithoutServiceTasks::class.java)
+      .withPropertyValues(
+        "$prefix.enabled=true",
+        "$prefix.service-tasks.worker-id=worker",
+        "$prefix.service-tasks.delivery-strategy=disabled",
+        "$prefix.user-tasks.delivery-strategy=disabled",
+        "$prefix.outbox.enabled=true",
+      )
+      .run {
+        assertThat(it).hasSingleBean(EngineCommandOutboxRelay::class.java)
+        assertThat(it).doesNotHaveBean(OutboxServiceTaskCompletionApiImpl::class.java)
+        val outcome = it.getBean(EngineCommandDelivery::class.java).deliver(EngineCommand.SendSignal("signal", emptyMap(), emptyMap()))
+        assertThat(outcome.result).isEqualTo(EngineCommandDelivery.Result.DELIVERED)
+      }
+  }
+
+  @Test
   fun `reads status of both clients`() {
     assertThat(httpStatusOf(C7RemoteException("", null, 400))).isEqualTo(400)
     assertThat(httpStatusOf(RestException("", "", 404).apply { httpStatusCode = 404 })).isEqualTo(404)
@@ -101,6 +125,21 @@ internal class C7RemoteOutboxAutoConfigurationTest {
 
     @Bean("c7remote-failure-retry-supplier")
     fun retries(): FailureRetrySupplier = mock()
+
+    @Bean
+    fun repository(): SubscriptionRepository = mock()
+
+    @Bean
+    fun dataSource(): DataSource = outboxDataSource()
+  }
+
+  @Configuration
+  class WithoutServiceTasks {
+    @Bean("c7remote-correlation-api")
+    fun correlation(): CorrelationApi = mock()
+
+    @Bean("c7remote-signal-api")
+    fun signal(): SignalApi = mock { on { sendSignal(any()) } doReturn CompletableFuture.completedFuture(Empty) }
 
     @Bean
     fun repository(): SubscriptionRepository = mock()

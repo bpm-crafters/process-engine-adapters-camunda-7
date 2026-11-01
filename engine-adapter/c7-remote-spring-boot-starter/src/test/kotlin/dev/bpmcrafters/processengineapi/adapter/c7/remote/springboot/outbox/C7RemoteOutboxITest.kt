@@ -44,7 +44,7 @@ class OutboxPostgresContainer : GenericContainer<OutboxPostgresContainer>("docke
 
 @ActiveProfiles("itest")
 @Import(C7RemoteOutboxITest.Config::class)
-class C7RemoteOutboxITest : AbstractC7RemoteApiITestBase() {
+open class C7RemoteOutboxITest : AbstractC7RemoteApiITestBase() {
 
   companion object {
     private const val PROCESS = "outbox-process"
@@ -72,7 +72,7 @@ class C7RemoteOutboxITest : AbstractC7RemoteApiITestBase() {
     ).also {
       JdbcClient.create(it).sql(
         """
-        CREATE TABLE c7remote_engine_outbox (
+        CREATE TABLE IF NOT EXISTS c7remote_engine_outbox (
           id VARCHAR(36) PRIMARY KEY, type VARCHAR(32) NOT NULL, task_id VARCHAR(64), payload BYTEA NOT NULL,
           status VARCHAR(16) NOT NULL, attempts INT NOT NULL, rejections INT NOT NULL, next_attempt_at TIMESTAMP NOT NULL,
           lease_until TIMESTAMP, last_error VARCHAR(4000))
@@ -146,6 +146,7 @@ class C7RemoteOutboxITest : AbstractC7RemoteApiITestBase() {
     deploymentApi.deploy(DeployBundleCommand(listOf(NamedResource.fromClasspath("bpmn/$PROCESS.bpmn")))).get()
     subscribe(TaskType.EXTERNAL, "outbox-service")
     subscribe(TaskType.USER, "outbox-user")
+    myProcessTestHelper.triggerExternalTaskDeliveryManually()
   }
 
   private fun subscribe(type: TaskType, key: String) {
@@ -214,3 +215,6 @@ class C7RemoteOutboxITest : AbstractC7RemoteApiITestBase() {
     throw AssertionError("Timed out waiting for $what, outbox: ${JdbcClient.create(dataSource).sql("SELECT status, rejections, attempts, last_error FROM c7remote_engine_outbox").query().listOfRows()}")
   }
 }
+
+@ActiveProfiles("itest-subscribed")
+class C7RemoteOutboxSubscribedITest : C7RemoteOutboxITest()
