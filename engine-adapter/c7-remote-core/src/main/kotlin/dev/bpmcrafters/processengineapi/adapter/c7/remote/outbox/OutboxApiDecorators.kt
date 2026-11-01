@@ -13,23 +13,23 @@ import java.util.concurrent.CompletableFuture
 
 class OutboxServiceTaskCompletionApiImpl(
   private val delegate: ServiceTaskCompletionApi,
-  private val enqueuer: OutboxEnqueuer,
+  private val dispatcher: TransactionalEngineCommandDispatcher,
   private val failureRetrySupplier: FailureRetrySupplier,
 ) : ServiceTaskCompletionApi {
 
   override fun completeTask(cmd: CompleteTaskCmd): CompletableFuture<Empty> =
-    enqueuer.enqueueOrCall("completion of service task ${cmd.taskId}", { CompleteServiceTask(cmd.taskId, cmd.get()) }) {
+    dispatcher.dispatch("completion of service task ${cmd.taskId}", { CompleteServiceTask(cmd.taskId, cmd.get()) }) {
       delegate.completeTask(cmd)
     }
 
   override fun completeTaskByError(cmd: CompleteTaskByErrorCmd): CompletableFuture<Empty> =
-    enqueuer.enqueueOrCall(
+    dispatcher.dispatch(
       "error of service task ${cmd.taskId}",
       { CompleteServiceTaskByError(cmd.taskId, cmd.errorCode, cmd.errorMessage, cmd.get()) }
     ) { delegate.completeTaskByError(cmd) }
 
   override fun failTask(cmd: FailTaskCmd): CompletableFuture<Empty> =
-    enqueuer.enqueueOrCall("failure of service task ${cmd.taskId}", { toCommand(cmd) }) { delegate.failTask(cmd) }
+    dispatcher.dispatch("failure of service task ${cmd.taskId}", { toCommand(cmd) }) { delegate.failTask(cmd) }
 
   private fun toCommand(cmd: FailTaskCmd): FailServiceTask {
     val failureRetry by lazy { failureRetrySupplier.apply(cmd.taskId) }
@@ -45,16 +45,16 @@ class OutboxServiceTaskCompletionApiImpl(
 
 class OutboxUserTaskCompletionApiImpl(
   private val delegate: UserTaskCompletionApi,
-  private val enqueuer: OutboxEnqueuer,
+  private val dispatcher: TransactionalEngineCommandDispatcher,
 ) : UserTaskCompletionApi {
 
   override fun completeTask(cmd: CompleteTaskCmd): CompletableFuture<Empty> =
-    enqueuer.enqueueOrCall("completion of user task ${cmd.taskId}", { CompleteUserTask(cmd.taskId, cmd.get()) }) {
+    dispatcher.dispatch("completion of user task ${cmd.taskId}", { CompleteUserTask(cmd.taskId, cmd.get()) }) {
       delegate.completeTask(cmd)
     }
 
   override fun completeTaskByError(cmd: CompleteTaskByErrorCmd): CompletableFuture<Empty> =
-    enqueuer.enqueueOrCall(
+    dispatcher.dispatch(
       "error of user task ${cmd.taskId}",
       { CompleteUserTaskByError(cmd.taskId, cmd.errorCode, cmd.errorMessage, cmd.get()) }
     ) { delegate.completeTaskByError(cmd) }
@@ -62,11 +62,11 @@ class OutboxUserTaskCompletionApiImpl(
 
 class OutboxCorrelationApiImpl(
   private val delegate: CorrelationApi,
-  private val enqueuer: OutboxEnqueuer,
+  private val dispatcher: TransactionalEngineCommandDispatcher,
 ) : CorrelationApi by delegate {
 
   override fun correlateMessage(cmd: CorrelateMessageCmd): CompletableFuture<Empty> =
-    enqueuer.enqueueOrCall("correlation of message ${cmd.messageName}", {
+    dispatcher.dispatch("correlation of message ${cmd.messageName}", {
       val correlation = cmd.correlation.get()
       CorrelateMessage(
         messageName = cmd.messageName,
@@ -80,11 +80,11 @@ class OutboxCorrelationApiImpl(
 
 class OutboxSignalApiImpl(
   private val delegate: SignalApi,
-  private val enqueuer: OutboxEnqueuer,
+  private val dispatcher: TransactionalEngineCommandDispatcher,
 ) : SignalApi by delegate {
 
   override fun sendSignal(cmd: SendSignalCmd): CompletableFuture<Empty> =
-    enqueuer.enqueueOrCall("signal ${cmd.signalName}", {
+    dispatcher.dispatch("signal ${cmd.signalName}", {
       SendSignal(cmd.signalName, delegate.ensureSupported(cmd.restrictions), cmd.get())
     }) { delegate.sendSignal(cmd) }
 }

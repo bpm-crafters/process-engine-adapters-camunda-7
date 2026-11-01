@@ -23,7 +23,7 @@ internal class EngineCommandOutboxTest {
   private val repository: SubscriptionRepository = mock()
   private val transaction: OutboxTransaction = mock()
   private val retrySupplier: FailureRetrySupplier = mock()
-  private val enqueuer = OutboxEnqueuer(outbox, repository, transaction)
+  private val dispatcher = TransactionalEngineCommandDispatcher(outbox, repository, transaction)
   private var status: Int? = null
   private val delivery = EngineCommandDelivery(service, user, correlation, signal, { status })
   private val relay = EngineCommandOutboxRelay(outbox, delivery, 1, Duration.ofSeconds(60), 2, Duration.ofSeconds(1))
@@ -49,7 +49,7 @@ internal class EngineCommandOutboxTest {
   fun `service completion is enqueued and terminated after commit`() {
     inTransaction()
 
-    OutboxServiceTaskCompletionApiImpl(service, enqueuer, retrySupplier).completeTask(CompleteTaskCmd("task") { emptyMap() })
+    OutboxServiceTaskCompletionApiImpl(service, dispatcher, retrySupplier).completeTask(CompleteTaskCmd("task") { emptyMap() })
 
     verify(outbox).enqueue(completeTask)
     verify(transaction).afterCommit(any())
@@ -60,7 +60,7 @@ internal class EngineCommandOutboxTest {
   fun `no transaction calls delegate`() {
     val cmd = CompleteTaskCmd("task") { emptyMap() }
 
-    OutboxServiceTaskCompletionApiImpl(service, enqueuer, retrySupplier).completeTask(cmd)
+    OutboxServiceTaskCompletionApiImpl(service, dispatcher, retrySupplier).completeTask(cmd)
 
     verify(service).completeTask(cmd)
     verifyNoInteractions(outbox)
@@ -71,7 +71,7 @@ internal class EngineCommandOutboxTest {
     inTransaction()
     whenever(retrySupplier.apply("task")).thenReturn(FailureRetrySupplier.FailureRetry(2, 30))
 
-    OutboxServiceTaskCompletionApiImpl(service, enqueuer, retrySupplier).failTask(FailTaskCmd("task", "reason", null))
+    OutboxServiceTaskCompletionApiImpl(service, dispatcher, retrySupplier).failTask(FailTaskCmd("task", "reason", null))
 
     verify(outbox).enqueue(FailServiceTask("task", "reason", null, 2, Duration.ofSeconds(30)))
   }
@@ -80,7 +80,7 @@ internal class EngineCommandOutboxTest {
   fun `user task error is enqueued`() {
     inTransaction()
 
-    OutboxUserTaskCompletionApiImpl(user, enqueuer).completeTaskByError(CompleteTaskByErrorCmd("task", "code", "text") { emptyMap() })
+    OutboxUserTaskCompletionApiImpl(user, dispatcher).completeTaskByError(CompleteTaskByErrorCmd("task", "code", "text") { emptyMap() })
 
     verify(outbox).enqueue(CompleteUserTaskByError("task", "code", "text", emptyMap()))
     verifyNoInteractions(user)
@@ -91,7 +91,7 @@ internal class EngineCommandOutboxTest {
     inTransaction()
     whenever(correlation.ensureSupported(any())).thenReturn(emptyMap())
 
-    OutboxCorrelationApiImpl(correlation, enqueuer).correlateMessage(
+    OutboxCorrelationApiImpl(correlation, dispatcher).correlateMessage(
       CorrelateMessageCmd("message", emptyMap<String, Any?>(), Correlation.withKey("key").withVariable("variable"))
     )
 
@@ -104,7 +104,7 @@ internal class EngineCommandOutboxTest {
     inTransaction()
     whenever(signal.ensureSupported(any())).thenReturn(emptyMap())
 
-    OutboxSignalApiImpl(signal, enqueuer).sendSignal(SendSignalCmd("signal", emptyMap()))
+    OutboxSignalApiImpl(signal, dispatcher).sendSignal(SendSignalCmd("signal", emptyMap()))
 
     verify(outbox).enqueue(sendSignal)
   }

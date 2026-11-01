@@ -35,7 +35,7 @@ internal class C7RemoteOutboxAutoConfigurationTest {
   fun `stays off by default`() {
     runner.run {
     assertThat(it).doesNotHaveBean(EngineCommandOutbox::class.java)
-    assertThat(it).doesNotHaveBean(OutboxEnqueuer::class.java)
+    assertThat(it).doesNotHaveBean(TransactionalEngineCommandDispatcher::class.java)
   }
   }
 
@@ -78,7 +78,7 @@ internal class C7RemoteOutboxAutoConfigurationTest {
     runner
     .withUserConfiguration(CustomOutbox::class.java)
     .withPropertyValues("$prefix.outbox.enabled=false")
-    .run { assertThat(it).doesNotHaveBean(OutboxEnqueuer::class.java) }
+    .run { assertThat(it).doesNotHaveBean(TransactionalEngineCommandDispatcher::class.java) }
   }
 
   @Test

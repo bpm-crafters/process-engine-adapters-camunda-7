@@ -64,34 +64,34 @@ private const val SERVICE_UNAVAILABLE = 503
 class C7RemoteOutboxAutoConfiguration {
 
   @Bean
-  fun outboxEnqueuer(outbox: EngineCommandOutbox, subscriptionRepository: SubscriptionRepository) =
-    OutboxEnqueuer(outbox, subscriptionRepository, SpringOutboxTransaction)
+  fun transactionalEngineCommandDispatcher(outbox: EngineCommandOutbox, subscriptionRepository: SubscriptionRepository) =
+    TransactionalEngineCommandDispatcher(outbox, subscriptionRepository, SpringOutboxTransaction)
 
   @Bean
   @Primary
   @ConditionalOnBean(name = [SERVICE_TASK_API])
   fun outboxServiceTaskCompletionApi(
     beanFactory: BeanFactory,
-    enqueuer: OutboxEnqueuer,
+    dispatcher: TransactionalEngineCommandDispatcher,
     @Qualifier("c7remote-failure-retry-supplier") failureRetrySupplier: FailureRetrySupplier,
   ): ServiceTaskCompletionApi =
-    OutboxServiceTaskCompletionApiImpl(beanFactory.getBean(SERVICE_TASK_API, ServiceTaskCompletionApi::class.java), enqueuer, failureRetrySupplier)
+    OutboxServiceTaskCompletionApiImpl(beanFactory.getBean(SERVICE_TASK_API, ServiceTaskCompletionApi::class.java), dispatcher, failureRetrySupplier)
 
   @Bean
   @Primary
   @ConditionalOnBean(name = [USER_TASK_API])
-  fun outboxUserTaskCompletionApi(beanFactory: BeanFactory, enqueuer: OutboxEnqueuer): UserTaskCompletionApi =
-    OutboxUserTaskCompletionApiImpl(beanFactory.getBean(USER_TASK_API, UserTaskCompletionApi::class.java), enqueuer)
+  fun outboxUserTaskCompletionApi(beanFactory: BeanFactory, dispatcher: TransactionalEngineCommandDispatcher): UserTaskCompletionApi =
+    OutboxUserTaskCompletionApiImpl(beanFactory.getBean(USER_TASK_API, UserTaskCompletionApi::class.java), dispatcher)
 
   @Bean
   @Primary
-  fun outboxCorrelationApi(beanFactory: BeanFactory, enqueuer: OutboxEnqueuer): CorrelationApi =
-    OutboxCorrelationApiImpl(beanFactory.getBean(CORRELATION_API, CorrelationApi::class.java), enqueuer)
+  fun outboxCorrelationApi(beanFactory: BeanFactory, dispatcher: TransactionalEngineCommandDispatcher): CorrelationApi =
+    OutboxCorrelationApiImpl(beanFactory.getBean(CORRELATION_API, CorrelationApi::class.java), dispatcher)
 
   @Bean
   @Primary
-  fun outboxSignalApi(beanFactory: BeanFactory, enqueuer: OutboxEnqueuer): SignalApi =
-    OutboxSignalApiImpl(beanFactory.getBean(SIGNAL_API, SignalApi::class.java), enqueuer)
+  fun outboxSignalApi(beanFactory: BeanFactory, dispatcher: TransactionalEngineCommandDispatcher): SignalApi =
+    OutboxSignalApiImpl(beanFactory.getBean(SIGNAL_API, SignalApi::class.java), dispatcher)
 
   /**
    * Delivers to the engine directly. Also the entry point for relays of custom outboxes.
