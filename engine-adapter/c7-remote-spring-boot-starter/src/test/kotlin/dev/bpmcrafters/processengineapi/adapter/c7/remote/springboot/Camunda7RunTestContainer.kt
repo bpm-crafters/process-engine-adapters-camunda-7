@@ -3,7 +3,7 @@ package dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot
 import org.testcontainers.containers.GenericContainer
 import org.testcontainers.containers.wait.strategy.Wait
 
-class Camunda7RunTestContainer(tag: String) : GenericContainer<Camunda7RunTestContainer>("ghcr.io/bpm-crafters/camunda-bpm-run:$tag") {
+class Camunda7RunTestContainer(tag: String) : GenericContainer<Camunda7RunTestContainer>("ghcr.io/bpm-crafters/camunda-bpm-platform:$tag") {
 
   init {
     withCommand("./camunda.sh", "--rest")

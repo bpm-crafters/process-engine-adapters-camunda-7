@@ -9,12 +9,12 @@ on:
     branches:
       - develop
     paths:
-      - 'docker/camunda-bpm-run/**'
+      - 'docker/camunda-bpm-platform/**'
       - '.github/workflows/camunda-run-image.yml'
   workflow_dispatch:
 
 env:
-  IMAGE: ghcr.io/bpm-crafters/camunda-bpm-run:7.24.0
+  IMAGE: ghcr.io/bpm-crafters/camunda-bpm-platform:run-7.24.0
 
 jobs:
   publish:
@@ -35,4 +35,4 @@ jobs:
             --platform linux/amd64,linux/arm64 \
             --tag "$IMAGE" \
             --push \
-            docker/camunda-bpm-run
+            docker/camunda-bpm-platform/run

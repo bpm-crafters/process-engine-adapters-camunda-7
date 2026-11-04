@@ -1,7 +1,7 @@
 services:
 
   camunda-bpm-platform-7:
-    image: ghcr.io/bpm-crafters/camunda-bpm-run:7.24.0
+    image: ghcr.io/bpm-crafters/camunda-bpm-platform:run-7.24.0
     # image: registry.camunda.cloud/cambpm-ee/camunda-bpm-platform-ee:7.24.1
     pull_policy: always
     ports:
