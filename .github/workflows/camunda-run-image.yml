@@ -1,0 +1,38 @@
+name: Camunda 7 Run image
+
+permissions:
+  contents: read
+  packages: write
+
+on:
+  push:
+    branches:
+      - develop
+    paths:
+      - 'docker/camunda-bpm-run/**'
+      - '.github/workflows/camunda-run-image.yml'
+  workflow_dispatch:
+
+env:
+  IMAGE: ghcr.io/bpm-crafters/camunda-bpm-run:7.24.0
+
+jobs:
+  publish:
+    if: github.repository == 'bpm-crafters/process-engine-adapters-camunda-7'
+    runs-on: ubuntu-latest
+    name: Build and publish Camunda 7 Run image
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7.0.1
+
+      - name: Log in to GitHub Container Registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Build and push multi-arch image
+        run: |
+          docker buildx create --use
+          docker buildx build \
+            --platform linux/amd64,linux/arm64 \
+            --tag "$IMAGE" \
+            --push \
+            docker/camunda-bpm-run
