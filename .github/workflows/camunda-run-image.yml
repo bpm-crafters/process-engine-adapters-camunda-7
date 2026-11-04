@@ -47,6 +47,15 @@ jobs:
             --output "type=image,push=$PUSH" \
             docker/camunda-bpm-platform/run
 
+      - name: Update Docker Hub description
+        if: inputs.dry_run != true
+        uses: peter-evans/dockerhub-description@1b9a80c056b620d92cedb9d9b5a223409c68ddfa # v5.0.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          repository: bpmcrafters/camunda-bpm-platform
+          readme-filepath: docker/camunda-bpm-platform/README.md
+
       - name: Log out from Docker Hub
         if: always() && inputs.dry_run != true
         run: docker logout
