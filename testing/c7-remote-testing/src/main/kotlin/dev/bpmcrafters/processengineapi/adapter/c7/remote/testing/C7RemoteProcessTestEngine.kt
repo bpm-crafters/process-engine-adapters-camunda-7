@@ -14,6 +14,6 @@ annotation class C7RemoteProcessTestEngine(
   val image: String = DEFAULT_IMAGE,
 ) {
   companion object {
-    const val DEFAULT_IMAGE = "ghcr.io/bpm-crafters/camunda-bpm-platform:run-7.24.0"
+    const val DEFAULT_IMAGE = "bpmcrafters/camunda-bpm-platform:run-7.24.0"
   }
 }
