@@ -148,7 +148,7 @@ Turns the remote adapter on or off. Default: `false`.
 | `retries` | `3` | Initial retry count used by the default failure retry supplier. |
 | `delivery-strategy` | required | One of `remote_scheduled`, `remote_subscribed`, `custom`, `disabled`. |
 | `schedule-delivery-fixed-rate-in-seconds` | `13` | Deprecated, use `schedule-delivery-fixed-rate`. Polling interval for `remote_scheduled`. |
-| `schedule-delivery-fixed-rate` | not set | Polling delay for `remote_scheduled` as a `Duration`, e.g. `200ms`. Takes precedence over `schedule-delivery-fixed-rate-in-seconds`. A value without unit is read as milliseconds. The delay starts after the previous pull finished, including its handlers. Every pull also runs the cleanup query for locked tasks, so short intervals add engine load and more HTTP calls. |
+| `schedule-delivery-fixed-rate` | not set | Polling delay for `remote_scheduled` as a `Duration`, e.g. `200ms`. Takes precedence over `schedule-delivery-fixed-rate-in-seconds`. Must be at least `1ms`. A value without unit is read as milliseconds. The delay starts after the previous pull finished. Handlers run asynchronously on the worker pool and are not awaited. Every pull also runs the cleanup query for locked tasks, so short intervals add engine load and more HTTP calls. |
 | `execute-initial-pull-on-startup` | `true` in property binding | Enable one startup pull before the recurring scheduler or subscriber takes over. Set it explicitly when you want startup delivery. |
 | `deserialize-on-server` | `false` | Requests Camunda REST variable deserialization on the server side for scheduled pulls. |
 | `worker-thread-pool-size` | `10` | Thread pool size for scheduled service-task worker execution. |
@@ -160,7 +160,7 @@ Turns the remote adapter on or off. Default: `false`.
 |----------|---------|-------------|
 | `delivery-strategy` | required | One of `remote_scheduled`, `custom`, `disabled`. |
 | `schedule-delivery-fixed-rate-in-seconds` | `5` | Deprecated, use `schedule-delivery-fixed-rate`. Polling interval for `remote_scheduled`. |
-| `schedule-delivery-fixed-rate` | not set | Polling delay for `remote_scheduled` as a `Duration`, e.g. `200ms`. Takes precedence over `schedule-delivery-fixed-rate-in-seconds`. A value without unit is read as milliseconds. The delay starts after the previous pull finished, including its handlers. Every pull also runs the cleanup query for locked tasks, so short intervals add engine load and more HTTP calls. |
+| `schedule-delivery-fixed-rate` | not set | Polling delay for `remote_scheduled` as a `Duration`, e.g. `200ms`. Takes precedence over `schedule-delivery-fixed-rate-in-seconds`. Must be at least `1ms`. A value without unit is read as milliseconds. The delay starts after the previous pull finished, including its handlers. Every pull sends REST calls to the engine, so short intervals add engine load and HTTP traffic. |
 | `execute-initial-pull-on-startup` | `true` in property binding | Enable one startup pull before the recurring scheduler takes over. Set it explicitly when you want startup delivery. |
 | `deserialize-on-server` | `false` | Requests Camunda REST variable deserialization on the server side for user-task polling. |
 

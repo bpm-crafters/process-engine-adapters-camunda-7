@@ -125,7 +125,7 @@ Turns the embedded adapter on or off. Default: `true`.
 | `retries` | `3` | Initial retry count used by the default failure retry supplier. |
 | `delivery-strategy` | required | One of `embedded_scheduled`, `custom`, `disabled`. |
 | `schedule-delivery-fixed-rate-in-seconds` | `13` | Deprecated, use `schedule-delivery-fixed-rate`. Polling interval for `embedded_scheduled`. |
-| `schedule-delivery-fixed-rate` | not set | Polling delay for `embedded_scheduled` as a `Duration`, e.g. `200ms`. Takes precedence over `schedule-delivery-fixed-rate-in-seconds`. A value without unit is read as milliseconds. The delay starts after the previous pull finished, including its handlers. Every pull also runs the cleanup query for locked tasks, so short intervals add engine load. |
+| `schedule-delivery-fixed-rate` | not set | Polling delay for `embedded_scheduled` as a `Duration`, e.g. `200ms`. Takes precedence over `schedule-delivery-fixed-rate-in-seconds`. Must be at least `1ms`. A value without unit is read as milliseconds. The delay starts after the previous pull finished, including its handlers. Every pull also runs the cleanup query for locked tasks, so short intervals add engine load. |
 | `execute-initial-pull-on-startup` | `true` | Triggers one startup pull before the recurring scheduler takes over. |
 
 #### `user-tasks.*`
@@ -134,7 +134,7 @@ Turns the embedded adapter on or off. Default: `true`.
 |----------|---------|-------------|
 | `delivery-strategy` | required | One of `embedded_scheduled`, `custom`, `disabled`. |
 | `schedule-delivery-fixed-rate-in-seconds` | `5` | Deprecated, use `schedule-delivery-fixed-rate`. Polling interval for `embedded_scheduled`. |
-| `schedule-delivery-fixed-rate` | not set | Polling delay for `embedded_scheduled` as a `Duration`, e.g. `200ms`. Takes precedence over `schedule-delivery-fixed-rate-in-seconds`. A value without unit is read as milliseconds. The delay starts after the previous pull finished, including its handlers. Every pull also runs the cleanup query for locked tasks, so short intervals add engine load. |
+| `schedule-delivery-fixed-rate` | not set | Polling delay for `embedded_scheduled` as a `Duration`, e.g. `200ms`. Takes precedence over `schedule-delivery-fixed-rate-in-seconds`. Must be at least `1ms`. A value without unit is read as milliseconds. The delay starts after the previous pull finished, including its handlers. Every pull queries the engine, so short intervals add engine load. |
 | `execute-initial-pull-on-startup` | `true` | Triggers one startup pull before the recurring scheduler takes over. |
 
 ### Example with explicit scheduling settings
