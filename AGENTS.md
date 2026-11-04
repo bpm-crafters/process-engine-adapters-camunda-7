@@ -9,7 +9,7 @@ This repository contains the Camunda 7 implementation of the BPM Crafters Proces
 - `.github`: GitHub workflow and issue template configuration for CI and repository hygiene.
 - `.mvn`: Maven wrapper support files used by `./mvnw`.
 - `bom`: Maven BOM module publishing aligned dependency versions for consumers of the adapter.
-- `docker/camunda-bpm-run`: Dockerfile for the Camunda 7 Run CE image published to `ghcr.io/bpm-crafters/camunda-bpm-run`, used by the remote tests, the remote testing module, and the remote examples.
+- `docker/camunda-bpm-platform`: Dockerfiles for Camunda 7 CE images published to Docker Hub as `bpmcrafters/camunda-bpm-platform` with `<distribution>-<version>` tags; `run` is used by the remote tests, the remote testing module, and the remote examples.
 - `docs`: user-facing adapter documentation, including quickstarts and embedded/remote reference guides.
 - `engine-adapter`: main library modules.
   - `adapter-testing`: shared Kotlin test support and JGiven-based integration test utilities.

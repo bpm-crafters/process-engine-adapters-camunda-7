@@ -2,19 +2,23 @@ name: Camunda 7 Run image
 
 permissions:
   contents: read
-  packages: write
 
 on:
   push:
     branches:
       - develop
     paths:
-      - 'docker/camunda-bpm-run/**'
+      - 'docker/camunda-bpm-platform/**'
       - '.github/workflows/camunda-run-image.yml'
   workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run (build only, no publish)'
+        type: boolean
+        default: false
 
 env:
-  IMAGE: ghcr.io/bpm-crafters/camunda-bpm-run:7.24.0
+  IMAGE: bpmcrafters/camunda-bpm-platform:run-7.24.0
 
 jobs:
   publish:
@@ -25,14 +29,33 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v7.0.1
 
-      - name: Log in to GitHub Container Registry
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+      - name: Log in to Docker Hub
+        if: inputs.dry_run != true
+        uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4.7.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push multi-arch image
+      - name: Build multi-arch image and push unless dry run
+        env:
+          PUSH: ${{ inputs.dry_run != true }}
         run: |
           docker buildx create --use
           docker buildx build \
             --platform linux/amd64,linux/arm64 \
             --tag "$IMAGE" \
-            --push \
-            docker/camunda-bpm-run
+            --output "type=image,push=$PUSH" \
+            docker/camunda-bpm-platform/run
+
+      - name: Update Docker Hub description
+        if: inputs.dry_run != true
+        uses: peter-evans/dockerhub-description@1b9a80c056b620d92cedb9d9b5a223409c68ddfa # v5.0.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          repository: bpmcrafters/camunda-bpm-platform
+          readme-filepath: docker/camunda-bpm-platform/README.md
+
+      - name: Log out from Docker Hub
+        if: always() && inputs.dry_run != true
+        run: docker logout
