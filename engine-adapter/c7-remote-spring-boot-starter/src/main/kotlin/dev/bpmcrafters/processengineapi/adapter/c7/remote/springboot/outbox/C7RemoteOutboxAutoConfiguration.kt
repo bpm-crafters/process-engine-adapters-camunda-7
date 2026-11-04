@@ -1,6 +1,5 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.outbox
 
-import dev.bpmcrafters.processengineapi.adapter.c7.common.threading.ThreadContextClassLoaderThreadFactory
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.outbox.*
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.C7RemoteAdapterAutoConfiguration
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.C7RemoteAdapterEnabledCondition
@@ -15,12 +14,9 @@ import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import dev.bpmcrafters.processengineapi.task.ServiceTaskCompletionApi
 import dev.bpmcrafters.processengineapi.task.UserTaskCompletionApi
 import feign.FeignException
-import io.github.oshai.kotlinlogging.KotlinLogging
 import org.camunda.bpm.client.exception.ConnectionLostException
 import org.camunda.bpm.client.exception.RestException
 import org.springframework.beans.factory.BeanFactory
-import org.springframework.beans.factory.DisposableBean
-import org.springframework.beans.factory.InitializingBean
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.autoconfigure.AutoConfiguration
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
@@ -30,14 +26,8 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Conditional
 import org.springframework.context.annotation.Primary
-import org.springframework.transaction.support.TransactionSynchronization
 import org.springframework.transaction.support.TransactionSynchronizationManager
 import org.springframework.util.ClassUtils
-import java.util.concurrent.Executors
-import java.util.concurrent.ScheduledExecutorService
-import java.util.concurrent.TimeUnit
-
-private val logger = KotlinLogging.logger {}
 
 private const val SERVICE_TASK_API = "c7remote-service-task-completion-api"
 private const val USER_TASK_API = "c7remote-user-task-completion-api"
@@ -126,45 +116,6 @@ class C7RemoteOutboxAutoConfiguration {
   @ConditionalOnBean(EngineCommandOutboxRelay::class)
   fun engineCommandOutboxRelayLifecycle(relay: EngineCommandOutboxRelay, properties: C7RemoteAdapterProperties) =
     OutboxRelayLifecycle(relay, properties.outbox.relayInterval.toMillis())
-}
-
-/**
- * Runs the relay on an own thread, as the adapter scheduler pool is sized for the pollers.
- */
-class OutboxRelayLifecycle(
-  private val relay: EngineCommandOutboxRelay,
-  private val intervalInMillis: Long,
-) : InitializingBean, DisposableBean {
-
-  private val scheduler: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor(
-    ThreadContextClassLoaderThreadFactory(OutboxRelayLifecycle::class.java.classLoader)
-  )
-
-  override fun afterPropertiesSet() {
-    scheduler.scheduleWithFixedDelay(::relaySafely, intervalInMillis, intervalInMillis, TimeUnit.MILLISECONDS)
-  }
-
-  override fun destroy() {
-    scheduler.shutdown()
-  }
-
-  private fun relaySafely() {
-    try {
-      relay.relay()
-    } catch (e: Throwable) {
-      logger.error(e) { "PROCESS-ENGINE-C7-REMOTE-125: outbox relay run failed: ${e.message}" }
-    }
-  }
-}
-
-internal object SpringOutboxTransaction : OutboxTransaction {
-  override fun isActive() = TransactionSynchronizationManager.isActualTransactionActive()
-
-  override fun afterCommit(action: () -> Unit) {
-    TransactionSynchronizationManager.registerSynchronization(object : TransactionSynchronization {
-      override fun afterCommit() = action()
-    })
-  }
 }
 
 private val officialClientPresent = ClassUtils.isPresent(

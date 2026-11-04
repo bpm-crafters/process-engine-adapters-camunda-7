@@ -29,7 +29,6 @@ import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.springframework.transaction.PlatformTransactionManager
 import org.springframework.transaction.support.TransactionTemplate
-import org.testcontainers.containers.GenericContainer
 import org.testcontainers.containers.wait.strategy.Wait
 import org.testcontainers.junit.jupiter.Container
 import java.net.URI
@@ -39,8 +38,6 @@ import java.net.http.HttpResponse
 import java.time.Duration
 import java.util.UUID
 import javax.sql.DataSource
-
-class OutboxPostgresContainer : GenericContainer<OutboxPostgresContainer>("docker.io/library/postgres:16-alpine")
 
 @ActiveProfiles("itest")
 @Import(C7RemoteOutboxITest.Config::class)
@@ -215,6 +212,3 @@ open class C7RemoteOutboxITest : AbstractC7RemoteApiITestBase() {
     throw AssertionError("Timed out waiting for $what, outbox: ${JdbcClient.create(dataSource).sql("SELECT status, rejections, attempts, last_error FROM c7remote_engine_outbox").query().listOfRows()}")
   }
 }
-
-@ActiveProfiles("itest-subscribed")
-class C7RemoteOutboxSubscribedITest : C7RemoteOutboxITest()
