@@ -204,15 +204,14 @@ class C7EmbeddedAdapterAutoConfiguration {
    * This one is used for pull-strategies only.
    */
   @Bean("c7embedded-service-task-worker-executor")
-  @ConditionalOnMissingQualifiedBean(beanClass = ExecutorService::class, qualifier = "c7embedded-service-task-worker-executor")
+  @ConditionalOnMissingQualifiedBean(beanClass = ThreadPoolExecutor::class, qualifier = "c7embedded-service-task-worker-executor")
   @Qualifier("c7embedded-service-task-worker-executor")
   fun serviceTaskWorkerExecutor(): ThreadPoolExecutor = ThreadPoolExecutor(
-    /* corePoolSize = */ 10,
-    /* maximumPoolSize = */ 10,
-    /* keepAliveTime = */ 0L,
-    /* unit = */ TimeUnit.MILLISECONDS,
-    /* workQueue = */ LinkedBlockingQueue(),
-    /* threadFactory = */ ThreadContextClassLoaderThreadFactory(C7EmbeddedAdapterAutoConfiguration::class.java.classLoader),
+    10,
+    10,
+    0L, TimeUnit.MILLISECONDS,
+    LinkedBlockingQueue(),
+    ThreadContextClassLoaderThreadFactory(C7EmbeddedAdapterAutoConfiguration::class.java.classLoader),
   )
 
   /**
