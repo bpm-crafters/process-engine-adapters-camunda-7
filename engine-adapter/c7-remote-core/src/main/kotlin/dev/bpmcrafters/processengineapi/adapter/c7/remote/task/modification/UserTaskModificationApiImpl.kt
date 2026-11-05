@@ -70,13 +70,43 @@ class UserTaskModificationApiImpl(
   }
 
   private fun changeDates(cmd: ChangeDatesModifyTaskCmd) {
+    // Preserve task fields; without REST-level versioning, this read-modify-write may overwrite concurrent changes.
+    val currentTask = taskApiClient.getTask(cmd.taskId).body
+      ?: throw IllegalArgumentException("Task with id ${cmd.taskId} not found.")
+    val taskUpdate = TaskDto()
+      .id(currentTask.id)
+      .name(currentTask.name)
+      .assignee(currentTask.assignee)
+      .owner(currentTask.owner)
+      .created(currentTask.created)
+      .lastUpdated(currentTask.lastUpdated)
+      .due(currentTask.due)
+      .followUp(currentTask.followUp)
+      .delegationState(currentTask.delegationState?.let { TaskDto.DelegationStateEnum.fromValue(it.value) })
+      .description(currentTask.description)
+      .executionId(currentTask.executionId)
+      .parentTaskId(currentTask.parentTaskId)
+      .priority(currentTask.priority)
+      .processDefinitionId(currentTask.processDefinitionId)
+      .processInstanceId(currentTask.processInstanceId)
+      .caseExecutionId(currentTask.caseExecutionId)
+      .caseDefinitionId(currentTask.caseDefinitionId)
+      .caseInstanceId(currentTask.caseInstanceId)
+      .taskDefinitionKey(currentTask.taskDefinitionKey)
+      .suspended(currentTask.suspended)
+      .formKey(currentTask.formKey)
+      .camundaFormRef(currentTask.camundaFormRef)
+      .tenantId(currentTask.tenantId)
+      .taskState(currentTask.taskState)
+
     when (cmd) {
-      is SetDueDateTaskCmd -> taskApiClient.updateTask(cmd.taskId, TaskDto().due(cmd.dueDate))
-      is ClearDueDateTaskCmd -> taskApiClient.updateTask(cmd.taskId, TaskDto().due(null))
-      is SetFollowUpDateTaskCmd -> taskApiClient.updateTask(cmd.taskId, TaskDto().followUp(cmd.followUpDate))
-      is ClearFollowUpDateTaskCmd -> taskApiClient.updateTask(cmd.taskId, TaskDto().followUp(null))
+      is SetDueDateTaskCmd -> taskUpdate.due(cmd.dueDate)
+      is ClearDueDateTaskCmd -> taskUpdate.due(null)
+      is SetFollowUpDateTaskCmd -> taskUpdate.followUp(cmd.followUpDate)
+      is ClearFollowUpDateTaskCmd -> taskUpdate.followUp(null)
       else -> throw UnsupportedOperationException("Unsupported command ${cmd.javaClass.canonicalName}.")
     }
+    taskApiClient.updateTask(cmd.taskId, taskUpdate)
   }
 
   private fun ChangeAssignmentModifyTaskCmd.toIdentityLinkDto(): IdentityLinkDto {
