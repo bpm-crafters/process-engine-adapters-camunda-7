@@ -4,13 +4,7 @@ import dev.bpmcrafters.processengineapi.adapter.c7.remote.TestFixtures
 import dev.bpmcrafters.processengineapi.task.*
 import org.assertj.core.api.Assertions.assertThat
 import org.camunda.community.rest.client.api.TaskApiClient
-import org.camunda.community.rest.client.model.CamundaFormRef
-import org.camunda.community.rest.client.model.IdentityLinkDto
-import org.camunda.community.rest.client.model.PatchVariablesDto
-import org.camunda.community.rest.client.model.TaskDto
-import org.camunda.community.rest.client.model.TaskWithAttachmentAndCommentDto
-import org.camunda.community.rest.client.model.UserIdDto
-import org.camunda.community.rest.client.model.VariableValueDto
+import org.camunda.community.rest.client.model.*
 import org.camunda.community.rest.variables.ValueMapper
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -20,7 +14,6 @@ import org.mockito.kotlin.*
 import org.springframework.http.ResponseEntity
 import java.time.OffsetDateTime
 import java.util.*
-import kotlin.test.assertEquals
 
 internal class UserTaskModificationApiImplTest {
   private val taskApiClient: TaskApiClient = mock()
@@ -364,14 +357,14 @@ internal class UserTaskModificationApiImplTest {
     assertThat(taskUpdate.description).isEqualTo(currentTask.description)
     assertThat(taskUpdate.executionId).isEqualTo(currentTask.executionId)
     assertThat(taskUpdate.parentTaskId).isEqualTo(currentTask.parentTaskId)
-    assertEquals(currentTask.priority, taskUpdate.priority)
+    assertThat(currentTask.priority).isEqualTo(taskUpdate.priority)
     assertThat(taskUpdate.processDefinitionId).isEqualTo(currentTask.processDefinitionId)
     assertThat(taskUpdate.processInstanceId).isEqualTo(currentTask.processInstanceId)
     assertThat(taskUpdate.caseExecutionId).isEqualTo(currentTask.caseExecutionId)
     assertThat(taskUpdate.caseDefinitionId).isEqualTo(currentTask.caseDefinitionId)
     assertThat(taskUpdate.caseInstanceId).isEqualTo(currentTask.caseInstanceId)
     assertThat(taskUpdate.taskDefinitionKey).isEqualTo(currentTask.taskDefinitionKey)
-    assertEquals(currentTask.suspended, taskUpdate.suspended)
+    assertThat(currentTask.suspended).isEqualTo(taskUpdate.suspended)
     assertThat(taskUpdate.formKey).isEqualTo(currentTask.formKey)
     assertThat(taskUpdate.camundaFormRef).isEqualTo(currentTask.camundaFormRef)
     assertThat(taskUpdate.tenantId).isEqualTo(currentTask.tenantId)

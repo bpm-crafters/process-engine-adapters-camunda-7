@@ -70,6 +70,7 @@ class UserTaskModificationApiImpl(
   }
 
   private fun changeDates(cmd: ChangeDatesModifyTaskCmd) {
+    // Preserve task fields; without REST-level versioning, this read-modify-write may overwrite concurrent changes.
     val currentTask = taskApiClient.getTask(cmd.taskId).body
       ?: throw IllegalArgumentException("Task with id ${cmd.taskId} not found.")
     val taskUpdate = TaskDto()
