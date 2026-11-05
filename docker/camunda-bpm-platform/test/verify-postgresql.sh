@@ -26,6 +26,9 @@ require_command() {
 download_driver() {
   mkdir -p "$JDBC_DIRECTORY"
 
+  find "$JDBC_DIRECTORY" -maxdepth 1 -type f -name 'postgresql-*.jar' \
+    ! -name "$(basename "$JDBC_JAR")" -delete
+
   if [[ -f "$JDBC_JAR" ]]; then
     return
   fi
@@ -41,6 +44,11 @@ wait_for_engine() {
   for attempt in {1..60}; do
     if curl --fail --silent --show-error "$ENGINE_URL" >/dev/null; then
       return
+    fi
+    if [[ -n "$("${COMPOSE[@]}" ps --status exited --services camunda)" ]]; then
+      echo "Camunda Run exited before the engine became available." >&2
+      "${COMPOSE[@]}" logs >&2
+      exit 1
     fi
     sleep 2
   done
