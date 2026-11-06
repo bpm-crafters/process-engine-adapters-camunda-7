@@ -22,17 +22,16 @@ class UserTaskModificationApiImpl(
 ) : UserTaskModificationApi {
   override fun update(cmd: ModifyTaskCmd): CompletableFuture<Empty> {
     logger.debug { "PROCESS-ENGINE-C7-REMOTE-051: modifying user task ${cmd.taskId}." }
-    if (cmd is CompositeModifyTaskCmd) {
-      cmd.commands.forEach {
-        handleCommand(it)
+    return if (cmd is CompositeModifyTaskCmd) {
+      cmd.commands.fold(CompletableFuture.completedFuture(Empty)) { future, command ->
+        future.thenCompose { handleCommand(command) }
       }
     } else {
       handleCommand(cmd)
     }
-    return CompletableFuture.completedFuture(Empty)
   }
 
-  private fun handleCommand(cmd: ModifyTaskCmd) {
+  private fun handleCommand(cmd: ModifyTaskCmd): CompletableFuture<Empty> = CompletableFuture.supplyAsync {
     logger.trace { "PROCESS-ENGINE-C7-EMBEDDED-052: handling command ${cmd}." }
     when (cmd) {
       is ChangeAssignmentModifyTaskCmd -> changeAssignment(cmd)
@@ -40,6 +39,7 @@ class UserTaskModificationApiImpl(
       is ChangeDatesModifyTaskCmd -> changeDates(cmd)
       else -> throw UnsupportedOperationException("Unsupported command ${cmd.javaClass.canonicalName}.")
     }
+    Empty
   }
 
   private fun changeAssignment(cmd: ChangeAssignmentModifyTaskCmd) {
