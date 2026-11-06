@@ -20,6 +20,8 @@ LABEL org.opencontainers.image.description="Camunda 7 Run Community Edition, bui
 LABEL org.opencontainers.image.licenses="Apache-2.0"
 
 COPY --from=download --chown=1000:1000 /camunda /camunda
+RUN mkdir -p /camunda/configuration/external /camunda/extensions \
+    && chown 1000:1000 /camunda/configuration/external /camunda/extensions
 WORKDIR /camunda
 USER 1000:1000
 

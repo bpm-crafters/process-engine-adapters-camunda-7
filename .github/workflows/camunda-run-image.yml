@@ -36,6 +36,12 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Verify mounted PostgreSQL JDBC driver
+        env:
+          CAMUNDA_IMAGE: ${{ env.IMAGE }}
+          BUILD_IMAGE: true
+        run: ./docker/camunda-bpm-platform/test/verify-postgresql.sh
+
       - name: Build multi-arch image and push unless dry run
         env:
           PUSH: ${{ inputs.dry_run != true }}
