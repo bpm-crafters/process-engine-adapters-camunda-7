@@ -83,10 +83,10 @@ dev:
             retry-timeout-in-seconds: 30
             retries: 3
             execute-initial-pull-on-startup: true
-            schedule-delivery-fixed-rate-in-seconds: 10
+            schedule-delivery-fixed-rate: 10s
           user-tasks:
             delivery-strategy: embedded_scheduled
             execute-initial-pull-on-startup: true
-            schedule-delivery-fixed-rate-in-seconds: 10
+            schedule-delivery-fixed-rate: 10s
 
 ```

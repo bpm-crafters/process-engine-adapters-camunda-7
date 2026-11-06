@@ -7,7 +7,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.boot.autoconfigure.AutoConfiguration
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.scheduling.annotation.Scheduled
-import java.util.concurrent.TimeUnit.SECONDS
+import java.util.concurrent.TimeUnit.MILLISECONDS
 
 private val logger = KotlinLogging.logger {}
 
@@ -27,8 +27,8 @@ class C7EmbeddedUserTaskPullStrategyAutoConfiguration(
 ) {
 
   @Scheduled(
-    fixedDelayString = "#{@'dev.bpm-crafters.process-api.adapter.c7embedded-dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot.C7EmbeddedAdapterProperties'.userTasks.scheduleDeliveryFixedRateInSeconds}",
-    timeUnit = SECONDS,
+    fixedDelayString = "#{@'dev.bpm-crafters.process-api.adapter.c7embedded-dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot.C7EmbeddedAdapterProperties'.userTasks.scheduleDeliveryIntervalInMilliseconds}",
+    timeUnit = MILLISECONDS,
     scheduler = "c7embedded-task-scheduler"
   )
   fun refresh() {
