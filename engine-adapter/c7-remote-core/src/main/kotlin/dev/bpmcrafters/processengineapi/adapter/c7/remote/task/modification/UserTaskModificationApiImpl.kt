@@ -37,7 +37,7 @@ class UserTaskModificationApiImpl(
       is ChangeAssignmentModifyTaskCmd -> changeAssignment(cmd)
       is ChangePayloadModifyTaskCmd -> changePayload(cmd)
       is ChangeDatesModifyTaskCmd -> changeDates(cmd)
-      else -> throw UnsupportedOperationException("Unsupported command ${cmd.javaClass.canonicalName}.")
+      else -> throw UnsupportedOperationException("Unsupported command ${cmd.javaClass.canonicalName ?: cmd.javaClass.name}.")
     }
     Empty
   }
@@ -52,7 +52,7 @@ class UserTaskModificationApiImpl(
       is SetCandidateGroupsTaskCmd -> taskApiClient.setCandidateGroups(cmd.taskId, cmd.toIdentityLinkDtoList())
       is AddCandidateUserTaskCmd, is AddCandidateGroupTaskCmd -> taskApiClient.addIdentityLink(cmd.taskId, cmd.toIdentityLinkDto())
       is RemoveCandidateUserTaskCmd, is RemoveCandidateGroupTaskCmd -> taskApiClient.deleteIdentityLink(cmd.taskId, cmd.toIdentityLinkDto())
-      else -> throw UnsupportedOperationException("Unsupported command ${cmd.javaClass.canonicalName}.")
+      else -> throw UnsupportedOperationException("Unsupported command ${cmd.javaClass.canonicalName ?: cmd.javaClass.name}.")
     }
   }
 
@@ -65,7 +65,7 @@ class UserTaskModificationApiImpl(
 
       is DeletePayloadTaskCmd -> taskApiClient.removeVariablesLocal(cmd.taskId, cmd.get())
       is ClearPayloadTaskCmd -> taskApiClient.clearTaskVariablesLocal(cmd.taskId)
-      else -> throw UnsupportedOperationException("Unsupported command ${cmd.javaClass.canonicalName}.")
+      else -> throw UnsupportedOperationException("Unsupported command ${cmd.javaClass.canonicalName ?: cmd.javaClass.name}.")
     }
   }
 
@@ -104,7 +104,7 @@ class UserTaskModificationApiImpl(
       is ClearDueDateTaskCmd -> taskUpdate.due(null)
       is SetFollowUpDateTaskCmd -> taskUpdate.followUp(cmd.followUpDate)
       is ClearFollowUpDateTaskCmd -> taskUpdate.followUp(null)
-      else -> throw UnsupportedOperationException("Unsupported command ${cmd.javaClass.canonicalName}.")
+      else -> throw UnsupportedOperationException("Unsupported command ${cmd.javaClass.canonicalName ?: cmd.javaClass.name}.")
     }
     taskApiClient.updateTask(cmd.taskId, taskUpdate)
   }
@@ -131,7 +131,7 @@ class UserTaskModificationApiImpl(
         groupId = this@toIdentityLinkDto.candidateGroup
       }
 
-      else -> throw UnsupportedOperationException("Unsupported command ${javaClass.canonicalName}.")
+      else -> throw UnsupportedOperationException("Unsupported command ${javaClass.canonicalName ?: javaClass.name}.")
     }
   }
 
@@ -152,7 +152,7 @@ class UserTaskModificationApiImpl(
         }
       }
 
-      else -> throw UnsupportedOperationException("Unsupported command ${javaClass.canonicalName}.")
+      else -> throw UnsupportedOperationException("Unsupported command ${javaClass.canonicalName ?: javaClass.name}.")
     }
   }
 

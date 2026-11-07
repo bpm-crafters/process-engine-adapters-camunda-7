@@ -41,7 +41,7 @@ internal class UserTaskModificationApiImplTest {
     }
     assertThat(exception.cause)
       .isInstanceOf(UnsupportedOperationException::class.java)
-      .hasMessage("Unsupported command null.")
+      .hasMessageMatching("Unsupported command .+\\.")
   }
 
   @Test
@@ -56,7 +56,7 @@ internal class UserTaskModificationApiImplTest {
     }
     assertThat(exception.cause)
       .isInstanceOf(UnsupportedOperationException::class.java)
-      .hasMessage("Unsupported command null.")
+      .hasMessageMatching("Unsupported command .+\\.")
   }
 
   @Test
@@ -70,7 +70,7 @@ internal class UserTaskModificationApiImplTest {
     }
     assertThat(exception.cause)
       .isInstanceOf(UnsupportedOperationException::class.java)
-      .hasMessage("Unsupported command null.")
+      .hasMessageMatching("Unsupported command .+\\.")
   }
 
 
