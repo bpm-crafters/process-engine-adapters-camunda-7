@@ -14,6 +14,7 @@ import org.mockito.kotlin.*
 import org.springframework.http.ResponseEntity
 import java.time.OffsetDateTime
 import java.util.*
+import java.util.concurrent.ExecutionException
 
 internal class UserTaskModificationApiImplTest {
   private val taskApiClient: TaskApiClient = mock()
@@ -31,18 +32,21 @@ internal class UserTaskModificationApiImplTest {
 
   @Test
   fun `react on wrong assign command`() {
-    assertThrows<UnsupportedOperationException> {
+    val exception = assertThrows<ExecutionException> {
       api.update(
         object : ChangeAssignmentModifyTaskCmd(taskId) {
 
         }
       ).get()
     }
+    assertThat(exception.cause)
+      .isInstanceOf(UnsupportedOperationException::class.java)
+      .hasMessageMatching("Unsupported command .+\\.")
   }
 
   @Test
   fun `react on wrong modify command`() {
-    assertThrows<UnsupportedOperationException> {
+    val exception = assertThrows<ExecutionException> {
       api.update(
         object : ModifyTaskCmd {
           override val taskId: String
@@ -50,17 +54,23 @@ internal class UserTaskModificationApiImplTest {
         }
       ).get()
     }
+    assertThat(exception.cause)
+      .isInstanceOf(UnsupportedOperationException::class.java)
+      .hasMessageMatching("Unsupported command .+\\.")
   }
 
   @Test
   fun `react on wrong payload command`() {
-    assertThrows<UnsupportedOperationException> {
+    val exception = assertThrows<ExecutionException> {
       api.update(
         object : ChangePayloadModifyTaskCmd(taskId) {
 
         }
       ).get()
     }
+    assertThat(exception.cause)
+      .isInstanceOf(UnsupportedOperationException::class.java)
+      .hasMessageMatching("Unsupported command .+\\.")
   }
 
 
@@ -71,10 +81,44 @@ internal class UserTaskModificationApiImplTest {
         assign("kermit")
         updatePayload(mapOf("key1" to "world"))
       }
-    )
+    ).get()
     verify(taskApiClient).setAssignee(taskId, UserIdDto().userId("kermit"))
     verify(taskApiClient).modifyTaskLocalVariables(taskId, PatchVariablesDto().modifications(valueMapper.mapValues(mapOf("key1" to "world"))))
     verifyNoMoreInteractions(taskApiClient)
+  }
+
+  @Test
+  fun `return an exceptional future when a remote modification fails`() {
+    doThrow(IllegalStateException("remote failure")).whenever(taskApiClient)
+      .setAssignee(eq(taskId), any())
+
+    val future = api.update(ChangeAssignmentModifyTaskCmd.AssignTaskCmd(taskId, "kermit"))
+
+    val exception = assertThrows<ExecutionException> { future.get() }
+    assertThat(exception.cause)
+      .isInstanceOf(IllegalStateException::class.java)
+      .hasMessage("remote failure")
+    verify(taskApiClient).setAssignee(eq(taskId), any())
+  }
+
+  @Test
+  fun `stop a composite modification after a failed command`() {
+    doThrow(IllegalStateException("remote failure")).whenever(taskApiClient)
+      .setAssignee(eq(taskId), any())
+
+    val future = api.update(
+      TaskModification.taskModification(taskId) {
+        assign("kermit")
+        unassign()
+      }
+    )
+
+    val exception = assertThrows<ExecutionException> { future.get() }
+    assertThat(exception.cause)
+      .isInstanceOf(IllegalStateException::class.java)
+      .hasMessage("remote failure")
+    verify(taskApiClient).setAssignee(eq(taskId), any())
+    verify(taskApiClient, never()).setAssignee(eq(taskId), eq(UserIdDto()))
   }
 
   @Test
@@ -297,11 +341,13 @@ internal class UserTaskModificationApiImplTest {
   fun `fail date update when task is not found`() {
     whenever(taskApiClient.getTask(taskId)).thenReturn(ResponseEntity.ok(null))
 
-    val exception = assertThrows<IllegalArgumentException> {
-      api.update(ChangeDatesModifyTaskCmd.ClearFollowUpDateTaskCmd(taskId = taskId))
+    val exception = assertThrows<ExecutionException> {
+      api.update(ChangeDatesModifyTaskCmd.ClearFollowUpDateTaskCmd(taskId = taskId)).get()
     }
 
-    assertThat(exception).hasMessage("Task with id $taskId not found.")
+    assertThat(exception.cause)
+      .isInstanceOf(IllegalArgumentException::class.java)
+      .hasMessage("Task with id $taskId not found.")
     verify(taskApiClient).getTask(taskId)
     verifyNoMoreInteractions(taskApiClient)
   }
