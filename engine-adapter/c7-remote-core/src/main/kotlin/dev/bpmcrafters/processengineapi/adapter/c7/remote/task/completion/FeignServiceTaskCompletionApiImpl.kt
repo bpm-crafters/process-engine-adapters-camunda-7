@@ -29,19 +29,19 @@ class FeignServiceTaskCompletionApiImpl(
     logger.debug { "PROCESS-ENGINE-C7-REMOTE-006: completing service task ${cmd.taskId}." }
     return CompletableFuture.supplyAsync {
       externalTaskApiClient.completeExternalTaskResource(
-      cmd.taskId,
-      CompleteExternalTaskDto()
-        .apply {
-          this.variables = valueMapper.mapValues(cmd.get())
-          this.workerId = this@FeignServiceTaskCompletionApiImpl.workerId
-        }
-    )
+        cmd.taskId,
+        CompleteExternalTaskDto()
+          .apply {
+            this.variables = valueMapper.mapValues(cmd.get())
+            this.workerId = this@FeignServiceTaskCompletionApiImpl.workerId
+          }
+      )
       subscriptionRepository.deactivateSubscriptionForTask(cmd.taskId)?.apply {
-      withThreadContextClassLoader(termination) {
-        termination.accept(TaskInformation(cmd.taskId, emptyMap()).withReason(TaskInformation.COMPLETE))
+        withThreadContextClassLoader(termination) {
+          termination.accept(TaskInformation(cmd.taskId, emptyMap()).withReason(TaskInformation.COMPLETE))
+        }
+        logger.debug { "PROCESS-ENGINE-C7-REMOTE-007: successfully completed service task ${cmd.taskId}." }
       }
-      logger.debug { "PROCESS-ENGINE-C7-REMOTE-007: successfully completed service task ${cmd.taskId}." }
-    }
       Empty
     }
   }
@@ -50,20 +50,20 @@ class FeignServiceTaskCompletionApiImpl(
     logger.debug { "PROCESS-ENGINE-C7-REMOTE-008: throwing error ${cmd.errorCode} in service task ${cmd.taskId}." }
     return CompletableFuture.supplyAsync {
       externalTaskApiClient.handleExternalTaskBpmnError(
-      cmd.taskId,
-      ExternalTaskBpmnError().apply {
-        this.workerId = this@FeignServiceTaskCompletionApiImpl.workerId
-        this.errorCode = cmd.errorCode
-        this.errorMessage = cmd.errorMessage
-        this.variables = valueMapper.mapValues(cmd.get())
-      }
-    )
+        cmd.taskId,
+        ExternalTaskBpmnError().apply {
+          this.workerId = this@FeignServiceTaskCompletionApiImpl.workerId
+          this.errorCode = cmd.errorCode
+          this.errorMessage = cmd.errorMessage
+          this.variables = valueMapper.mapValues(cmd.get())
+        }
+      )
       subscriptionRepository.deactivateSubscriptionForTask(cmd.taskId)?.apply {
-      withThreadContextClassLoader(termination) {
-        termination.accept(TaskInformation(cmd.taskId, emptyMap()).withReason(TaskInformation.COMPLETE))
+        withThreadContextClassLoader(termination) {
+          termination.accept(TaskInformation(cmd.taskId, emptyMap()).withReason(TaskInformation.COMPLETE))
+        }
+        logger.debug { "PROCESS-ENGINE-C7-REMOTE-009: successfully thrown error in service task ${cmd.taskId}." }
       }
-      logger.debug { "PROCESS-ENGINE-C7-REMOTE-009: successfully thrown error in service task ${cmd.taskId}." }
-    }
       Empty
     }
   }
@@ -72,23 +72,23 @@ class FeignServiceTaskCompletionApiImpl(
     logger.debug { "PROCESS-ENGINE-C7-REMOTE-010: failing service task ${cmd.taskId}." }
     return CompletableFuture.supplyAsync {
       val (retries, retryTimeoutInSeconds) = failureRetrySupplier.apply(cmd.taskId)
-      val retryTimeoutInMillis = cmd.retryBackoff?.toMillis() ?: retryTimeoutInSeconds * 1000
+      val retryTimeoutInMillis = cmd.retryBackoff?.toMillis() ?: (retryTimeoutInSeconds * 1000)
       externalTaskApiClient.handleFailure(
-      cmd.taskId,
-      ExternalTaskFailureDto().apply {
-        this.workerId = this@FeignServiceTaskCompletionApiImpl.workerId
-        this.retries = cmd.retryCount ?: retries
-        this.retryTimeout = retryTimeoutInMillis
-        this.errorDetails = cmd.errorDetails
-        this.errorMessage = cmd.reason
-      }
-    )
+        cmd.taskId,
+        ExternalTaskFailureDto().apply {
+          this.workerId = this@FeignServiceTaskCompletionApiImpl.workerId
+          this.retries = cmd.retryCount ?: retries
+          this.retryTimeout = retryTimeoutInMillis
+          this.errorDetails = cmd.errorDetails
+          this.errorMessage = cmd.reason
+        }
+      )
       subscriptionRepository.deactivateSubscriptionForTask(cmd.taskId)?.apply {
-      withThreadContextClassLoader(termination) {
-        termination.accept(TaskInformation(cmd.taskId, emptyMap()).withReason(TaskInformation.COMPLETE))
+        withThreadContextClassLoader(termination) {
+          termination.accept(TaskInformation(cmd.taskId, emptyMap()).withReason(TaskInformation.COMPLETE))
+        }
+        logger.debug { "PROCESS-ENGINE-C7-REMOTE-011: successfully failed service task ${cmd.taskId} handling." }
       }
-      logger.debug { "PROCESS-ENGINE-C7-REMOTE-011: successfully failed service task ${cmd.taskId} handling." }
-    }
       Empty
     }
   }

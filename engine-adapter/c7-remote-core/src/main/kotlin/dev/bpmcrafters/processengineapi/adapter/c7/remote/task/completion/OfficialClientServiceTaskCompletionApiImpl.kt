@@ -25,19 +25,19 @@ class OfficialClientServiceTaskCompletionApiImpl(
     logger.debug { "PROCESS-ENGINE-C7-REMOTE-006: completing service task ${cmd.taskId}." }
     return CompletableFuture.supplyAsync {
       externalTaskService
-      .complete(
-        cmd.taskId,
-        cmd.get(),
-        mapOf()
-      )
-      subscriptionRepository.deactivateSubscriptionForTask(cmd.taskId)?.apply {
-      withThreadContextClassLoader(termination) {
-        termination.accept(
-          TaskInformation(cmd.taskId, mapOf()).withReason(TaskInformation.COMPLETE)
+        .complete(
+          cmd.taskId,
+          cmd.get(),
+          mapOf()
         )
+      subscriptionRepository.deactivateSubscriptionForTask(cmd.taskId)?.apply {
+        withThreadContextClassLoader(termination) {
+          termination.accept(
+            TaskInformation(cmd.taskId, mapOf()).withReason(TaskInformation.COMPLETE)
+          )
+        }
+        logger.debug { "PROCESS-ENGINE-C7-REMOTE-007: successfully completed service task ${cmd.taskId}." }
       }
-      logger.debug { "PROCESS-ENGINE-C7-REMOTE-007: successfully completed service task ${cmd.taskId}." }
-    }
       Empty
     }
   }
@@ -46,20 +46,20 @@ class OfficialClientServiceTaskCompletionApiImpl(
     logger.debug { "PROCESS-ENGINE-C7-REMOTE-008: throwing error ${cmd.errorCode} in service task ${cmd.taskId}." }
     return CompletableFuture.supplyAsync {
       externalTaskService
-      .handleBpmnError(
-        cmd.taskId,
-        cmd.errorCode,
-        cmd.errorMessage,
-        cmd.get()
-      )
-      subscriptionRepository.deactivateSubscriptionForTask(cmd.taskId)?.apply {
-      withThreadContextClassLoader(termination) {
-        termination.accept(
-          TaskInformation(cmd.taskId, mapOf()).withReason(TaskInformation.COMPLETE)
+        .handleBpmnError(
+          cmd.taskId,
+          cmd.errorCode,
+          cmd.errorMessage,
+          cmd.get()
         )
+      subscriptionRepository.deactivateSubscriptionForTask(cmd.taskId)?.apply {
+        withThreadContextClassLoader(termination) {
+          termination.accept(
+            TaskInformation(cmd.taskId, mapOf()).withReason(TaskInformation.COMPLETE)
+          )
+        }
+        logger.debug { "PROCESS-ENGINE-C7-REMOTE-009: successfully thrown error in service task ${cmd.taskId}." }
       }
-      logger.debug { "PROCESS-ENGINE-C7-REMOTE-009: successfully thrown error in service task ${cmd.taskId}." }
-    }
       Empty
     }
   }
@@ -68,23 +68,23 @@ class OfficialClientServiceTaskCompletionApiImpl(
     logger.debug { "PROCESS-ENGINE-C7-REMOTE-010: failing service task ${cmd.taskId}." }
     return CompletableFuture.supplyAsync {
       val (retries, retryTimeoutInSeconds) = failureRetrySupplier.apply(cmd.taskId)
-      val retryTimeoutInMillis = cmd.retryBackoff?.toMillis() ?: retryTimeoutInSeconds * 1000
+      val retryTimeoutInMillis = cmd.retryBackoff?.toMillis() ?: (retryTimeoutInSeconds * 1000)
       externalTaskService
-      .handleFailure(
-        cmd.taskId,
-        cmd.reason,
-        cmd.errorDetails,
-        cmd.retryCount ?: retries,
-        retryTimeoutInMillis
-      )
-      subscriptionRepository.deactivateSubscriptionForTask(cmd.taskId)?.apply {
-      withThreadContextClassLoader(termination) {
-        termination.accept(
-          TaskInformation(cmd.taskId, mapOf()).withReason(TaskInformation.COMPLETE)
+        .handleFailure(
+          cmd.taskId,
+          cmd.reason,
+          cmd.errorDetails,
+          cmd.retryCount ?: retries,
+          retryTimeoutInMillis
         )
+      subscriptionRepository.deactivateSubscriptionForTask(cmd.taskId)?.apply {
+        withThreadContextClassLoader(termination) {
+          termination.accept(
+            TaskInformation(cmd.taskId, mapOf()).withReason(TaskInformation.COMPLETE)
+          )
+        }
+        logger.debug { "PROCESS-ENGINE-C7-REMOTE-011: successfully failed service task ${cmd.taskId} handling." }
       }
-      logger.debug { "PROCESS-ENGINE-C7-REMOTE-011: successfully failed service task ${cmd.taskId} handling." }
-    }
       Empty
     }
   }
