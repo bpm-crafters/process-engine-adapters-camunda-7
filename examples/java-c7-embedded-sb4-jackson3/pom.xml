@@ -51,7 +51,7 @@
     <dependency>
       <groupId>io.holunda</groupId>
       <artifactId>camunda-platform-7-autologin</artifactId>
-      <version>2026.04.2</version>
+      <version>2026.11.1</version>
     </dependency>
     <dependency>
       <groupId>com.h2database</groupId>
