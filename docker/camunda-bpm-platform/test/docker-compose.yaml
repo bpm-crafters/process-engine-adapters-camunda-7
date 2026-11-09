@@ -1,0 +1,25 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: camunda
+      POSTGRES_USER: camunda
+      POSTGRES_PASSWORD: camunda
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U camunda -d camunda"]
+      interval: 2s
+      timeout: 5s
+      retries: 15
+
+  camunda:
+    image: ${CAMUNDA_IMAGE:-bpmcrafters/camunda-bpm-platform:run-7.24.0}
+    ports:
+      - "${CAMUNDA_TEST_PORT:-18080}:8080"
+    environment:
+      CAMUNDA_RUN_REST: "true"
+    volumes:
+      - ./config:/camunda/configuration/external:ro
+      - ./extensions:/camunda/extensions:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
