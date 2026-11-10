@@ -23,9 +23,11 @@ import dev.bpmcrafters.processengineapi.correlation.SignalApi
 import dev.bpmcrafters.processengineapi.decision.EvaluateDecisionApi
 import dev.bpmcrafters.processengineapi.deploy.DeploymentApi
 import dev.bpmcrafters.processengineapi.impl.task.InMemSubscriptionRepository
+import dev.bpmcrafters.processengineapi.impl.task.ObservedServiceTaskCompletionApi
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import dev.bpmcrafters.processengineapi.process.StartProcessApi
 import dev.bpmcrafters.processengineapi.task.ServiceTaskCompletionApi
+import dev.bpmcrafters.processengineapi.task.TaskExecutionObserver
 import dev.bpmcrafters.processengineapi.task.TaskSubscriptionApi
 import dev.bpmcrafters.processengineapi.task.UserTaskCompletionApi
 import dev.bpmcrafters.processengineapi.task.UserTaskModificationApi
@@ -34,6 +36,7 @@ import io.micrometer.core.instrument.MeterRegistry
 import io.toolisticon.spring.condition.ConditionalOnMissingQualifiedBean
 import jakarta.annotation.PostConstruct
 import org.camunda.bpm.engine.*
+import org.springframework.beans.factory.ObjectProvider
 import org.springframework.boot.autoconfigure.AutoConfiguration
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
@@ -85,8 +88,12 @@ class C7EmbeddedAdapterAutoConfiguration {
 
   @Bean("c7embedded-task-subscription-api")
   @Qualifier("c7embedded-task-subscription-api")
-  fun taskSubscriptionApi(subscriptionRepository: SubscriptionRepository): TaskSubscriptionApi = C7TaskSubscriptionApiImpl(
-    subscriptionRepository = subscriptionRepository
+  fun taskSubscriptionApi(
+    subscriptionRepository: SubscriptionRepository,
+    observers: ObjectProvider<TaskExecutionObserver>
+  ): TaskSubscriptionApi = C7TaskSubscriptionApiImpl(
+    subscriptionRepository = subscriptionRepository,
+    observers = observers.orderedStream().toList()
   )
 
   @Bean("c7embedded-correlation-api")
@@ -175,16 +182,22 @@ class C7EmbeddedAdapterAutoConfiguration {
     c7AdapterProperties: C7EmbeddedAdapterProperties,
     @Qualifier("c7embedded-failure-retry-supplier")
     failureRetrySupplier: FailureRetrySupplier,
-    commandExecutor: EngineCommandExecutor
-  ): ServiceTaskCompletionApi =
-    C7ServiceTaskCompletionApiImpl(
+    commandExecutor: EngineCommandExecutor,
+    observers: ObjectProvider<TaskExecutionObserver>
+  ): ServiceTaskCompletionApi {
+    val completionApi = C7ServiceTaskCompletionApiImpl(
       workerId = c7AdapterProperties.serviceTasks.workerId,
       externalTaskService = externalTaskService,
       subscriptionRepository = subscriptionRepository,
       failureRetrySupplier = failureRetrySupplier,
       commandExecutor = commandExecutor,
-
     )
+    return if (observers.orderedStream().findAny().isEmpty) {
+      completionApi
+    } else {
+      ObservedServiceTaskCompletionApi(completionApi, observers.orderedStream().toList())
+    }
+  }
 
   @Bean("c7embedded-user-task-completion-api")
   @Qualifier("c7embedded-user-task-completion-api")
