@@ -7,14 +7,17 @@ import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.Conditional
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.completion.FailureRetrySupplier
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.completion.OfficialClientServiceTaskCompletionApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.subscribe.SubscribingServiceTaskDelivery
+import dev.bpmcrafters.processengineapi.impl.task.ObservedServiceTaskCompletionApi
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import dev.bpmcrafters.processengineapi.task.ServiceTaskCompletionApi
+import dev.bpmcrafters.processengineapi.task.TaskExecutionObserver
 import io.github.oshai.kotlinlogging.KotlinLogging
 import jakarta.annotation.PostConstruct
 import org.camunda.bpm.client.ExternalTaskClient
 import org.camunda.bpm.client.impl.ExternalTaskClientImpl
 import org.camunda.bpm.client.task.ExternalTaskService
 import org.camunda.bpm.client.task.impl.ExternalTaskServiceImpl
+import org.springframework.beans.factory.ObjectProvider
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.autoconfigure.AutoConfiguration
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
@@ -62,12 +65,20 @@ class OfficialClientServiceTaskAutoConfiguration {
     externalTaskService: ExternalTaskService,
     subscriptionRepository: SubscriptionRepository,
     @Qualifier("c7remote-failure-retry-supplier")
-    failureRetrySupplier: FailureRetrySupplier
-  ): ServiceTaskCompletionApi =
-    OfficialClientServiceTaskCompletionApiImpl(
+    failureRetrySupplier: FailureRetrySupplier,
+    observers: ObjectProvider<TaskExecutionObserver>
+  ): ServiceTaskCompletionApi {
+    val completionApi = OfficialClientServiceTaskCompletionApiImpl(
       externalTaskService = externalTaskService,
       subscriptionRepository = subscriptionRepository,
       failureRetrySupplier = failureRetrySupplier
     )
+    val taskExecutionObservers = observers.orderedStream().toList()
+    return if (taskExecutionObservers.isEmpty()) {
+      completionApi
+    } else {
+      ObservedServiceTaskCompletionApi(completionApi, taskExecutionObservers)
+    }
+  }
 
 }

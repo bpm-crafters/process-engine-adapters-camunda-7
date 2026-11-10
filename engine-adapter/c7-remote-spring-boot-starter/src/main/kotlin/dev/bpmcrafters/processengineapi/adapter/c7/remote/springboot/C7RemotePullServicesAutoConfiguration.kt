@@ -9,8 +9,10 @@ import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.Pul
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.PullServiceTaskDeliveryMetrics
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.PullUserTaskDelivery
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.modification.UserTaskModificationApiImpl
+import dev.bpmcrafters.processengineapi.impl.task.ObservedServiceTaskCompletionApi
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import dev.bpmcrafters.processengineapi.task.ServiceTaskCompletionApi
+import dev.bpmcrafters.processengineapi.task.TaskExecutionObserver
 import dev.bpmcrafters.processengineapi.task.UserTaskCompletionApi
 import dev.bpmcrafters.processengineapi.task.UserTaskModificationApi
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -20,6 +22,7 @@ import org.camunda.community.rest.client.api.ExternalTaskApiClient
 import org.camunda.community.rest.client.api.ProcessDefinitionApiClient
 import org.camunda.community.rest.client.api.TaskApiClient
 import org.camunda.community.rest.variables.ValueMapper
+import org.springframework.beans.factory.ObjectProvider
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.autoconfigure.AutoConfiguration
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
@@ -119,15 +122,23 @@ class C7RemotePullServicesAutoConfiguration {
     c7AdapterProperties: C7RemoteAdapterProperties,
     @Qualifier("c7remote-failure-retry-supplier")
     failureRetrySupplier: FailureRetrySupplier,
-    valueMapper: ValueMapper
-  ): ServiceTaskCompletionApi =
-    FeignServiceTaskCompletionApiImpl(
+    valueMapper: ValueMapper,
+    observers: ObjectProvider<TaskExecutionObserver>
+  ): ServiceTaskCompletionApi {
+    val completionApi = FeignServiceTaskCompletionApiImpl(
       workerId = c7AdapterProperties.serviceTasks.workerId,
       externalTaskApiClient = externalTaskApiClient,
       subscriptionRepository = subscriptionRepository,
       failureRetrySupplier = failureRetrySupplier,
       valueMapper = valueMapper
     )
+    val taskExecutionObservers = observers.orderedStream().toList()
+    return if (taskExecutionObservers.isEmpty()) {
+      completionApi
+    } else {
+      ObservedServiceTaskCompletionApi(completionApi, taskExecutionObservers)
+    }
+  }
 
   @Bean("c7remote-process-definition-meta-data-resolver")
   @Qualifier("c7remote-process-definition-meta-data-resolver")
