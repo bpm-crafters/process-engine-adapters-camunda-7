@@ -192,11 +192,10 @@ class C7EmbeddedAdapterAutoConfiguration {
       failureRetrySupplier = failureRetrySupplier,
       commandExecutor = commandExecutor,
     )
-    val taskExecutionObservers = observers.orderedStream().toList()
-    return if (taskExecutionObservers.isEmpty()) {
+    return if (observers.orderedStream().findAny().isEmpty) {
       completionApi
     } else {
-      ObservedServiceTaskCompletionApi(completionApi, taskExecutionObservers)
+      ObservedServiceTaskCompletionApi(completionApi, observers.orderedStream().toList())
     }
   }
 

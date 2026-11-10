@@ -132,11 +132,10 @@ class C7RemotePullServicesAutoConfiguration {
       failureRetrySupplier = failureRetrySupplier,
       valueMapper = valueMapper
     )
-    val taskExecutionObservers = observers.orderedStream().toList()
-    return if (taskExecutionObservers.isEmpty()) {
+    return if (observers.orderedStream().findAny().isEmpty) {
       completionApi
     } else {
-      ObservedServiceTaskCompletionApi(completionApi, taskExecutionObservers)
+      ObservedServiceTaskCompletionApi(completionApi, observers.orderedStream().toList())
     }
   }
 
