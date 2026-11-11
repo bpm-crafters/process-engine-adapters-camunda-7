@@ -6,7 +6,7 @@ permissions:
 on:
   push:
     branches:
-      - develop
+      - master
     paths:
       - 'docker/camunda-bpm-platform/**'
       - '.github/workflows/camunda-run-image.yml'
