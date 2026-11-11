@@ -1,0 +1,67 @@
+name: Camunda 7 Run image
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'docker/camunda-bpm-platform/**'
+      - '.github/workflows/camunda-run-image.yml'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run (build only, no publish)'
+        type: boolean
+        default: false
+
+env:
+  IMAGE: bpmcrafters/camunda-bpm-platform:run-7.24.0
+
+jobs:
+  publish:
+    if: github.repository == 'bpm-crafters/process-engine-adapters-camunda-7'
+    runs-on: ubuntu-latest
+    name: Build and publish Camunda 7 Run image
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7.0.1
+
+      - name: Log in to Docker Hub
+        if: inputs.dry_run != true
+        uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Verify mounted PostgreSQL JDBC driver
+        env:
+          CAMUNDA_IMAGE: ${{ env.IMAGE }}
+          BUILD_IMAGE: true
+        run: ./docker/camunda-bpm-platform/test/verify-postgresql.sh
+
+      - name: Build multi-arch image and push unless dry run
+        env:
+          PUSH: ${{ inputs.dry_run != true }}
+        run: |
+          docker buildx create --use
+          docker buildx build \
+            --platform linux/amd64,linux/arm64 \
+            --tag "$IMAGE" \
+            --output "type=image,push=$PUSH" \
+            docker/camunda-bpm-platform/run
+
+      - name: Update Docker Hub description
+        if: inputs.dry_run != true
+        uses: peter-evans/dockerhub-description@1b9a80c056b620d92cedb9d9b5a223409c68ddfa # v5.0.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          repository: bpmcrafters/camunda-bpm-platform
+          readme-filepath: docker/camunda-bpm-platform/README.md
+
+      - name: Log out from Docker Hub
+        if: always() && inputs.dry_run != true
+        run: docker logout

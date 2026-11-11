@@ -14,6 +14,7 @@ This library provides an adapter implementation of Process Engine API for Camund
 
 | Adapter-7 Version                                                                                     | Camunda 7 Version | API Version |
 |-------------------------------------------------------------------------------------------------------|-------------------|-------------|
+| [2026.10.1](https://github.com/bpm-crafters/process-engine-adapters-camunda-7/releases/tag/2026.10.1) | 7.24.0            | 1.7         |
 | [2026.09.2](https://github.com/bpm-crafters/process-engine-adapters-camunda-7/releases/tag/2026.09.2) | 7.24.0            | 1.7         |
 | [2026.09.1](https://github.com/bpm-crafters/process-engine-adapters-camunda-7/releases/tag/2026.09.1) | 7.24.0            | 1.7         |
 | [2026.06.2](https://github.com/bpm-crafters/process-engine-adapters-camunda-7/releases/tag/2026.06.2) | 7.24.0            | 1.7         |
@@ -51,5 +52,7 @@ The library contains of the following Maven modules:
 - `process-engine-adapter-camunda-platform-c7-embedded-core`: Camunda 7 Platform Embedded Adapter implementation 
 - `process-engine-adapter-camunda-platform-c7-embedded-spring-boot-starter`: Camunda 7 Platform Embedded Adapter Spring Boot Starter 
 - `process-engine-adapter-camunda-platform-c7-remote-core`: Camunda 7 Platform Remote Adapter implementation 
-- `process-engine-adapter-camunda-platform-c7-remote-spring-boot-starter`: Camunda 7 Platform Remote Adapter Spring Boot Starter 
+- `process-engine-adapter-camunda-platform-c7-remote-spring-boot-starter`: Camunda 7 Platform Remote Adapter Spring Boot Starter
+- `process-engine-adapter-camunda-platform-c7-embedded-testing`: Camunda 7 Platform Embedded Adapter Testing
+- `process-engine-adapter-camunda-platform-c7-remote-testing`: Camunda 7 Platform Remote Adapter Testing
 - `process-engine-adapter-camunda-platform-c7-bom`: Maven BOM containing dependency definitions.

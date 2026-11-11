@@ -142,12 +142,13 @@ Turns the remote adapter on or off. Default: `false`.
 | Property | Default | Description |
 |----------|---------|-------------|
 | `worker-id` | required | Worker id used for external task fetching and completion. |
-| `max-task-count` | `100` | Maximum number of external tasks fetched per pull cycle. |
-| `lock-time-in-seconds` | `10` | Lock duration for fetched external tasks. |
+| `max-task-count` | `100` | Maximum number of external tasks fetched per pull cycle. A pull cycle never fetches more tasks than the worker queue has free capacity. |
+| `lock-time-in-seconds` | `10` | Lock duration for fetched external tasks. Must exceed the runtime of the slowest worker, otherwise the task is delivered again (at-least-once). Can be overridden per subscription with the `workerLockDurationInMilliseconds` restriction. |
 | `retry-timeout-in-seconds` | `10` | Timeout used by the default failure retry supplier. |
 | `retries` | `3` | Initial retry count used by the default failure retry supplier. |
 | `delivery-strategy` | required | One of `remote_scheduled`, `remote_subscribed`, `custom`, `disabled`. |
-| `schedule-delivery-fixed-rate-in-seconds` | `13` | Polling interval for `remote_scheduled`. |
+| `schedule-delivery-fixed-rate-in-seconds` | `13` | Deprecated, use `schedule-delivery-fixed-rate`. Polling interval for `remote_scheduled`. |
+| `schedule-delivery-fixed-rate` | not set | Polling delay for `remote_scheduled` as a `Duration`, e.g. `200ms`. Takes precedence over `schedule-delivery-fixed-rate-in-seconds`. Must be at least `1ms`. A value without unit is read as milliseconds. The delay starts after the previous pull finished. Handlers run asynchronously on the worker pool and are not awaited. Every pull also runs the cleanup query for locked tasks, so short intervals add engine load and more HTTP calls. |
 | `execute-initial-pull-on-startup` | `true` in property binding | Enable one startup pull before the recurring scheduler or subscriber takes over. Set it explicitly when you want startup delivery. |
 | `deserialize-on-server` | `false` | Requests Camunda REST variable deserialization on the server side for scheduled pulls. |
 | `worker-thread-pool-size` | `10` | Thread pool size for scheduled service-task worker execution. |
@@ -158,7 +159,8 @@ Turns the remote adapter on or off. Default: `false`.
 | Property | Default | Description |
 |----------|---------|-------------|
 | `delivery-strategy` | required | One of `remote_scheduled`, `custom`, `disabled`. |
-| `schedule-delivery-fixed-rate-in-seconds` | `5` | Polling interval for `remote_scheduled`. |
+| `schedule-delivery-fixed-rate-in-seconds` | `5` | Deprecated, use `schedule-delivery-fixed-rate`. Polling interval for `remote_scheduled`. |
+| `schedule-delivery-fixed-rate` | not set | Polling delay for `remote_scheduled` as a `Duration`, e.g. `200ms`. Takes precedence over `schedule-delivery-fixed-rate-in-seconds`. Must be at least `1ms`. A value without unit is read as milliseconds. The delay starts after the previous pull finished, including its handlers. Every pull sends REST calls to the engine, so short intervals add engine load and HTTP traffic. |
 | `execute-initial-pull-on-startup` | `true` in property binding | Enable one startup pull before the recurring scheduler takes over. Set it explicitly when you want startup delivery. |
 | `deserialize-on-server` | `false` | Requests Camunda REST variable deserialization on the server side for user-task polling. |
 
@@ -173,7 +175,7 @@ dev:
           enabled: true
           service-tasks:
             delivery-strategy: remote_scheduled
-            schedule-delivery-fixed-rate-in-seconds: 5
+            schedule-delivery-fixed-rate: 5s
             worker-id: remote-worker
             lock-time-in-seconds: 10
             deserialize-on-server: false
@@ -183,7 +185,7 @@ dev:
             execute-initial-pull-on-startup: true
           user-tasks:
             delivery-strategy: remote_scheduled
-            schedule-delivery-fixed-rate-in-seconds: 5
+            schedule-delivery-fixed-rate: 5s
             execute-initial-pull-on-startup: false
             deserialize-on-server: false
 

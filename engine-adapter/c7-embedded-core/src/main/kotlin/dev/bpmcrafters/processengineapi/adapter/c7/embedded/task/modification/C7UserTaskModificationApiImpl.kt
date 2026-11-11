@@ -40,7 +40,7 @@ class C7UserTaskModificationApiImpl(
       is ChangeAssignmentModifyTaskCmd -> changeAssignment(cmd)
       is ChangePayloadModifyTaskCmd -> changePayload(cmd)
       is ChangeDatesModifyTaskCmd -> changeDates(cmd)
-      else -> throw UnsupportedOperationException("Unsupported command ${cmd.javaClass.canonicalName}.")
+      else -> throw UnsupportedOperationException("Unsupported command ${cmd.javaClass.canonicalName ?: cmd.javaClass.name}.")
     }
   }
 
@@ -56,7 +56,7 @@ class C7UserTaskModificationApiImpl(
       is AddCandidateGroupTaskCmd -> taskService.addCandidateGroup(cmd.taskId, cmd.candidateGroup)
       is RemoveCandidateUserTaskCmd -> taskService.deleteCandidateUser(cmd.taskId, cmd.candidateUser)
       is RemoveCandidateGroupTaskCmd -> taskService.deleteCandidateGroup(cmd.taskId, cmd.candidateGroup)
-      else -> throw UnsupportedOperationException("Unsupported command ${cmd.javaClass.canonicalName}.")
+      else -> throw UnsupportedOperationException("Unsupported command ${cmd.javaClass.canonicalName ?: cmd.javaClass.name}.")
     }
   }
 
@@ -65,7 +65,7 @@ class C7UserTaskModificationApiImpl(
       is UpdatePayloadTaskCmd -> taskService.setVariablesLocal(cmd.taskId, cmd.get())
       is DeletePayloadTaskCmd -> taskService.removeVariablesLocal(cmd.taskId, cmd.get())
       is ClearPayloadTaskCmd -> taskService.removeAllVariablesLocal(cmd.taskId)
-      else -> throw UnsupportedOperationException("Unsupported command ${cmd.javaClass.canonicalName}.")
+      else -> throw UnsupportedOperationException("Unsupported command ${cmd.javaClass.canonicalName ?: cmd.javaClass.name}.")
     }
   }
 
@@ -77,7 +77,7 @@ class C7UserTaskModificationApiImpl(
       is ClearDueDateTaskCmd -> task.dueDate = null
       is SetFollowUpDateTaskCmd -> task.followUpDate = Date.from(cmd.followUpDate.toInstant())
       is ClearFollowUpDateTaskCmd -> task.followUpDate = null
-      else -> throw UnsupportedOperationException("Unsupported command ${cmd.javaClass.canonicalName}.")
+      else -> throw UnsupportedOperationException("Unsupported command ${cmd.javaClass.canonicalName ?: cmd.javaClass.name}.")
     }
     taskService.saveTask(task)
   }
