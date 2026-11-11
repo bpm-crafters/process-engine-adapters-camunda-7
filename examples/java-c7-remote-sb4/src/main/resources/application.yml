@@ -23,7 +23,7 @@ dev:
           enabled: true
           service-tasks:
             delivery-strategy: remote_scheduled
-            schedule-delivery-fixed-rate-in-seconds: 5
+            schedule-delivery-fixed-rate: 5s
             worker-id: embedded-worker
             lock-time-in-seconds: 10
             deserialize-on-server: false
@@ -31,7 +31,7 @@ dev:
             worker-thread-pool-size: 2
             max-task-count: 2
           user-tasks:
-            schedule-delivery-fixed-rate-in-seconds: 5
+            schedule-delivery-fixed-rate: 5s
             delivery-strategy: remote_scheduled
             execute-initial-pull-on-startup: false
             deserialize-on-server: false
