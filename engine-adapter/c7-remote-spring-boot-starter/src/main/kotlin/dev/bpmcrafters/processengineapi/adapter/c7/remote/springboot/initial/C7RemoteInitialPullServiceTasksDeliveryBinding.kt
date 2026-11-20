@@ -6,20 +6,19 @@ import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.initial.C7R
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.PullServiceTaskDelivery
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.PullServiceTaskDeliveryMetrics
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
+import dev.bpmcrafters.processengineapi.springboot.lifecycle.ProcessApplicationRunningEvent
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.camunda.community.rest.client.api.ExternalTaskApiClient
 import org.camunda.community.rest.variables.ValueMapper
-import org.springframework.boot.context.event.ApplicationStartedEvent
 import org.springframework.context.event.EventListener
 import org.springframework.core.Ordered
 import org.springframework.core.annotation.Order
-import org.springframework.scheduling.annotation.Async
 import java.util.concurrent.ThreadPoolExecutor
 
 private val logger = KotlinLogging.logger {}
 
 /**
- * This class is responsible for the initial pull of user tasks.
+ * This class is responsible for the initial pull of service tasks.
  * We are not relying on the pull delivery strategy configured centrally, because for other deliveries we still want to
  * execute an initial pull.
  */
@@ -27,8 +26,8 @@ private val logger = KotlinLogging.logger {}
 open class C7RemoteInitialPullServiceTasksDeliveryBinding(
   externalTaskApiClient: ExternalTaskApiClient,
   subscriptionRepository: SubscriptionRepository,
-  c7AdapterProperties: C7RemoteAdapterProperties,
-  executor: ThreadPoolExecutor,
+  private val c7AdapterProperties: C7RemoteAdapterProperties,
+  private val executor: ThreadPoolExecutor,
   valueMapper: ValueMapper,
   processDefinitionMetaDataResolver: ProcessDefinitionMetaDataResolver,
   metrics: PullServiceTaskDeliveryMetrics
@@ -53,8 +52,16 @@ open class C7RemoteInitialPullServiceTasksDeliveryBinding(
   )
 
   @EventListener
-  @Async
-  open fun pullUserTasks(event: ApplicationStartedEvent) {
+  @Order(ORDER)
+  open fun pullServiceTasks(event: ProcessApplicationRunningEvent) {
+    if (c7AdapterProperties.serviceTasks.executeInitialPullAsync) {
+      executor.execute { deliverServiceTasks() }
+    } else {
+      deliverServiceTasks()
+    }
+  }
+
+  private fun deliverServiceTasks() {
     logger.trace { "PROCESS-ENGINE-C7-REMOTE-101: Delivering service tasks..." }
     pullDelivery.refresh()
     logger.trace { "PROCESS-ENGINE-C7-REMOTE-102: Delivered service tasks." }

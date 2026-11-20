@@ -18,6 +18,13 @@
       <artifactId>process-engine-adapter-camunda-platform-c7-remote-core</artifactId>
       <version>${project.version}</version>
     </dependency>
+
+    <dependency>
+      <groupId>dev.bpm-crafters.process-engine-api</groupId>
+      <artifactId>process-engine-api-lifecycle-spring-boot</artifactId>
+      <version>${process-engine-api-lifecycle-spring-boot.version}</version>
+    </dependency>
+
     <dependency>
       <groupId>io.toolisticon.spring</groupId>
       <artifactId>spring-boot-conditions</artifactId>

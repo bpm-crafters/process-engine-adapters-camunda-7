@@ -1,21 +1,27 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot.schedule
 
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot.C7EmbeddedAdapterProperties.UserTaskDeliveryStrategy
+import dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot.C7EmbeddedAdapterProperties
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot.ConditionalOnUserTaskDeliveryStrategy
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.delivery.pull.EmbeddedPullUserTaskDelivery
+import dev.bpmcrafters.processengineapi.springboot.lifecycle.ProcessApplicationRunningEvent
+import dev.bpmcrafters.processengineapi.springboot.lifecycle.ProcessApplicationStoppingEvent
 import io.github.oshai.kotlinlogging.KotlinLogging
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.autoconfigure.AutoConfiguration
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
-import org.springframework.scheduling.annotation.Scheduled
-import java.util.concurrent.TimeUnit.MILLISECONDS
+import org.springframework.context.event.EventListener
+import org.springframework.core.Ordered
+import org.springframework.core.annotation.Order
+import org.springframework.scheduling.TaskScheduler
+import java.time.Duration
+import java.time.Instant
+import java.util.concurrent.ScheduledFuture
 
 private val logger = KotlinLogging.logger {}
 
 /**
  * Dynamic / imperative scheduling configuration using own task scheduler for user tasks.
- *
- * Keeping the scheduled trigger in its own auto-configuration prevents the scheduled polling hook
- * from being registered for non-scheduled user-task delivery strategies.
  */
 @AutoConfiguration
 @ConditionalOnUserTaskDeliveryStrategy(
@@ -23,15 +29,37 @@ private val logger = KotlinLogging.logger {}
 )
 @AutoConfigureAfter(C7EmbeddedSchedulingAutoConfiguration::class)
 class C7EmbeddedUserTaskPullStrategyAutoConfiguration(
-  private val embeddedPullUserTaskDelivery: EmbeddedPullUserTaskDelivery
+  private val embeddedPullUserTaskDelivery: EmbeddedPullUserTaskDelivery,
+  private val c7EmbeddedAdapterProperties: C7EmbeddedAdapterProperties,
+  @Qualifier("c7embedded-task-scheduler")
+  private val taskScheduler: TaskScheduler
 ) {
+  private var scheduledDelivery: ScheduledFuture<*>? = null
 
-  @Scheduled(
-    fixedDelayString = "#{@'dev.bpm-crafters.process-api.adapter.c7embedded-dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot.C7EmbeddedAdapterProperties'.userTasks.scheduleDeliveryIntervalInMilliseconds}",
-    timeUnit = MILLISECONDS,
-    scheduler = "c7embedded-task-scheduler"
-  )
-  fun refresh() {
+  @EventListener
+  @Order(Ordered.LOWEST_PRECEDENCE)
+  @Synchronized
+  fun start(event: ProcessApplicationRunningEvent) {
+    if (scheduledDelivery != null) {
+      return
+    }
+
+    val deliveryInterval = Duration.ofMillis(c7EmbeddedAdapterProperties.userTasks.scheduleDeliveryIntervalInMilliseconds)
+    scheduledDelivery = taskScheduler.scheduleWithFixedDelay(
+      { refresh() },
+      Instant.now().plus(deliveryInterval),
+      deliveryInterval
+    )
+  }
+
+  @EventListener
+  @Synchronized
+  fun stop(event: ProcessApplicationStoppingEvent) {
+    scheduledDelivery?.cancel(false)
+    scheduledDelivery = null
+  }
+
+  private fun refresh() {
     logger.trace { "PROCESS-ENGINE-C7-EMBEDDED-107: Delivering user tasks..." }
     embeddedPullUserTaskDelivery.refresh()
     logger.trace { "PROCESS-ENGINE-C7-EMBEDDED-108: Delivered user tasks." }

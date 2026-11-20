@@ -5,14 +5,13 @@ import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.initial.C7R
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.process.ProcessDefinitionMetaDataResolver
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.PullUserTaskDelivery
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
+import dev.bpmcrafters.processengineapi.springboot.lifecycle.ProcessApplicationRunningEvent
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.camunda.community.rest.client.api.TaskApiClient
 import org.camunda.community.rest.variables.ValueMapper
-import org.springframework.boot.context.event.ApplicationStartedEvent
 import org.springframework.context.event.EventListener
 import org.springframework.core.Ordered
 import org.springframework.core.annotation.Order
-import org.springframework.scheduling.annotation.Async
 import java.util.concurrent.ExecutorService
 
 private val logger = KotlinLogging.logger {}
@@ -27,9 +26,9 @@ open class C7RemoteInitialPullUserTasksDeliveryBinding(
   subscriptionRepository: SubscriptionRepository,
   processDefinitionMetaDataResolver: ProcessDefinitionMetaDataResolver,
   taskApiClient: TaskApiClient,
-  executorService: ExecutorService,
+  private val executorService: ExecutorService,
   valueMapper: ValueMapper,
-  c7RemoteAdapterProperties: C7RemoteAdapterProperties
+  private val c7RemoteAdapterProperties: C7RemoteAdapterProperties
 ) {
 
   companion object {
@@ -46,8 +45,16 @@ open class C7RemoteInitialPullUserTasksDeliveryBinding(
   )
 
   @EventListener
-  @Async
-  open fun pullUserTasks(event: ApplicationStartedEvent) {
+  @Order(ORDER)
+  open fun pullUserTasks(event: ProcessApplicationRunningEvent) {
+    if (c7RemoteAdapterProperties.userTasks.executeInitialPullAsync) {
+      executorService.execute { deliverUserTasks() }
+    } else {
+      deliverUserTasks()
+    }
+  }
+
+  private fun deliverUserTasks() {
     logger.trace { "PROCESS-ENGINE-C7-REMOTE-103: Delivering user tasks..." }
     pullUserTaskDelivery.refresh()
     logger.trace { "PROCESS-ENGINE-C7-REMOTE-104: Delivered user tasks." }

@@ -19,20 +19,18 @@ import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Conditional
-import org.springframework.scheduling.annotation.EnableAsync
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.ThreadPoolExecutor
 
 private val logger = KotlinLogging.logger {}
 
 /**
- * This configuration configures the initial pull bound to the application started event.
+ * This configuration configures the initial pull bound to the process application running phase.
  * It is not relying on any delivery strategies but just configures the initial pull to happen
  * and deliver tasks to the task handlers.
  */
 @AutoConfiguration
 @AutoConfigureAfter(OfficialClientServiceTaskAutoConfiguration::class)
-@EnableAsync
 @Conditional(C7RemoteAdapterEnabledCondition::class)
 class C7RemoteInitialPullOnStartupAutoConfiguration {
 

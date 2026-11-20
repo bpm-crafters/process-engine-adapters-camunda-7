@@ -8,6 +8,9 @@ spring:
 springdoc:
   swagger-ui:
     try-it-out-enabled: true
+    enabled: true
+  api-docs:
+    enabled: true
 
 dev:
   bpm-crafters:

@@ -29,8 +29,6 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Conditional
 import org.springframework.core.annotation.Order
 import org.springframework.scheduling.TaskScheduler
-import org.springframework.scheduling.annotation.EnableAsync
-import org.springframework.scheduling.annotation.EnableScheduling
 import org.springframework.scheduling.concurrent.SimpleAsyncTaskScheduler
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler
 import java.util.concurrent.ExecutorService
@@ -42,8 +40,6 @@ private val logger = KotlinLogging.logger {}
  * Autoconfiguration for scheduled delivery.
  */
 @AutoConfiguration
-@EnableAsync
-@EnableScheduling
 @AutoConfigureAfter(C7RemoteAdapterAutoConfiguration::class)
 @Conditional(C7RemoteAdapterEnabledCondition::class)
 class C7RemotePullServicesAutoConfiguration {
