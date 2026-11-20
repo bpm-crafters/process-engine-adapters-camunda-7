@@ -15,6 +15,8 @@ class C7RemoteAdapterPropertiesTest {
   fun `falls back to default seconds when no duration is set`() {
     assertThat(userTasks().scheduleDeliveryIntervalInMilliseconds).isEqualTo(5_000)
     assertThat(serviceTasks().scheduleDeliveryIntervalInMilliseconds).isEqualTo(13_000)
+    assertThat(userTasks().executeInitialPullAsync).isFalse()
+    assertThat(serviceTasks().executeInitialPullAsync).isFalse()
   }
 
   @Test

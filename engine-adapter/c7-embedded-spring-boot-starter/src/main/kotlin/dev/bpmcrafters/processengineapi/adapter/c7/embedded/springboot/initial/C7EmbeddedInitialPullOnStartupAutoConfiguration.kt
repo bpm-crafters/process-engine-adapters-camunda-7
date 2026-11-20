@@ -13,14 +13,13 @@ import org.springframework.boot.autoconfigure.AutoConfiguration
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Conditional
-import org.springframework.scheduling.annotation.EnableAsync
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.ThreadPoolExecutor
 
 private val logger = KotlinLogging.logger {}
 
 /**
- * This configuration configures the initial pull bound to the application started event.
+ * This configuration configures the initial pull bound to the process application running phase.
  * It is not relying on any delivery strategies but just configures the initial pull to happen
  * and deliver tasks to the task handlers.
  *
@@ -30,7 +29,6 @@ private val logger = KotlinLogging.logger {}
  */
 @AutoConfiguration
 @AutoConfigureAfter(C7EmbeddedAdapterAutoConfiguration::class)
-@EnableAsync
 @Conditional(C7EmbeddedAdapterEnabledCondition::class)
 class C7EmbeddedInitialPullOnStartupAutoConfiguration {
 
@@ -48,12 +46,14 @@ class C7EmbeddedInitialPullOnStartupAutoConfiguration {
     processDefinitionMetaDataResolver: ProcessDefinitionMetaDataResolver,
     subscriptionRepository: SubscriptionRepository,
     @Qualifier("c7embedded-user-task-worker-executor")
-    executorService: ExecutorService
+    executorService: ExecutorService,
+    c7EmbeddedAdapterProperties: C7EmbeddedAdapterProperties
   ) = C7EmbeddedInitialPullUserTasksDeliveryBinding(
     taskService = taskService,
     subscriptionRepository = subscriptionRepository,
     processDefinitionMetaDataResolver = processDefinitionMetaDataResolver,
-    executorService = executorService
+    executorService = executorService,
+    c7EmbeddedAdapterProperties = c7EmbeddedAdapterProperties
   )
 
   @Bean("c7embedded-service-task-initial-pull")

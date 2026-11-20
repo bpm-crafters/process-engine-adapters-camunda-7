@@ -3,7 +3,6 @@ package dev.bpmcrafters.example.common.adapter.in.process;
 import dev.bpmcrafters.example.common.adapter.shared.SimpleProcessWorkflowConst.Expressions;
 import dev.bpmcrafters.processengineapi.task.ServiceTaskCompletionApi;
 import dev.bpmcrafters.processengineapi.task.TaskInformation;
-import dev.bpmcrafters.processengineapi.task.TaskSubscriptionApi;
 
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -12,8 +11,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ExecuteActionTaskHandler extends AbstractSynchronousTaskHandler {
 
-  public ExecuteActionTaskHandler(TaskSubscriptionApi taskSubscriptionApi, ServiceTaskCompletionApi externalTaskCompletionApi) {
-    super(taskSubscriptionApi, externalTaskCompletionApi, "execute-action-external");
+  public ExecuteActionTaskHandler(ServiceTaskCompletionApi externalTaskCompletionApi) {
+    super(externalTaskCompletionApi, "execute-action-external");
   }
 
   @Override

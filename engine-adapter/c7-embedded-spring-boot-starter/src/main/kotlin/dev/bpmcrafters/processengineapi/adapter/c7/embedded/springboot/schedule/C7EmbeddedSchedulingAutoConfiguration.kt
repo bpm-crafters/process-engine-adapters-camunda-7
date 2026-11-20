@@ -24,8 +24,6 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Conditional
 import org.springframework.core.annotation.Order
 import org.springframework.scheduling.TaskScheduler
-import org.springframework.scheduling.annotation.EnableAsync
-import org.springframework.scheduling.annotation.EnableScheduling
 import org.springframework.scheduling.concurrent.SimpleAsyncTaskScheduler
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler
 import java.util.concurrent.ExecutorService
@@ -41,8 +39,6 @@ private val logger = KotlinLogging.logger {}
  * Spring Boot 3 and Spring Boot 4.
  */
 @AutoConfiguration
-@EnableScheduling
-@EnableAsync
 @AutoConfigureAfter(C7EmbeddedAdapterAutoConfiguration::class)
 @Conditional(C7EmbeddedAdapterEnabledCondition::class)
 class C7EmbeddedSchedulingAutoConfiguration {

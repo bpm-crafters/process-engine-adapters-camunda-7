@@ -18,6 +18,13 @@
       <artifactId>process-engine-api</artifactId>
     </dependency>
     <dependency>
+      <groupId>dev.bpm-crafters.process-engine-api</groupId>
+      <artifactId>process-engine-api-lifecycle-spring-boot</artifactId>
+      <version>${process-engine-api-lifecycle-spring-boot.version}</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
       <groupId>io.micrometer</groupId>
       <artifactId>micrometer-registry-prometheus</artifactId>
     </dependency>
