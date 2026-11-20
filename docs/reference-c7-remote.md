@@ -125,9 +125,12 @@ camunda:
 
 | Value | Effect |
 |-------|--------|
-| `remote_scheduled` | Polls user tasks over REST and enables user-task completion/modification beans. |
-| `custom` | Disables the built-in recurring delivery. Provide your own delivery and matching user-task beans if needed. |
-| `disabled` | Disables user-task delivery and configures a no-op user-task completion API. |
+| `remote_scheduled` | Polls user tasks over REST. |
+| `custom` | Disables the built-in recurring delivery; the application supplies delivery itself. |
+| `disabled` | Disables adapter-managed user-task delivery. |
+
+User-task completion and modification are command-side REST APIs. They are available for every user-task delivery
+strategy, including `custom` and `disabled`; the delivery strategy controls only adapter-managed delivery.
 
 #### Service tasks
 
