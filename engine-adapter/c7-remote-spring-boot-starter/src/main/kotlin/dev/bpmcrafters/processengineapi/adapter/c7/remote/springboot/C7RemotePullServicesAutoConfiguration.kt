@@ -162,9 +162,6 @@ class C7RemotePullServicesAutoConfiguration {
    */
   @Bean("c7remote-user-task-completion-api")
   @Qualifier("c7remote-user-task-completion-api")
-  @ConditionalOnUserTaskDeliveryStrategy(
-    strategy = C7RemoteAdapterProperties.UserTaskDeliveryStrategy.REMOTE_SCHEDULED
-  )
   fun userTaskCompletionApi(
     taskApiClient: TaskApiClient,
     subscriptionRepository: SubscriptionRepository,
@@ -181,9 +178,6 @@ class C7RemotePullServicesAutoConfiguration {
    */
   @Bean("c7remote-user-task-modification-api")
   @Qualifier("c7remote-user-task-modification-api")
-  @ConditionalOnUserTaskDeliveryStrategy(
-    strategy = C7RemoteAdapterProperties.UserTaskDeliveryStrategy.REMOTE_SCHEDULED
-  )
   fun userTaskModificationApi(
     taskApiClient: TaskApiClient,
     valueMapper: ValueMapper
