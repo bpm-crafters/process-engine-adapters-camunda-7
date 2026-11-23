@@ -3,10 +3,13 @@ package dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.initial
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.C7RemoteAdapterEnabledCondition
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.C7RemoteAdapterProperties
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.C7RemoteAdapterProperties.Companion.DEFAULT_PREFIX
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.registerParticipant
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.client.OfficialClientServiceTaskAutoConfiguration
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.process.ProcessDefinitionMetaDataResolver
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.PullServiceTaskDeliveryMetrics
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
+import dev.bpmcrafters.processengineapi.lifecycle.ProcessApplicationLifecycle
+import dev.bpmcrafters.processengineapi.lifecycle.ProcessApplicationPhase
 import io.github.oshai.kotlinlogging.KotlinLogging
 import jakarta.annotation.PostConstruct
 import org.camunda.community.rest.client.api.ExternalTaskApiClient
@@ -43,6 +46,7 @@ class C7RemoteInitialPullOnStartupAutoConfiguration {
   @Qualifier("c7remote-user-task-initial-pull")
   @ConditionalOnProperty(prefix = DEFAULT_PREFIX, name = ["user-tasks.execute-initial-pull-on-startup"])
   fun configureInitialPullForUserTaskDelivery(
+    lifecycle: ProcessApplicationLifecycle,
     taskApiClient: TaskApiClient,
     processDefinitionApiClient: ProcessDefinitionApiClient,
     subscriptionRepository: SubscriptionRepository,
@@ -59,12 +63,15 @@ class C7RemoteInitialPullOnStartupAutoConfiguration {
     executorService = executorService,
     valueMapper = valueMapper,
     c7RemoteAdapterProperties = c7AdapterProperties
-  )
+  ).also { binding ->
+    lifecycle.registerParticipant(ProcessApplicationPhase.RUNNING - 10) { binding.pullUserTasks() }
+  }
 
   @Bean("c7remote-service-task-initial-pull")
   @Qualifier("c7remote-service-task-initial-pull")
   @ConditionalOnProperty(prefix = DEFAULT_PREFIX, name = ["service-tasks.execute-initial-pull-on-startup"])
   fun configureInitialPullForExternalServiceTaskDelivery(
+    lifecycle: ProcessApplicationLifecycle,
     externalTaskApi: ExternalTaskApiClient,
     subscriptionRepository: SubscriptionRepository,
     c7AdapterProperties: C7RemoteAdapterProperties,
@@ -82,5 +89,7 @@ class C7RemoteInitialPullOnStartupAutoConfiguration {
     valueMapper = valueMapper,
     processDefinitionMetaDataResolver = processDefinitionMetaDataResolver,
     metrics = metrics,
-  )
+  ).also { binding ->
+    lifecycle.registerParticipant(ProcessApplicationPhase.RUNNING - 20) { binding.pullServiceTasks() }
+  }
 }

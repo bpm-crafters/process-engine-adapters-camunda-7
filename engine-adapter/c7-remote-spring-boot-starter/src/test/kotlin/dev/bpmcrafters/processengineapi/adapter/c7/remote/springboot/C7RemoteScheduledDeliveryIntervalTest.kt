@@ -1,7 +1,7 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot
 
-import dev.bpmcrafters.processengineapi.springboot.lifecycle.ProcessApplicationRunningEvent
-import dev.bpmcrafters.processengineapi.springboot.lifecycle.ProcessApplicationStoppingEvent
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.schedule.PullServiceTaskDeliveryAutoConfiguration
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.schedule.PullUserTaskDeliveryAutoConfiguration
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.eq
@@ -37,7 +37,7 @@ class C7RemoteScheduledDeliveryIntervalTest {
   lateinit var taskScheduler: TaskScheduler
 
   @Test
-  fun `starts and stops scheduled pulls through lifecycle events`() {
+  fun `starts and stops scheduled pulls`() {
     val scheduledServiceTaskDelivery = mock(ScheduledFuture::class.java)
     clearInvocations(taskScheduler)
     `when`(
@@ -48,12 +48,14 @@ class C7RemoteScheduledDeliveryIntervalTest {
       )
     ).thenReturn(scheduledServiceTaskDelivery)
 
-    context.publishEvent(ProcessApplicationRunningEvent())
+    context.getBean(PullServiceTaskDeliveryAutoConfiguration::class.java).start()
+    context.getBean(PullUserTaskDeliveryAutoConfiguration::class.java).start()
 
     verify(taskScheduler).scheduleWithFixedDelay(any(), any(), eq(Duration.ofMillis(200)))
     verify(taskScheduler).scheduleWithFixedDelay(any(), any(), eq(Duration.ofMillis(300)))
 
-    context.publishEvent(ProcessApplicationStoppingEvent())
+    context.getBean(PullServiceTaskDeliveryAutoConfiguration::class.java).stop()
+    context.getBean(PullUserTaskDeliveryAutoConfiguration::class.java).stop()
 
     verify(scheduledServiceTaskDelivery).cancel(false)
   }

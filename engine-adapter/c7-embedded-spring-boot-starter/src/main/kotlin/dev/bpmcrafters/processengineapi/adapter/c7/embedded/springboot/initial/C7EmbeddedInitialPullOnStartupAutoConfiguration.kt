@@ -4,6 +4,8 @@ import dev.bpmcrafters.processengineapi.adapter.c7.embedded.process.ProcessDefin
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot.*
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.delivery.pull.EmbeddedPullServiceTaskDeliveryMetrics
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
+import dev.bpmcrafters.processengineapi.lifecycle.ProcessApplicationLifecycle
+import dev.bpmcrafters.processengineapi.lifecycle.ProcessApplicationPhase
 import io.github.oshai.kotlinlogging.KotlinLogging
 import jakarta.annotation.PostConstruct
 import org.camunda.bpm.engine.ExternalTaskService
@@ -41,6 +43,7 @@ class C7EmbeddedInitialPullOnStartupAutoConfiguration {
   @Qualifier("c7embedded-user-task-initial-pull")
   @Conditional(C7EmbeddedAdapterUserTaskInitialPullEnabledCondition::class)
   fun configureInitialPullForUserTaskDelivery(
+    lifecycle: ProcessApplicationLifecycle,
     taskService: TaskService,
     @Qualifier("c7embedded-process-definition-meta-data-resolver")
     processDefinitionMetaDataResolver: ProcessDefinitionMetaDataResolver,
@@ -54,12 +57,15 @@ class C7EmbeddedInitialPullOnStartupAutoConfiguration {
     processDefinitionMetaDataResolver = processDefinitionMetaDataResolver,
     executorService = executorService,
     c7EmbeddedAdapterProperties = c7EmbeddedAdapterProperties
-  )
+  ).also { binding ->
+    lifecycle.registerParticipant(ProcessApplicationPhase.RUNNING - 10) { binding.pullUserTasks() }
+  }
 
   @Bean("c7embedded-service-task-initial-pull")
   @Qualifier("c7embedded-service-task-initial-pull")
   @Conditional(C7EmbeddedAdapterServiceTaskInitialPullEnabledCondition::class)
   fun configureInitialPullForExternalServiceTaskDelivery(
+    lifecycle: ProcessApplicationLifecycle,
     externalTaskService: ExternalTaskService,
     subscriptionRepository: SubscriptionRepository,
     c7AdapterProperties: C7EmbeddedAdapterProperties,
@@ -72,5 +78,7 @@ class C7EmbeddedInitialPullOnStartupAutoConfiguration {
     c7AdapterProperties = c7AdapterProperties,
     executor = executor,
     metrics = metrics
-  )
+  ).also { binding ->
+    lifecycle.registerParticipant(ProcessApplicationPhase.RUNNING - 20) { binding.pullServiceTasks() }
+  }
 }

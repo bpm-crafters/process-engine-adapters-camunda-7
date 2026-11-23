@@ -2,17 +2,12 @@ package dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.initial
 
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.process.ProcessDefinitionMetaDataResolver
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.C7RemoteAdapterProperties
-import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.initial.C7RemoteInitialPullServiceTasksDeliveryBinding.Companion.ORDER
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.PullServiceTaskDelivery
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.PullServiceTaskDeliveryMetrics
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
-import dev.bpmcrafters.processengineapi.springboot.lifecycle.ProcessApplicationRunningEvent
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.camunda.community.rest.client.api.ExternalTaskApiClient
 import org.camunda.community.rest.variables.ValueMapper
-import org.springframework.context.event.EventListener
-import org.springframework.core.Ordered
-import org.springframework.core.annotation.Order
 import java.util.concurrent.ThreadPoolExecutor
 
 private val logger = KotlinLogging.logger {}
@@ -22,7 +17,6 @@ private val logger = KotlinLogging.logger {}
  * We are not relying on the pull delivery strategy configured centrally, because for other deliveries we still want to
  * execute an initial pull.
  */
-@Order(ORDER)
 open class C7RemoteInitialPullServiceTasksDeliveryBinding(
   externalTaskApiClient: ExternalTaskApiClient,
   subscriptionRepository: SubscriptionRepository,
@@ -32,10 +26,6 @@ open class C7RemoteInitialPullServiceTasksDeliveryBinding(
   processDefinitionMetaDataResolver: ProcessDefinitionMetaDataResolver,
   metrics: PullServiceTaskDeliveryMetrics
 ) {
-  companion object {
-    const val ORDER = Ordered.HIGHEST_PRECEDENCE + 1000
-  }
-
   private val pullDelivery = PullServiceTaskDelivery(
     subscriptionRepository = subscriptionRepository,
     externalTaskApiClient = externalTaskApiClient,
@@ -51,9 +41,7 @@ open class C7RemoteInitialPullServiceTasksDeliveryBinding(
     metrics = metrics
   )
 
-  @EventListener
-  @Order(ORDER)
-  open fun pullServiceTasks(event: ProcessApplicationRunningEvent) {
+  open fun pullServiceTasks() {
     if (c7AdapterProperties.serviceTasks.executeInitialPullAsync) {
       executor.execute { deliverServiceTasks() }
     } else {
