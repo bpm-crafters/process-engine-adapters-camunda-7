@@ -10,6 +10,7 @@ import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.Pul
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.PullUserTaskDelivery
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.modification.UserTaskModificationApiImpl
 import dev.bpmcrafters.processengineapi.impl.task.ObservedServiceTaskCompletionApi
+import dev.bpmcrafters.processengineapi.impl.task.ObservedUserTaskCompletionApi
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import dev.bpmcrafters.processengineapi.task.ServiceTaskCompletionApi
 import dev.bpmcrafters.processengineapi.task.TaskExecutionObserver
@@ -176,12 +177,19 @@ class C7RemotePullServicesAutoConfiguration {
     taskApiClient: TaskApiClient,
     subscriptionRepository: SubscriptionRepository,
     valueMapper: ValueMapper,
-  ): UserTaskCompletionApi =
-    UserTaskCompletionApiImpl(
+    observers: ObjectProvider<TaskExecutionObserver>
+  ): UserTaskCompletionApi {
+    val completionApi = UserTaskCompletionApiImpl(
       taskApiClient = taskApiClient,
       subscriptionRepository = subscriptionRepository,
       valueMapper = valueMapper
     )
+    return if (observers.orderedStream().findAny().isEmpty) {
+      completionApi
+    } else {
+      ObservedUserTaskCompletionApi(completionApi, observers.orderedStream().toList())
+    }
+  }
 
   /**
    * User task modification api.
