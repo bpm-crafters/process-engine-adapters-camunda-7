@@ -78,6 +78,25 @@ internal class EmbeddedPullServiceTaskDeliveryTest {
   }
 
   @Test
+  fun `matches a task without tenant when requested`() {
+    val subscription = TaskSubscriptionHandle(
+      taskType = TaskType.EXTERNAL,
+      restrictions = mapOf(CommonRestrictions.WITHOUT_TENANT_ID to "true"),
+      taskDescriptionKey = "topic",
+      payloadDescription = null,
+      action = { _, _ -> },
+      termination = { }
+    )
+    val task: LockedExternalTask = mock()
+    whenever(task.topicName).thenReturn("topic")
+    whenever(task.tenantId).thenReturn(null)
+
+    with(taskDelivery) {
+      assertThat(subscription.matches(task)).isTrue()
+    }
+  }
+
+  @Test
   fun `failed delivery cleans up local state via termination handler`() {
     val subscriptionRepository = mock<dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository>()
     val delivery = EmbeddedPullServiceTaskDelivery(
