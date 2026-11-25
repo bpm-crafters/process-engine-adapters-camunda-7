@@ -55,6 +55,13 @@ so the adapter matches Spin instead of relying on the default selection.
 
 All embedded adapter properties use the prefix `dev.bpm-crafters.process-api.adapter.c7embedded`.
 
+### Lifecycle-managed delivery
+
+The embedded starter registers task subscriptions before entering `RUNNING`. Initial pulls then run on entry to
+`RUNNING`; recurring scheduled delivery starts in the same phase and is cancelled at `STOPPING`. Initial pulls run
+synchronously by default, so the lifecycle does not report `RUNNING` until enabled initial pulls have returned. Set
+`execute-initial-pull-async` to run an initial pull on its task worker executor instead.
+
 The adapter starter does not bring an embedded Camunda engine on its own. Add it together with a Camunda 7 embedded setup such as `camunda-bpm-spring-boot-starter` or `camunda-bpm-spring-boot-starter-webapp`.
 
 ### Minimal classpath
@@ -126,7 +133,8 @@ Turns the embedded adapter on or off. Default: `true`.
 | `delivery-strategy` | required | One of `embedded_scheduled`, `custom`, `disabled`. |
 | `schedule-delivery-fixed-rate-in-seconds` | `13` | Deprecated, use `schedule-delivery-fixed-rate`. Polling interval for `embedded_scheduled`. |
 | `schedule-delivery-fixed-rate` | not set | Polling delay for `embedded_scheduled` as a `Duration`, e.g. `200ms`. Takes precedence over `schedule-delivery-fixed-rate-in-seconds`. Must be at least `1ms`. A value without unit is read as milliseconds. The delay starts after the previous pull finished, including its handlers. Every pull also runs the cleanup query for locked tasks, so short intervals add engine load. |
-| `execute-initial-pull-on-startup` | `true` | Triggers one startup pull before the recurring scheduler takes over. |
+| `execute-initial-pull-on-startup` | `true` | Triggers one initial pull while the process application enters the `RUNNING` lifecycle phase, before the recurring scheduler takes over. |
+| `execute-initial-pull-async` | `false` | Executes the initial pull on the service-task worker executor instead of waiting for it while entering `RUNNING`. |
 
 #### `user-tasks.*`
 
@@ -135,7 +143,8 @@ Turns the embedded adapter on or off. Default: `true`.
 | `delivery-strategy` | required | One of `embedded_scheduled`, `custom`, `disabled`. |
 | `schedule-delivery-fixed-rate-in-seconds` | `5` | Deprecated, use `schedule-delivery-fixed-rate`. Polling interval for `embedded_scheduled`. |
 | `schedule-delivery-fixed-rate` | not set | Polling delay for `embedded_scheduled` as a `Duration`, e.g. `200ms`. Takes precedence over `schedule-delivery-fixed-rate-in-seconds`. Must be at least `1ms`. A value without unit is read as milliseconds. The delay starts after the previous pull finished, including its handlers. Every pull queries the engine, so short intervals add engine load. |
-| `execute-initial-pull-on-startup` | `true` | Triggers one startup pull before the recurring scheduler takes over. |
+| `execute-initial-pull-on-startup` | `true` | Triggers one initial pull while the process application enters the `RUNNING` lifecycle phase, before the recurring scheduler takes over. |
+| `execute-initial-pull-async` | `false` | Executes the initial pull on the user-task worker executor instead of waiting for it while entering `RUNNING`. |
 
 ### Example with explicit scheduling settings
 
@@ -154,10 +163,12 @@ dev:
             retry-timeout-in-seconds: 30
             retries: 3
             execute-initial-pull-on-startup: true
+            execute-initial-pull-async: false
             schedule-delivery-fixed-rate: 10s
           user-tasks:
             delivery-strategy: embedded_scheduled
             execute-initial-pull-on-startup: true
+            execute-initial-pull-async: false
             schedule-delivery-fixed-rate: 10s
 ```
 
@@ -203,6 +214,7 @@ the real type, you want to access if reading the field. For this purpose, `TaskI
 | Key                  | Original Type  | Description                                                                | Example                       |
 |----------------------|----------------|----------------------------------------------------------------------------|-------------------------------|
 | activityId           | String         | Id of the element in BPMN (Task definition key)                            | approve_user_task             |
+| activityInstanceId   | String         | Id of the activity instance of the service task                            | approve_user_task:a1b2c3d4    |
 | processDefinitionId  | String         | Id of process definition (given at deployment time)                        | approval_process:912834729348 |
 | processDefinitionKey | String         | Id of the process element in BPMN (Process Definition key)                 | approval_process              |
 | tenantId             | String         | Tenant Id                                                                  | my_tenant                     |

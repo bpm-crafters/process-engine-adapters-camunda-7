@@ -83,10 +83,16 @@ dev:
             retry-timeout-in-seconds: 30
             retries: 3
             execute-initial-pull-on-startup: true
+            execute-initial-pull-async: false
             schedule-delivery-fixed-rate: 10s
           user-tasks:
             delivery-strategy: embedded_scheduled
             execute-initial-pull-on-startup: true
+            execute-initial-pull-async: false
             schedule-delivery-fixed-rate: 10s
 
 ```
+
+Initial pulls happen when the process application enters the `RUNNING` lifecycle phase, after task subscriptions
+have been registered. They are synchronous by default. Set `execute-initial-pull-async: true` to submit an initial
+pull to the corresponding worker executor. Scheduled delivery starts at `RUNNING` and is cancelled at `STOPPING`.

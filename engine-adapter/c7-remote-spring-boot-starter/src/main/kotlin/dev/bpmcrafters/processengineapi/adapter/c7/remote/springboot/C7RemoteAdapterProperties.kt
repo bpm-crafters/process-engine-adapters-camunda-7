@@ -49,6 +49,10 @@ class C7RemoteAdapterProperties(
      */
     val executeInitialPullOnStartup: Boolean = true,
     /**
+     * Should the initial pull run asynchronously on the user task worker executor.
+     */
+    val executeInitialPullAsync: Boolean = false,
+    /**
      * Should variables be deserialized on server?
      */
     val deserializeOnServer: Boolean = false,
@@ -98,6 +102,10 @@ class C7RemoteAdapterProperties(
      * Should an initial pull be executed on startup.
      */
     val executeInitialPullOnStartup: Boolean = true,
+    /**
+     * Should the initial pull run asynchronously on the service task worker executor.
+     */
+    val executeInitialPullAsync: Boolean = false,
     /**
      * Default initial number of retries.
      */

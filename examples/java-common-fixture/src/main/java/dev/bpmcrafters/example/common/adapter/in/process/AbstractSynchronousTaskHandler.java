@@ -15,20 +15,20 @@ import static java.util.Optional.ofNullable;
  */
 @Slf4j
 public abstract class AbstractSynchronousTaskHandler {
-  private final TaskSubscriptionApi taskSubscriptionApi;
   private final ServiceTaskCompletionApi externalTaskCompletionApi;
   private final String topic;
+  private TaskSubscriptionApi taskSubscriptionApi;
   private TaskSubscription subscription;
 
-  public AbstractSynchronousTaskHandler(TaskSubscriptionApi taskSubscriptionApi, ServiceTaskCompletionApi externalTaskCompletionApi, String topic) {
-    this.taskSubscriptionApi = taskSubscriptionApi;
+  public AbstractSynchronousTaskHandler(ServiceTaskCompletionApi externalTaskCompletionApi, String topic) {
     this.externalTaskCompletionApi = externalTaskCompletionApi;
     this.topic = topic;
   }
 
   @SneakyThrows
-  public void register() {
+  public void register(TaskSubscriptionApi taskSubscriptionApi) {
     log.info("[EXTERNAL TASK HANDLER] Registering handler for {}", topic);
+    this.taskSubscriptionApi = taskSubscriptionApi;
     this.subscription = this.taskSubscriptionApi.subscribeForTask(
       new SubscribeForTaskCmd(
         CommonRestrictions.builder().build(),
@@ -69,6 +69,9 @@ public abstract class AbstractSynchronousTaskHandler {
 
   @SneakyThrows
   public void unregister() {
+    if (subscription == null || taskSubscriptionApi == null) {
+      return;
+    }
     log.info("[EXTERNAL TASK HANDLER] Un-registering handler for {}", topic);
     this.taskSubscriptionApi.unsubscribe(new UnsubscribeFromTaskCmd(subscription)).get();
   }

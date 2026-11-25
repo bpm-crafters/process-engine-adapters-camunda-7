@@ -205,6 +205,7 @@ class EmbeddedPullUserTaskDelivery(
         when (it.key) {
           CommonRestrictions.EXECUTION_ID -> it.value == task.executionId
           CommonRestrictions.TENANT_ID -> it.value == task.tenantId
+          CommonRestrictions.WITHOUT_TENANT_ID -> task.tenantId.isNullOrBlank()
           CommonRestrictions.ACTIVITY_ID -> it.value == task.taskDefinitionKey
           CommonRestrictions.PROCESS_INSTANCE_ID -> it.value == task.processInstanceId
           CommonRestrictions.PROCESS_DEFINITION_ID -> it.value == task.processDefinitionId

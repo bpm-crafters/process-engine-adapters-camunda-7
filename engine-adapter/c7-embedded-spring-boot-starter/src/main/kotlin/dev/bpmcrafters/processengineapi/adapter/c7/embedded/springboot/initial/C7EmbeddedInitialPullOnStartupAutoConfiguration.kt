@@ -4,6 +4,8 @@ import dev.bpmcrafters.processengineapi.adapter.c7.embedded.process.ProcessDefin
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot.*
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.delivery.pull.EmbeddedPullServiceTaskDeliveryMetrics
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
+import dev.bpmcrafters.processengineapi.lifecycle.ProcessApplicationLifecycle
+import dev.bpmcrafters.processengineapi.lifecycle.ProcessApplicationPhase
 import io.github.oshai.kotlinlogging.KotlinLogging
 import jakarta.annotation.PostConstruct
 import org.camunda.bpm.engine.ExternalTaskService
@@ -13,14 +15,13 @@ import org.springframework.boot.autoconfigure.AutoConfiguration
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Conditional
-import org.springframework.scheduling.annotation.EnableAsync
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.ThreadPoolExecutor
 
 private val logger = KotlinLogging.logger {}
 
 /**
- * This configuration configures the initial pull bound to the application started event.
+ * This configuration configures the initial pull bound to the process application running phase.
  * It is not relying on any delivery strategies but just configures the initial pull to happen
  * and deliver tasks to the task handlers.
  *
@@ -30,7 +31,6 @@ private val logger = KotlinLogging.logger {}
  */
 @AutoConfiguration
 @AutoConfigureAfter(C7EmbeddedAdapterAutoConfiguration::class)
-@EnableAsync
 @Conditional(C7EmbeddedAdapterEnabledCondition::class)
 class C7EmbeddedInitialPullOnStartupAutoConfiguration {
 
@@ -43,23 +43,29 @@ class C7EmbeddedInitialPullOnStartupAutoConfiguration {
   @Qualifier("c7embedded-user-task-initial-pull")
   @Conditional(C7EmbeddedAdapterUserTaskInitialPullEnabledCondition::class)
   fun configureInitialPullForUserTaskDelivery(
+    lifecycle: ProcessApplicationLifecycle,
     taskService: TaskService,
     @Qualifier("c7embedded-process-definition-meta-data-resolver")
     processDefinitionMetaDataResolver: ProcessDefinitionMetaDataResolver,
     subscriptionRepository: SubscriptionRepository,
     @Qualifier("c7embedded-user-task-worker-executor")
-    executorService: ExecutorService
+    executorService: ExecutorService,
+    c7EmbeddedAdapterProperties: C7EmbeddedAdapterProperties
   ) = C7EmbeddedInitialPullUserTasksDeliveryBinding(
     taskService = taskService,
     subscriptionRepository = subscriptionRepository,
     processDefinitionMetaDataResolver = processDefinitionMetaDataResolver,
-    executorService = executorService
-  )
+    executorService = executorService,
+    c7EmbeddedAdapterProperties = c7EmbeddedAdapterProperties
+  ).also { binding ->
+    lifecycle.registerParticipant(ProcessApplicationPhase.RUNNING - 10) { binding.pullUserTasks() }
+  }
 
   @Bean("c7embedded-service-task-initial-pull")
   @Qualifier("c7embedded-service-task-initial-pull")
   @Conditional(C7EmbeddedAdapterServiceTaskInitialPullEnabledCondition::class)
   fun configureInitialPullForExternalServiceTaskDelivery(
+    lifecycle: ProcessApplicationLifecycle,
     externalTaskService: ExternalTaskService,
     subscriptionRepository: SubscriptionRepository,
     c7AdapterProperties: C7EmbeddedAdapterProperties,
@@ -72,5 +78,7 @@ class C7EmbeddedInitialPullOnStartupAutoConfiguration {
     c7AdapterProperties = c7AdapterProperties,
     executor = executor,
     metrics = metrics
-  )
+  ).also { binding ->
+    lifecycle.registerParticipant(ProcessApplicationPhase.RUNNING - 20) { binding.pullServiceTasks() }
+  }
 }

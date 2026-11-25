@@ -8,6 +8,13 @@ title: Process Engine Adapter C7 Remote
 
 All remote adapter properties use the prefix `dev.bpm-crafters.process-api.adapter.c7remote`.
 
+### Lifecycle-managed delivery
+
+The remote starter registers task subscriptions before entering `RUNNING`. Initial pulls then run on entry to
+`RUNNING`; recurring scheduled delivery starts in the same phase and is cancelled at `STOPPING`. Initial pulls run
+synchronously by default, so the lifecycle does not report `RUNNING` until enabled initial pulls have returned. Set
+`execute-initial-pull-async` to run an initial pull on its task worker executor instead.
+
 The remote starter expects a Camunda 7 REST client library on the classpath. The official Camunda external task client is optional and only needed when service tasks use subscribed delivery.
 
 ### Classpath options
@@ -118,9 +125,12 @@ camunda:
 
 | Value | Effect |
 |-------|--------|
-| `remote_scheduled` | Polls user tasks over REST and enables user-task completion/modification beans. |
-| `custom` | Disables the built-in recurring delivery. Provide your own delivery and matching user-task beans if needed. |
-| `disabled` | Disables user-task delivery and configures a no-op user-task completion API. |
+| `remote_scheduled` | Polls user tasks over REST. |
+| `custom` | Disables the built-in recurring delivery; the application supplies delivery itself. |
+| `disabled` | Disables adapter-managed user-task delivery. |
+
+User-task completion and modification are command-side REST APIs. They are available for every user-task delivery
+strategy, including `custom` and `disabled`; the delivery strategy controls only adapter-managed delivery.
 
 #### Service tasks
 
@@ -149,7 +159,8 @@ Turns the remote adapter on or off. Default: `false`.
 | `delivery-strategy` | required | One of `remote_scheduled`, `remote_subscribed`, `custom`, `disabled`. |
 | `schedule-delivery-fixed-rate-in-seconds` | `13` | Deprecated, use `schedule-delivery-fixed-rate`. Polling interval for `remote_scheduled`. |
 | `schedule-delivery-fixed-rate` | not set | Polling delay for `remote_scheduled` as a `Duration`, e.g. `200ms`. Takes precedence over `schedule-delivery-fixed-rate-in-seconds`. Must be at least `1ms`. A value without unit is read as milliseconds. The delay starts after the previous pull finished. Handlers run asynchronously on the worker pool and are not awaited. Every pull also runs the cleanup query for locked tasks, so short intervals add engine load and more HTTP calls. |
-| `execute-initial-pull-on-startup` | `true` in property binding | Enable one startup pull before the recurring scheduler or subscriber takes over. Set it explicitly when you want startup delivery. |
+| `execute-initial-pull-on-startup` | `true` in property binding | Enable one initial pull while the process application enters the `RUNNING` lifecycle phase, before the recurring scheduler or subscriber takes over. Set it explicitly when you want startup delivery. |
+| `execute-initial-pull-async` | `false` | Execute the initial pull on the service-task worker executor instead of waiting for it while entering `RUNNING`. |
 | `deserialize-on-server` | `false` | Requests Camunda REST variable deserialization on the server side for scheduled pulls. |
 | `worker-thread-pool-size` | `10` | Thread pool size for scheduled service-task worker execution. |
 | `worker-thread-pool-queue-capacity` | `50` | Queue capacity for scheduled service-task worker execution. |
@@ -161,7 +172,8 @@ Turns the remote adapter on or off. Default: `false`.
 | `delivery-strategy` | required | One of `remote_scheduled`, `custom`, `disabled`. |
 | `schedule-delivery-fixed-rate-in-seconds` | `5` | Deprecated, use `schedule-delivery-fixed-rate`. Polling interval for `remote_scheduled`. |
 | `schedule-delivery-fixed-rate` | not set | Polling delay for `remote_scheduled` as a `Duration`, e.g. `200ms`. Takes precedence over `schedule-delivery-fixed-rate-in-seconds`. Must be at least `1ms`. A value without unit is read as milliseconds. The delay starts after the previous pull finished, including its handlers. Every pull sends REST calls to the engine, so short intervals add engine load and HTTP traffic. |
-| `execute-initial-pull-on-startup` | `true` in property binding | Enable one startup pull before the recurring scheduler takes over. Set it explicitly when you want startup delivery. |
+| `execute-initial-pull-on-startup` | `true` in property binding | Enable one initial pull while the process application enters the `RUNNING` lifecycle phase, before the recurring scheduler takes over. Set it explicitly when you want startup delivery. |
+| `execute-initial-pull-async` | `false` | Execute the initial pull on the user-task worker executor instead of waiting for it while entering `RUNNING`. |
 | `deserialize-on-server` | `false` | Requests Camunda REST variable deserialization on the server side for user-task polling. |
 
 ### Example with explicit scheduling settings
@@ -183,6 +195,7 @@ dev:
             worker-thread-pool-size: 2
             max-task-count: 2
             execute-initial-pull-on-startup: true
+            execute-initial-pull-async: false
           user-tasks:
             delivery-strategy: remote_scheduled
             schedule-delivery-fixed-rate: 5s
@@ -238,6 +251,7 @@ the real type, you want to access if reading the field. For this purpose, `TaskI
 | Key                  | Original Type  | Description                                                                | Example                       |
 |----------------------|----------------|----------------------------------------------------------------------------|-------------------------------|
 | activityId           | String         | Id of the element in BPMN (Task definition key)                            | approve_user_task             |
+| activityInstanceId   | String         | Id of the activity instance of the service task                            | approve_user_task:a1b2c3d4    |
 | processDefinitionId  | String         | Id of process definition (given at deployment time)                        | approval_process:912834729348 |
 | processDefinitionKey | String         | Id of the process element in BPMN (Process Definition key)                 | approval_process              |
 | tenantId             | String         | Tenant Id                                                                  | my_tenant                     |

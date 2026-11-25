@@ -8,6 +8,5 @@ public class JavaCamunda7RemoteExampleApplication {
 
   public static void main(String[] args) {
     SpringApplication.run(JavaCamunda7RemoteExampleApplication.class, args);
-
   }
 }
