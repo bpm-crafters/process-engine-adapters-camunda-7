@@ -7,7 +7,7 @@ permissions:
 on:
   push:
     branches:
-      - develop
+      - 'develop'
       - 'release/**'
   pull_request:
     branches:
@@ -42,7 +42,7 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v6.2.0
         with:
-          java-version: 17
+          java-version-file: .java-version
           distribution: 'zulu'
           cache: maven
 

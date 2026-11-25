@@ -1,8 +1,8 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.common.serialization
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper as jackson2ObjectMapper
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper as jackson2ObjectMapper
 import tools.jackson.module.kotlin.jacksonObjectMapper as jackson3ObjectMapper
 
 class AdapterDataConverterTest {
@@ -29,7 +29,10 @@ class AdapterDataConverterTest {
     converters.forEach { converter ->
       assertThat(
         converter.convert(
-          mapOf("score" to 23.5, "message" to "ok"),
+          mapOf(
+            "score" to 23.5,
+            "message" to "ok"
+          ),
           Offer::class.java,
         )
       ).isEqualTo(Offer(23.5, "ok"))
