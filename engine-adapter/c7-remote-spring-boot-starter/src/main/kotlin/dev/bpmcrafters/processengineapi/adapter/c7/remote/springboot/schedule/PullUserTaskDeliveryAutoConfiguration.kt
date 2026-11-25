@@ -4,16 +4,14 @@ import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.C7RemoteAda
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.C7RemoteAdapterProperties
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.C7RemotePullServicesAutoConfiguration
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.ConditionalOnUserTaskDeliveryStrategy
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.registerParticipant
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.PullUserTaskDelivery
-import dev.bpmcrafters.processengineapi.springboot.lifecycle.ProcessApplicationRunningEvent
-import dev.bpmcrafters.processengineapi.springboot.lifecycle.ProcessApplicationStoppingEvent
+import dev.bpmcrafters.processengineapi.lifecycle.ProcessApplicationLifecycle
+import dev.bpmcrafters.processengineapi.lifecycle.ProcessApplicationPhase
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.autoconfigure.AutoConfiguration
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
-import org.springframework.context.event.EventListener
-import org.springframework.core.Ordered
-import org.springframework.core.annotation.Order
 import org.springframework.scheduling.TaskScheduler
 import java.time.Duration
 import java.time.Instant
@@ -33,14 +31,18 @@ class PullUserTaskDeliveryAutoConfiguration(
   private val remotePullUserTaskDelivery: PullUserTaskDelivery,
   private val c7RemoteAdapterProperties: C7RemoteAdapterProperties,
   @Qualifier("c7remote-task-scheduler")
-  private val taskScheduler: TaskScheduler
+  private val taskScheduler: TaskScheduler,
+  lifecycle: ProcessApplicationLifecycle
 ) {
   private var scheduledDelivery: ScheduledFuture<*>? = null
 
-  @EventListener
-  @Order(Ordered.LOWEST_PRECEDENCE)
+  init {
+    lifecycle.registerParticipant(ProcessApplicationPhase.RUNNING) { start() }
+    lifecycle.registerParticipant(ProcessApplicationPhase.STOPPING) { stop() }
+  }
+
   @Synchronized
-  fun start(event: ProcessApplicationRunningEvent) {
+  fun start() {
     if (scheduledDelivery != null) {
       return
     }
@@ -53,9 +55,8 @@ class PullUserTaskDeliveryAutoConfiguration(
     )
   }
 
-  @EventListener
   @Synchronized
-  fun stop(event: ProcessApplicationStoppingEvent) {
+  fun stop() {
     scheduledDelivery?.cancel(false)
     scheduledDelivery = null
   }

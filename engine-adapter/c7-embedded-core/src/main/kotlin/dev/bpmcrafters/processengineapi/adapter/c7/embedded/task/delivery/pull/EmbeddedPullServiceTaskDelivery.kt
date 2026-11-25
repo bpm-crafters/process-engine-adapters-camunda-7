@@ -259,6 +259,7 @@ class EmbeddedPullServiceTaskDelivery(
           CommonRestrictions.ACTIVITY_ID -> it.value == task.activityId
           CommonRestrictions.BUSINESS_KEY -> it.value == task.businessKey
           CommonRestrictions.TENANT_ID -> it.value == task.tenantId
+          CommonRestrictions.WITHOUT_TENANT_ID -> task.tenantId.isNullOrBlank()
           CommonRestrictions.PROCESS_INSTANCE_ID -> it.value == task.processInstanceId
           CommonRestrictions.PROCESS_DEFINITION_KEY -> it.value == task.processDefinitionKey
           CommonRestrictions.PROCESS_DEFINITION_ID -> it.value == task.processDefinitionId

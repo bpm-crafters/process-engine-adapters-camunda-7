@@ -110,6 +110,7 @@ class SubscribingServiceTaskDelivery(
           CommonRestrictions.ACTIVITY_ID -> it.value == externalTask.activityId
           CommonRestrictions.BUSINESS_KEY -> it.value == externalTask.businessKey
           CommonRestrictions.TENANT_ID -> it.value == externalTask.tenantId
+          CommonRestrictions.WITHOUT_TENANT_ID -> externalTask.tenantId.isNullOrBlank()
           CommonRestrictions.PROCESS_INSTANCE_ID -> it.value == externalTask.processInstanceId
           CommonRestrictions.PROCESS_DEFINITION_KEY -> it.value == externalTask.processDefinitionKey
           CommonRestrictions.PROCESS_DEFINITION_ID -> it.value == externalTask.processDefinitionId

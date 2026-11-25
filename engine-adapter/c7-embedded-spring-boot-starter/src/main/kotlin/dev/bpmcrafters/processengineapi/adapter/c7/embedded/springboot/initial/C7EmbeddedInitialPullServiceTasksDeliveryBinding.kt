@@ -1,16 +1,11 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot.initial
 
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot.C7EmbeddedAdapterProperties
-import dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot.initial.C7EmbeddedInitialPullServiceTasksDeliveryBinding.Companion.ORDER
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.delivery.pull.EmbeddedPullServiceTaskDelivery
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.delivery.pull.EmbeddedPullServiceTaskDeliveryMetrics
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
-import dev.bpmcrafters.processengineapi.springboot.lifecycle.ProcessApplicationRunningEvent
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.camunda.bpm.engine.ExternalTaskService
-import org.springframework.context.event.EventListener
-import org.springframework.core.Ordered
-import org.springframework.core.annotation.Order
 import java.util.concurrent.ThreadPoolExecutor
 
 private val logger = KotlinLogging.logger {}
@@ -20,7 +15,6 @@ private val logger = KotlinLogging.logger {}
  * We are not relying on the pull delivery strategy configured centrally, because for other deliveries we still want to
  * execute an initial pull (e.g. for event-based delivery)
  */
-@Order(ORDER)
 open class C7EmbeddedInitialPullServiceTasksDeliveryBinding(
   externalTaskService: ExternalTaskService,
   subscriptionRepository: SubscriptionRepository,
@@ -28,10 +22,6 @@ open class C7EmbeddedInitialPullServiceTasksDeliveryBinding(
   private val executor: ThreadPoolExecutor,
   metrics: EmbeddedPullServiceTaskDeliveryMetrics
 ) {
-  companion object {
-    const val ORDER = Ordered.HIGHEST_PRECEDENCE + 1000
-  }
-
 
   private val pullDelivery = EmbeddedPullServiceTaskDelivery(
     subscriptionRepository = subscriptionRepository,
@@ -45,9 +35,7 @@ open class C7EmbeddedInitialPullServiceTasksDeliveryBinding(
     metrics = metrics
   )
 
-  @EventListener
-  @Order(ORDER)
-  open fun pullServiceTasks(event: ProcessApplicationRunningEvent) {
+  open fun pullServiceTasks() {
     if (c7AdapterProperties.serviceTasks.executeInitialPullAsync) {
       executor.execute { deliverServiceTasks() }
     } else {

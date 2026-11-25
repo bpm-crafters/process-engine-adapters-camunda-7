@@ -14,7 +14,7 @@
   <name>Camunda 7 Remote Testing Adapter</name>
 
   <properties>
-    <process-engine-api-testing.version>2026.10.1</process-engine-api-testing.version>
+    <process-engine-api-testing.version>2026.11.1</process-engine-api-testing.version>
   </properties>
 
   <dependencies>
