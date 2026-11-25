@@ -71,16 +71,6 @@
     </dependency>
 
     <dependency>
-      <groupId>org.camunda.bpm</groupId>
-      <artifactId>camunda-bpm-junit5</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.camunda.bpm</groupId>
-      <artifactId>camunda-bpm-assert</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-test</artifactId>
       <scope>test</scope>
@@ -91,26 +81,13 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>io.holunda.c7</groupId>
-      <artifactId>c7-process-test-coverage-junit5</artifactId>
-      <version>${c7.version}</version>
+      <groupId>dev.bpm-crafters.process-engine-adapters</groupId>
+      <artifactId>process-engine-adapter-camunda-platform-c7-embedded-testing</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>com.tngtech.jgiven</groupId>
-      <artifactId>jgiven-core</artifactId>
-      <version>${jgiven.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.tngtech.jgiven</groupId>
-      <artifactId>jgiven-junit5</artifactId>
-      <version>${jgiven.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.awaitility</groupId>
-      <artifactId>awaitility-kotlin</artifactId>
+      <groupId>dev.bpm-crafters.process-engine-api-testing</groupId>
+      <artifactId>process-engine-api-testing-jgiven</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
