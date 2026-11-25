@@ -20,6 +20,7 @@
     <deploy.skip>true</deploy.skip>
     <gpg.skip>true</gpg.skip>
     <dokka.skip>true</dokka.skip>
+    <process-engine-api-testing.version>2026.11.1</process-engine-api-testing.version>
   </properties>
 
   <modules>
@@ -54,6 +55,16 @@
         <groupId>dev.bpm-crafters.process-engine-adapters</groupId>
         <artifactId>process-engine-adapter-camunda-platform-c7-remote-spring-boot-starter</artifactId>
         <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>dev.bpm-crafters.process-engine-adapters</groupId>
+        <artifactId>process-engine-adapter-camunda-platform-c7-embedded-testing</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>dev.bpm-crafters.process-engine-api-testing</groupId>
+        <artifactId>process-engine-api-testing-jgiven</artifactId>
+        <version>${process-engine-api-testing.version}</version>
       </dependency>
       <dependency>
         <groupId>dev.bpm-crafters.process-engine-examples</groupId>
