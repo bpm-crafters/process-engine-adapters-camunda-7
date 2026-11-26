@@ -57,6 +57,12 @@
       <artifactId>c7-rest-client-spring-boot-starter-feign-4</artifactId>
       <version>${c7.version}</version>
     </dependency>
+    <!-- Feign's value mapper requires a Jackson 2 ObjectMapper bean. -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-jackson2</artifactId>
+      <scope>runtime</scope>
+    </dependency>
   </dependencies>
 
 </project>
