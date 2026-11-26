@@ -54,7 +54,8 @@ class SubscribingServiceTaskDelivery(
                     logger.debug { "PROCESS-ENGINE-C7-REMOTE-032: successfully delivered service task ${externalTask.id}." }
                   } catch (e: Exception) {
                     val jobRetries: Int = externalTask.retries?.minus(1) ?: retries
-                    logger.error { "PROCESS-ENGINE-C7-REMOTE-033: failing delivering task ${externalTask.id}: ${e.message}" }
+                    val failureMessage = "PROCESS-ENGINE-C7-REMOTE-033: failing delivering task ${externalTask.id}: ${e.message}"
+                    if (jobRetries > 0) logger.warn(e) { failureMessage } else logger.error(e) { failureMessage }
                     externalTaskService.handleFailure(
                       externalTask.id,
                       "Error delivering external task",
@@ -63,7 +64,7 @@ class SubscribingServiceTaskDelivery(
                       retryTimeoutInSeconds * 1000 // millis
                     )
                     cleanupFailedDelivery(externalTask.id)
-                    logger.error { "PROCESS-ENGINE-C7-REMOTE-034: successfully failed delivering task ${externalTask.id}: ${e.message}" }
+                    logger.debug { "PROCESS-ENGINE-C7-REMOTE-034: successfully failed delivering task ${externalTask.id}: ${e.message}" }
                   }
                 } else {
                   // put it back

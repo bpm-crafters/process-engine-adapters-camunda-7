@@ -135,9 +135,10 @@ class PullServiceTaskDelivery(
         logger.debug { "PROCESS-ENGINE-C7-REMOTE-032: successfully delivered service task ${lockedTask.id}." }
         metrics.incrementCompletedTasksCounter(lockedTask.topicName!!)
       } catch (e: Exception) {
-        logger.error { "PROCESS-ENGINE-C7-REMOTE-033: failing delivering task ${lockedTask.id}: ${e.message}" }
-        metrics.incrementFailedTasksCounter(lockedTask.topicName!!)
         val jobRetries: Int = lockedTask.retries?.minus(1) ?: retries
+        val failureMessage = "PROCESS-ENGINE-C7-REMOTE-033: failing delivering task ${lockedTask.id}: ${e.message}"
+        if (jobRetries > 0) logger.warn(e) { failureMessage } else logger.error(e) { failureMessage }
+        metrics.incrementFailedTasksCounter(lockedTask.topicName!!)
         externalTaskApiClient.handleFailure(
           lockedTask.id,
           ExternalTaskFailureDto().apply {
@@ -149,7 +150,7 @@ class PullServiceTaskDelivery(
           }
         )
         cleanupFailedDelivery(lockedTask.id!!)
-        logger.error { "PROCESS-ENGINE-C7-REMOTE-034: successfully failed delivering task ${lockedTask.id}: ${e.message}" }
+        logger.debug { "PROCESS-ENGINE-C7-REMOTE-034: successfully failed delivering task ${lockedTask.id}: ${e.message}" }
       } finally {
         metrics.recordTaskExecutionTime(lockedTask.topicName!!, Duration.between(start, OffsetDateTime.now()))
       }
