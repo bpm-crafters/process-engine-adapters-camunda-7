@@ -205,8 +205,11 @@ class C7EmbeddedSpringTaskExecutionObserverITest {
 
     awaitTrace(processInstanceId, TaskType.EXTERNAL, "close")
 
-    val failedTask = externalTaskService.createExternalTaskQuery().processInstanceId(processInstanceId).activityId(SERVICE_TASK).singleResult()
-    assertThat(failedTask.errorMessage).isEqualTo("handler failed")
+    // the delivery fails the task in the engine only after the observer cleanup has run
+    await().atMost(Duration.ofSeconds(15)).untilAsserted {
+      val failedTask = externalTaskService.createExternalTaskQuery().processInstanceId(processInstanceId).activityId(SERVICE_TASK).singleResult()
+      assertThat(failedTask.errorMessage).isEqualTo("handler failed")
+    }
     assertThat(trace.of(processInstanceId, TaskType.EXTERNAL).map { it.event }).containsSubsequence("handler", "outcome:Thrown", "close")
   }
 
