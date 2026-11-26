@@ -1,5 +1,6 @@
-package dev.bpmcrafters.example.javac7;
+package dev.bpmcrafters.example.smoke;
 
+import dev.bpmcrafters.example.javac7.JavaCamunda7ExampleApplication;
 import dev.bpmcrafters.example.common.application.port.out.UserTaskOutPort;
 import dev.bpmcrafters.example.common.application.port.out.WorkflowOutPort;
 import dev.bpmcrafters.processengineapi.task.TaskInformation;
@@ -14,6 +15,13 @@ import static dev.bpmcrafters.example.common.adapter.shared.SimpleProcessWorkflo
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
+/**
+ * Starts the actual Spring Boot 4 application context and executes a complete embedded-engine flow.
+ *
+ * The test is deliberately broader than the unit-level condition tests: it verifies that Camunda's
+ * process engine, scheduled adapter delivery, user-task completion, and message correlation all work
+ * together after the Boot 4 compatibility auto-configuration has replaced Camunda's original one.
+ */
 @SpringBootTest(
   classes = JavaCamunda7ExampleApplication.class,
   webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
@@ -22,7 +30,7 @@ import static org.awaitility.Awaitility.await;
     "dev.bpm-crafters.process-api.adapter.c7embedded.user-tasks.schedule-delivery-fixed-rate-in-seconds=1"
   }
 )
-class JavaCamunda7EmbeddedSpringBoot4Jackson3SmokeTest {
+class JavaCamunda7EmbeddedSpringBoot4SmokeTest {
 
   @Autowired
   private WorkflowOutPort workflowOutPort;
@@ -35,7 +43,7 @@ class JavaCamunda7EmbeddedSpringBoot4Jackson3SmokeTest {
 
   @Test
   void shouldStartAndCompleteSimpleProcessWithEmbeddedEngine() {
-    var correlationKey = "sb4-jackson3-smoke-" + UUID.randomUUID();
+    var correlationKey = "sb4-smoke-" + UUID.randomUUID();
 
     workflowOutPort.deploySimpleProcess();
     var processInstanceId = workflowOutPort.startSimpleProcess(correlationKey, 123);

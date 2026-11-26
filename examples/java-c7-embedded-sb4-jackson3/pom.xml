@@ -11,6 +11,7 @@
 
   <properties>
     <spring-boot.version>4.1.0</spring-boot.version>
+    <springdoc.version>3.0.3</springdoc.version>
   </properties>
 
   <artifactId>process-engine-api-example-java-c7-embedded-sb4-jackson3</artifactId>
@@ -25,11 +26,6 @@
         <scope>import</scope>
         <type>pom</type>
       </dependency>
-      <dependency>
-        <groupId>org.springdoc</groupId>
-        <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-        <version>3.0.3</version>
-      </dependency>
     </dependencies>
   </dependencyManagement>
 
@@ -37,6 +33,12 @@
     <dependency>
       <groupId>dev.bpm-crafters.process-engine-examples</groupId>
       <artifactId>process-engine-api-example-java-c7-common-fixture</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springdoc</groupId>
+      <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+      <version>${springdoc.version}</version>
     </dependency>
 
     <dependency>
@@ -51,7 +53,7 @@
     <dependency>
       <groupId>io.holunda</groupId>
       <artifactId>camunda-platform-7-autologin</artifactId>
-      <version>2026.11.1</version>
+      <version>${c7.version}</version>
     </dependency>
     <dependency>
       <groupId>com.h2database</groupId>

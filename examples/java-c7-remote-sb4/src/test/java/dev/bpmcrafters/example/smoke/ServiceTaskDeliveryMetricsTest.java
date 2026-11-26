@@ -1,4 +1,4 @@
-package dev.bpmcrafters.example.javac7;
+package dev.bpmcrafters.example.smoke;
 
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot.C7EmbeddedAdapterAutoConfiguration;
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.delivery.pull.EmbeddedPullServiceTaskDeliveryMetrics;
@@ -7,12 +7,11 @@ import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.Pul
 import io.micrometer.core.instrument.MeterRegistry;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.LazyInitializationBeanFactoryPostProcessor;
-import org.springframework.boot.actuate.autoconfigure.metrics.CompositeMeterRegistryAutoConfiguration;
-import org.springframework.boot.actuate.autoconfigure.metrics.MetricsAutoConfiguration;
-import org.springframework.boot.actuate.autoconfigure.metrics.export.simple.SimpleMetricsExportAutoConfiguration;
+import org.springframework.boot.micrometer.metrics.autoconfigure.CompositeMeterRegistryAutoConfiguration;
+import org.springframework.boot.micrometer.metrics.autoconfigure.MetricsAutoConfiguration;
+import org.springframework.boot.micrometer.metrics.autoconfigure.export.simple.SimpleMetricsExportAutoConfiguration;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.MapPropertySource;
 
 import java.util.Map;
@@ -56,7 +55,6 @@ class ServiceTaskDeliveryMetricsTest {
     return context;
   }
 
-  @Configuration(proxyBeanMethods = false)
   @ImportAutoConfiguration({
     C7RemoteAdapterAutoConfiguration.class,
     C7EmbeddedAdapterAutoConfiguration.class,
