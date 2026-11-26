@@ -25,12 +25,14 @@ class TaskSubscriptionApiImpl(
     val SUPPORTED_RESTRICTIONS = setOf(
       CommonRestrictions.EXECUTION_ID,
       CommonRestrictions.ACTIVITY_ID,
+      CommonRestrictions.BUSINESS_KEY,
       CommonRestrictions.TENANT_ID,
       CommonRestrictions.WITHOUT_TENANT_ID,
       CommonRestrictions.PROCESS_INSTANCE_ID,
       CommonRestrictions.PROCESS_DEFINITION_ID,
       CommonRestrictions.PROCESS_DEFINITION_KEY,
       CommonRestrictions.PROCESS_DEFINITION_VERSION_TAG,
+      CommonRestrictions.WORKER_LOCK_DURATION_IN_MILLISECONDS,
     )
   }
 }
