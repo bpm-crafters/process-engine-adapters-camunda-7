@@ -1,6 +1,7 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.remote.task.completion
 
 import dev.bpmcrafters.processengineapi.Empty
+import dev.bpmcrafters.processengineapi.adapter.c7.common.task.executeExternalTaskCommand
 import dev.bpmcrafters.processengineapi.adapter.c7.common.threading.withThreadContextClassLoader
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import dev.bpmcrafters.processengineapi.task.*
@@ -28,14 +29,14 @@ class FeignServiceTaskCompletionApiImpl(
   override fun completeTask(cmd: CompleteTaskCmd): CompletableFuture<Empty> {
     logger.debug { "PROCESS-ENGINE-C7-REMOTE-006: completing service task ${cmd.taskId}." }
     return CompletableFuture.supplyAsync {
-      externalTaskApiClient.completeExternalTaskResource(
-        cmd.taskId,
-        CompleteExternalTaskDto()
-          .apply {
-            this.variables = valueMapper.mapValues(cmd.get())
-            this.workerId = this@FeignServiceTaskCompletionApiImpl.workerId
-          }
-      )
+      val request = CompleteExternalTaskDto()
+        .apply {
+          this.variables = valueMapper.mapValues(cmd.get())
+          this.workerId = this@FeignServiceTaskCompletionApiImpl.workerId
+        }
+      executeExternalTaskCommand(cmd.taskId, subscriptionRepository, { isMissingFeignExternalTask(it, cmd.taskId) }) {
+        externalTaskApiClient.completeExternalTaskResource(cmd.taskId, request)
+      }
       subscriptionRepository.deactivateSubscriptionForTask(cmd.taskId)?.apply {
         withThreadContextClassLoader(termination) {
           termination.accept(TaskInformation(cmd.taskId, emptyMap()).withReason(TaskInformation.COMPLETE))
@@ -49,15 +50,15 @@ class FeignServiceTaskCompletionApiImpl(
   override fun completeTaskByError(cmd: CompleteTaskByErrorCmd): CompletableFuture<Empty> {
     logger.debug { "PROCESS-ENGINE-C7-REMOTE-008: throwing error ${cmd.errorCode} in service task ${cmd.taskId}." }
     return CompletableFuture.supplyAsync {
-      externalTaskApiClient.handleExternalTaskBpmnError(
-        cmd.taskId,
-        ExternalTaskBpmnError().apply {
-          this.workerId = this@FeignServiceTaskCompletionApiImpl.workerId
-          this.errorCode = cmd.errorCode
-          this.errorMessage = cmd.errorMessage
-          this.variables = valueMapper.mapValues(cmd.get())
-        }
-      )
+      val request = ExternalTaskBpmnError().apply {
+        this.workerId = this@FeignServiceTaskCompletionApiImpl.workerId
+        this.errorCode = cmd.errorCode
+        this.errorMessage = cmd.errorMessage
+        this.variables = valueMapper.mapValues(cmd.get())
+      }
+      executeExternalTaskCommand(cmd.taskId, subscriptionRepository, { isMissingFeignExternalTask(it, cmd.taskId) }) {
+        externalTaskApiClient.handleExternalTaskBpmnError(cmd.taskId, request)
+      }
       subscriptionRepository.deactivateSubscriptionForTask(cmd.taskId)?.apply {
         withThreadContextClassLoader(termination) {
           termination.accept(TaskInformation(cmd.taskId, emptyMap()).withReason(TaskInformation.COMPLETE))
@@ -73,16 +74,18 @@ class FeignServiceTaskCompletionApiImpl(
     return CompletableFuture.supplyAsync {
       val (retries, retryTimeoutInSeconds) = failureRetrySupplier.apply(cmd.taskId)
       val retryTimeoutInMillis = cmd.retryBackoff?.toMillis() ?: (retryTimeoutInSeconds * 1000)
-      externalTaskApiClient.handleFailure(
-        cmd.taskId,
-        ExternalTaskFailureDto().apply {
-          this.workerId = this@FeignServiceTaskCompletionApiImpl.workerId
-          this.retries = cmd.retryCount ?: retries
-          this.retryTimeout = retryTimeoutInMillis
-          this.errorDetails = cmd.errorDetails
-          this.errorMessage = cmd.reason
-        }
-      )
+      executeExternalTaskCommand(cmd.taskId, subscriptionRepository, { isMissingFeignExternalTask(it, cmd.taskId) }) {
+        externalTaskApiClient.handleFailure(
+          cmd.taskId,
+          ExternalTaskFailureDto().apply {
+            this.workerId = this@FeignServiceTaskCompletionApiImpl.workerId
+            this.retries = cmd.retryCount ?: retries
+            this.retryTimeout = retryTimeoutInMillis
+            this.errorDetails = cmd.errorDetails
+            this.errorMessage = cmd.reason
+          }
+        )
+      }
       subscriptionRepository.deactivateSubscriptionForTask(cmd.taskId)?.apply {
         withThreadContextClassLoader(termination) {
           termination.accept(TaskInformation(cmd.taskId, emptyMap()).withReason(TaskInformation.COMPLETE))

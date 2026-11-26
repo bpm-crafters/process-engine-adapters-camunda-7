@@ -1,6 +1,7 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.remote.task.completion
 
 import dev.bpmcrafters.processengineapi.Empty
+import dev.bpmcrafters.processengineapi.adapter.c7.common.task.executeExternalTaskCommand
 import dev.bpmcrafters.processengineapi.adapter.c7.common.threading.withThreadContextClassLoader
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import dev.bpmcrafters.processengineapi.task.*
@@ -24,12 +25,15 @@ class OfficialClientServiceTaskCompletionApiImpl(
   override fun completeTask(cmd: CompleteTaskCmd): CompletableFuture<Empty> {
     logger.debug { "PROCESS-ENGINE-C7-REMOTE-006: completing service task ${cmd.taskId}." }
     return CompletableFuture.supplyAsync {
-      externalTaskService
-        .complete(
-          cmd.taskId,
-          cmd.get(),
-          mapOf()
-        )
+      val variables = cmd.get()
+      executeExternalTaskCommand(cmd.taskId, subscriptionRepository, { isMissingClientExternalTask(it, cmd.taskId) }) {
+        externalTaskService
+          .complete(
+            cmd.taskId,
+            variables,
+            mapOf()
+          )
+      }
       subscriptionRepository.deactivateSubscriptionForTask(cmd.taskId)?.apply {
         withThreadContextClassLoader(termination) {
           termination.accept(
@@ -45,13 +49,16 @@ class OfficialClientServiceTaskCompletionApiImpl(
   override fun completeTaskByError(cmd: CompleteTaskByErrorCmd): CompletableFuture<Empty> {
     logger.debug { "PROCESS-ENGINE-C7-REMOTE-008: throwing error ${cmd.errorCode} in service task ${cmd.taskId}." }
     return CompletableFuture.supplyAsync {
-      externalTaskService
-        .handleBpmnError(
-          cmd.taskId,
-          cmd.errorCode,
-          cmd.errorMessage,
-          cmd.get()
-        )
+      val variables = cmd.get()
+      executeExternalTaskCommand(cmd.taskId, subscriptionRepository, { isMissingClientExternalTask(it, cmd.taskId) }) {
+        externalTaskService
+          .handleBpmnError(
+            cmd.taskId,
+            cmd.errorCode,
+            cmd.errorMessage,
+            variables
+          )
+      }
       subscriptionRepository.deactivateSubscriptionForTask(cmd.taskId)?.apply {
         withThreadContextClassLoader(termination) {
           termination.accept(
@@ -69,14 +76,16 @@ class OfficialClientServiceTaskCompletionApiImpl(
     return CompletableFuture.supplyAsync {
       val (retries, retryTimeoutInSeconds) = failureRetrySupplier.apply(cmd.taskId)
       val retryTimeoutInMillis = cmd.retryBackoff?.toMillis() ?: (retryTimeoutInSeconds * 1000)
-      externalTaskService
-        .handleFailure(
-          cmd.taskId,
-          cmd.reason,
-          cmd.errorDetails,
-          cmd.retryCount ?: retries,
-          retryTimeoutInMillis
-        )
+      executeExternalTaskCommand(cmd.taskId, subscriptionRepository, { isMissingClientExternalTask(it, cmd.taskId) }) {
+        externalTaskService
+          .handleFailure(
+            cmd.taskId,
+            cmd.reason,
+            cmd.errorDetails,
+            cmd.retryCount ?: retries,
+            retryTimeoutInMillis
+          )
+      }
       subscriptionRepository.deactivateSubscriptionForTask(cmd.taskId)?.apply {
         withThreadContextClassLoader(termination) {
           termination.accept(

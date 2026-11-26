@@ -1,21 +1,36 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.subscribe
 
 import dev.bpmcrafters.processengineapi.CommonRestrictions
+import dev.bpmcrafters.processengineapi.adapter.c7.common.task.ExternalTaskNotFoundException
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.completion.OfficialClientServiceTaskCompletionApiImpl
+import dev.bpmcrafters.processengineapi.impl.task.InMemSubscriptionRepository
+import dev.bpmcrafters.processengineapi.task.CompleteTaskCmd
 import dev.bpmcrafters.processengineapi.task.TaskInformation
 import dev.bpmcrafters.processengineapi.impl.task.TaskSubscriptionHandle
 import dev.bpmcrafters.processengineapi.task.TaskType
+import dev.bpmcrafters.processengineapi.test.assertMissingTaskLoggedOnce
+import dev.bpmcrafters.processengineapi.test.captureAdapterLogs
 import org.assertj.core.api.Assertions.assertThat
 import org.camunda.bpm.client.ExternalTaskClient
+import org.camunda.bpm.client.exception.NotFoundException
+import org.camunda.bpm.client.exception.RestException
 import org.camunda.bpm.client.task.ExternalTaskHandler
 import org.camunda.bpm.client.task.ExternalTask
 import org.camunda.bpm.client.task.ExternalTaskService
 import org.camunda.bpm.client.topic.TopicSubscriptionBuilder
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertAll
+import org.junit.jupiter.api.assertThrows
 import org.mockito.kotlin.any
+import org.mockito.kotlin.anyOrNull
+import org.mockito.kotlin.doThrow
+import org.mockito.kotlin.eq
 import org.mockito.kotlin.mock
+import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.ExecutionException
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -112,5 +127,62 @@ internal class SubscribingServiceTaskDeliveryTest {
     assertEquals(TaskInformation.DELETE, terminated.single().meta[TaskInformation.REASON])
     verify(externalTaskService).handleFailure("1", "Error delivering external task", "boom", 1, 60_000)
     verify(subscriptionRepository).deactivateSubscriptionForTask("1")
+  }
+
+  @Test
+  fun `missing task from official client completion ends delivery without reporting failure`() {
+    val restFailure = RestException("External task with id 1 does not exist", "RestException", 0)
+      .apply { httpStatusCode = 404 }
+    val missing = NotFoundException("External task with id 1 does not exist", restFailure)
+    val externalTaskService = mock<ExternalTaskService>()
+    doThrow(missing).whenever(externalTaskService).complete(eq("1"), any(), any())
+    val repository = InMemSubscriptionRepository()
+    val completionApi = OfficialClientServiceTaskCompletionApiImpl(externalTaskService, repository, mock())
+    val terminated = mutableListOf<TaskInformation>()
+    lateinit var completionFailure: Throwable
+    val subscription = TaskSubscriptionHandle(
+      taskType = TaskType.EXTERNAL,
+      restrictions = emptyMap(),
+      taskDescriptionKey = "topic",
+      payloadDescription = null,
+      action = { delivered, _ ->
+        val failure = assertThrows<ExecutionException> {
+          completionApi.completeTask(CompleteTaskCmd(delivered.taskId) { emptyMap() }).get()
+        }
+        completionFailure = requireNotNull(failure.cause)
+        throw failure
+      },
+      termination = { terminated.add(it) }
+    )
+    repository.createTaskSubscription(subscription)
+    val builder = mock<TopicSubscriptionBuilder>(defaultAnswer = org.mockito.Answers.RETURNS_SELF)
+    val handler = org.mockito.kotlin.argumentCaptor<ExternalTaskHandler>()
+    whenever(externalTaskClient.subscribe("topic")).thenReturn(builder)
+    whenever(builder.open()).thenReturn(mock())
+    val task = mock<ExternalTask> {
+      on { id }.thenReturn("1")
+      on { topicName }.thenReturn("topic")
+      on { retries }.thenReturn(2)
+      on { allVariables }.thenReturn(emptyMap())
+    }
+    SubscribingServiceTaskDelivery(externalTaskClient, repository, 30, 60, 3).subscribe()
+    verify(builder).handler(handler.capture())
+
+    val logs = captureAdapterLogs {
+      handler.singleValue.execute(task, externalTaskService)
+    }
+
+    assertAll(
+      { assertMissingTaskLoggedOnce(logs, "1") },
+      { verify(externalTaskService, never()).handleFailure(eq("1"), anyOrNull(), anyOrNull(), any(), any()) },
+      { assertThat(completionFailure).isInstanceOfSatisfying(ExternalTaskNotFoundException::class.java) {
+          assertThat(it.taskId).isEqualTo("1")
+        } },
+      { assertThat(completionFailure.cause).isSameAs(missing) },
+      { assertThat(terminated.map { it.taskId to it.meta[TaskInformation.REASON] })
+          .containsExactly("1" to TaskInformation.DELETE) },
+      { assertThat(repository.getActiveSubscriptionForTask("1")).isNull() },
+      { assertThat(repository.getTaskSubscriptions()).containsExactly(subscription) }
+    )
   }
 }

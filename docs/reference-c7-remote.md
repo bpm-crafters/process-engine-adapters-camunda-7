@@ -134,6 +134,11 @@ strategy, including `custom` and `disabled`; the delivery strategy controls only
 
 #### Service tasks
 
+If Camunda confirms that a service task disappeared before a completion, BPMN error, or failure command reached it,
+the command future fails with the C7 adapter's `ExternalTaskNotFoundException`. Both remote delivery strategies end
+the local delivery with reason `DELETE`. If the exception reaches the delivery handler, the adapter logs it at
+`DEBUG` and skips a follow-up failure command. Other HTTP 404 responses follow normal failure handling.
+
 | Value | Effect |
 |-------|--------|
 | `remote_scheduled` | Polls external tasks over REST with the Feign-based client. |

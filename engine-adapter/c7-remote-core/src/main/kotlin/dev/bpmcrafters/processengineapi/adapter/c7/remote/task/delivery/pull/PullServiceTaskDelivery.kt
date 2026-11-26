@@ -2,6 +2,7 @@ package dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull
 
 import dev.bpmcrafters.processengineapi.CommonRestrictions
 import dev.bpmcrafters.processengineapi.adapter.c7.common.threading.withThreadContextClassLoader
+import dev.bpmcrafters.processengineapi.adapter.c7.common.task.ExternalTaskNotFoundException
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.process.ProcessDefinitionMetaDataResolver
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.RefreshableDelivery
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.ServiceTaskDelivery
@@ -135,6 +136,11 @@ class PullServiceTaskDelivery(
         logger.debug { "PROCESS-ENGINE-C7-REMOTE-032: successfully delivered service task ${lockedTask.id}." }
         metrics.incrementCompletedTasksCounter(lockedTask.topicName!!)
       } catch (e: Exception) {
+        val taskId = lockedTask.id!!
+        if (ExternalTaskNotFoundException.matches(e, taskId)) {
+          logger.debug { "PROCESS-ENGINE-C7-REMOTE-048: external task $taskId no longer exists." }
+          return@Callable
+        }
         val jobRetries: Int = lockedTask.retries?.minus(1) ?: retries
         val failureMessage = "PROCESS-ENGINE-C7-REMOTE-033: failing delivering task ${lockedTask.id}: ${e.message}"
         if (jobRetries > 0) logger.warn(e) { failureMessage } else logger.error(e) { failureMessage }
