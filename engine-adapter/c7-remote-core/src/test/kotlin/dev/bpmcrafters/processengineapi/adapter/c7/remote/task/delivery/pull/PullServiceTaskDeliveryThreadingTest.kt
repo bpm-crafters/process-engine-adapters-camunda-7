@@ -23,6 +23,7 @@ import org.mockito.kotlin.*
 import org.springframework.http.ResponseEntity
 import java.time.Duration
 import java.util.concurrent.Callable
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit.MILLISECONDS
@@ -62,14 +63,13 @@ internal class PullServiceTaskDeliveryThreadingTest {
     metrics = metrics
   ))
 
-  private val executingTaskHandlers = LinkedBlockingQueue<TaskHandler>()
+  private val blockedTaskReleases = LinkedBlockingQueue<CountDownLatch>()
 
   private inner class TestTaskHandlerImpl : TaskHandler {
     override fun accept(taskInformation: TaskInformation, variables: Map<String, Any?>) {
-      synchronized(this) {
-        executingTaskHandlers.offer(this)
-        wait()
-      }
+      val release = CountDownLatch(1)
+      blockedTaskReleases.offer(release)
+      release.await()
     }
   }
 
@@ -181,18 +181,7 @@ internal class PullServiceTaskDeliveryThreadingTest {
 
   fun executeTaskHandlers(n: Int) {
     (1..n).forEach { _ ->
-      val executingTaskHandler = executingTaskHandlers.poll(5, SECONDS)!!
-      synchronized(executingTaskHandler) {
-        executingTaskHandler.notifyAll()
-      }
+      blockedTaskReleases.poll(5, SECONDS)!!.countDown()
     }
   }
 }
-
-private fun TaskHandler.wait() =
-  @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
-  (this as Object).wait()
-
-private fun TaskHandler.notifyAll() =
-  @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
-  (this as Object).notifyAll()
