@@ -1,6 +1,7 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.delivery.pull
 
 import dev.bpmcrafters.processengineapi.CommonRestrictions
+import dev.bpmcrafters.processengineapi.impl.task.InMemSubscriptionRepository
 import dev.bpmcrafters.processengineapi.impl.task.TaskSubscriptionHandle
 import dev.bpmcrafters.processengineapi.task.TaskInformation
 import dev.bpmcrafters.processengineapi.task.TaskType
@@ -9,6 +10,10 @@ import org.camunda.bpm.engine.ExternalTaskService
 import org.camunda.bpm.engine.externaltask.LockedExternalTask
 import org.camunda.bpm.engine.variable.Variables
 import org.junit.jupiter.api.Test
+import org.mockito.kotlin.any
+import org.mockito.kotlin.anyOrNull
+import org.mockito.kotlin.doReturn
+import org.mockito.kotlin.doThrow
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
@@ -29,9 +34,11 @@ internal class EmbeddedPullServiceTaskDeliveryTest {
     whenever(executor.queue).thenReturn(queue)
   }
 
+  private val subscriptionRepository = InMemSubscriptionRepository()
+
   private val taskDelivery = EmbeddedPullServiceTaskDelivery(
     externalTaskService = externalTaskService,
-    subscriptionRepository = mock(),
+    subscriptionRepository = subscriptionRepository,
     executor = executor,
     lockDurationInSeconds = 30,
     workerId = "worker",
@@ -141,5 +148,46 @@ internal class EmbeddedPullServiceTaskDeliveryTest {
     assertEquals(TaskInformation.DELETE, terminated.single().meta[TaskInformation.REASON])
     verify(externalTaskService).handleFailure("1", "worker", "Something went wrong", 1, 60_000)
     verify(subscriptionRepository).deactivateSubscriptionForTask("1")
+  }
+
+  @Test
+  fun `failed delivery cleans up local state even if reporting the failure fails`() {
+    val taskIdsPassedToTerminationHandler = mutableListOf<String>()
+    val subscription = subscriptionThrowing(RuntimeException("Something went wrong"), taskIdsPassedToTerminationHandler)
+    doThrow(IllegalStateException("database unavailable"))
+      .whenever(externalTaskService).handleFailure(any(), any(), anyOrNull(), any(), any())
+
+    taskDelivery.createTaskActionHandlerCallable(lockedTask(), subscription).call()
+
+    assertThat(taskIdsPassedToTerminationHandler).containsExactly("1")
+    assertThat(subscriptionRepository.getActiveSubscriptionForTask("1")).isNull()
+  }
+
+  @Test
+  fun `error thrown by the handler is reported as failure`() {
+    val taskIdsPassedToTerminationHandler = mutableListOf<String>()
+    val subscription = subscriptionThrowing(NoClassDefFoundError("missing class"), taskIdsPassedToTerminationHandler)
+
+    taskDelivery.createTaskActionHandlerCallable(lockedTask(), subscription).call()
+
+    verify(externalTaskService).handleFailure("1", "worker", "missing class", 1, 60_000)
+    assertThat(taskIdsPassedToTerminationHandler).containsExactly("1")
+  }
+
+  private fun subscriptionThrowing(throwable: Throwable, taskIdsPassedToTerminationHandler: MutableList<String>) = TaskSubscriptionHandle(
+    taskType = TaskType.EXTERNAL,
+    restrictions = mapOf(),
+    taskDescriptionKey = "topic",
+    payloadDescription = null,
+    action = { _, _ -> throw throwable },
+    termination = { taskIdsPassedToTerminationHandler.add(it.taskId) }
+  )
+
+  private fun lockedTask(): LockedExternalTask = mock {
+    on { id } doReturn "1"
+    on { topicName } doReturn "topic"
+    on { lockExpirationTime } doReturn Date(System.currentTimeMillis() + 20_000)
+    on { retries } doReturn 2
+    on { variables } doReturn Variables.createVariables()
   }
 }

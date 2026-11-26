@@ -147,16 +147,19 @@ class EmbeddedPullServiceTaskDelivery(
             }
             logger.debug { "PROCESS-ENGINE-C7-EMBEDDED-032: successfully delivered service task ${lockedTask.id}." }
           }
-          logger.debug { "PROCESS-ENGINE-C7-REMOTE-032: successfully delivered service task ${lockedTask.id}." }
           metrics.incrementCompletedTasksCounter(lockedTask.topicName!!)
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
           val jobRetries: Int = lockedTask.retries?.minus(1) ?: retries
           logger.error { "PROCESS-ENGINE-C7-EMBEDDED-033: failing delivering task ${lockedTask.id}: ${e.message}" }
           metrics.incrementFailedTasksCounter(lockedTask.topicName!!)
-          externalTaskService.handleFailure(lockedTask.id, workerId, e.message, jobRetries, retryTimeoutInSeconds * 1000)
-          cleanupFailedDelivery(lockedTask.id)
-          logger.error { "PROCESS-ENGINE-C7-EMBEDDED-034: successfully failed delivering task ${lockedTask.id}: ${e.message}" }
-
+          try {
+            externalTaskService.handleFailure(lockedTask.id, workerId, e.message, jobRetries, retryTimeoutInSeconds * 1000)
+            logger.error { "PROCESS-ENGINE-C7-EMBEDDED-034: successfully failed delivering task ${lockedTask.id}: ${e.message}" }
+          } catch (reportError: Exception) {
+            logger.error(reportError) { "PROCESS-ENGINE-C7-EMBEDDED-048: failed reporting the failure of task ${lockedTask.id}, it is delivered again once its lock expires." }
+          } finally {
+            cleanupFailedDelivery(lockedTask.id)
+          }
         } finally {
           metrics.recordTaskExecutionTime(lockedTask.topicName!!, Duration.between(start, OffsetDateTime.now()))
         }
