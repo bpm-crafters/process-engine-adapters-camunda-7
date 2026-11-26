@@ -42,7 +42,12 @@ import java.util.concurrent.*
 
 private val logger = KotlinLogging.logger {}
 
-@AutoConfiguration(afterName = ["org.springframework.boot.actuate.autoconfigure.metrics.CompositeMeterRegistryAutoConfiguration"])
+@AutoConfiguration(
+  afterName = [
+    "org.springframework.boot.actuate.autoconfigure.metrics.CompositeMeterRegistryAutoConfiguration",
+    "org.springframework.boot.micrometer.metrics.autoconfigure.CompositeMeterRegistryAutoConfiguration"
+  ]
+)
 @EnableConfigurationProperties(value = [C7RemoteAdapterProperties::class])
 @Conditional(C7RemoteAdapterEnabledCondition::class)
 class C7RemoteAdapterAutoConfiguration {

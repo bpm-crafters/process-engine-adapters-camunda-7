@@ -60,7 +60,12 @@ private val logger = KotlinLogging.logger {}
  * `AutoConfiguration.imports`; the adapter enabled condition intentionally applies only to these
  * adapter-facing beans, not to the separate Camunda Spring Boot 4 compatibility configuration.
  */
-@AutoConfiguration
+@AutoConfiguration(
+  afterName = [
+    "org.springframework.boot.actuate.autoconfigure.metrics.CompositeMeterRegistryAutoConfiguration",
+    "org.springframework.boot.micrometer.metrics.autoconfigure.CompositeMeterRegistryAutoConfiguration"
+  ]
+)
 @EnableConfigurationProperties(value = [C7EmbeddedAdapterProperties::class])
 @Conditional(C7EmbeddedAdapterEnabledCondition::class)
 class C7EmbeddedAdapterAutoConfiguration {
