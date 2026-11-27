@@ -22,6 +22,9 @@ First of all, add the corresponding adapter and an embedded Camunda 7 starter to
 </dependencies>
 ```
 
+Declare `org.springframework.boot:spring-boot-starter-validation` in your application if you use Bean Validation.
+The adapter declares it as an optional dependency.
+
 ## Spring Boot 4
 
 The embedded adapter starter is compatible with Spring Boot 3 and Spring Boot 4. A runnable Spring Boot 4 example is

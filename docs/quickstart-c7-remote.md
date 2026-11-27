@@ -30,6 +30,9 @@ you need a Camunda 7 REST client on the classpath. The current examples use the 
 </dependencies>
 ```
 
+Declare `org.springframework.boot:spring-boot-starter-validation` in your application if you use Bean Validation.
+The adapter declares it as an optional dependency.
+
 If you build on Spring Boot 4, use `io.holunda.c7:c7-rest-client-spring-boot-starter-feign-4` instead of `...-feign`.
 
 ## Jackson and Spin combinations
