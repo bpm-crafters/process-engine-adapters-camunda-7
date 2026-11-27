@@ -2,6 +2,7 @@ package dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.delivery.pull
 
 import dev.bpmcrafters.processengineapi.CommonRestrictions
 import dev.bpmcrafters.processengineapi.adapter.c7.common.threading.withThreadContextClassLoader
+import dev.bpmcrafters.processengineapi.adapter.c7.common.task.ExternalTaskNotFoundException
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.delivery.ExternalServiceTaskDelivery
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.delivery.pull.EmbeddedPullServiceTaskDeliveryMetrics.DropReason.EXPIRED_WHILE_IN_QUEUE
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.delivery.pull.EmbeddedPullServiceTaskDeliveryMetrics.DropReason.NO_MATCHING_SUBSCRIPTIONS
@@ -149,6 +150,10 @@ class EmbeddedPullServiceTaskDelivery(
           }
           metrics.incrementCompletedTasksCounter(lockedTask.topicName!!)
         } catch (e: Throwable) {
+          val taskId = lockedTask.id
+          if (ExternalTaskNotFoundException.matches(e, taskId)) {
+            return@Callable
+          }
           val jobRetries: Int = lockedTask.retries?.minus(1) ?: retries
           val failureMessage = "PROCESS-ENGINE-C7-EMBEDDED-033: failing delivering task ${lockedTask.id}: ${e.message}"
           if (jobRetries > 0) logger.warn(e) { failureMessage } else logger.error(e) { failureMessage }

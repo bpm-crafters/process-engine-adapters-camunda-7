@@ -1,5 +1,7 @@
 package dev.bpmcrafters.example.common.adapter.out.process;
 
+import static dev.bpmcrafters.example.common.adapter.shared.AsyncResult.await;
+
 import dev.bpmcrafters.example.common.adapter.shared.SimpleProcessWorkflowConst;
 import dev.bpmcrafters.example.common.adapter.shared.SimpleProcessWorkflowConst.Expressions;
 import dev.bpmcrafters.example.common.application.port.out.WorkflowOutPort;
@@ -18,7 +20,6 @@ import dev.bpmcrafters.processengineapi.process.StartProcessByDefinitionCmd;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -35,22 +36,20 @@ public class WorkflowAdapter implements WorkflowOutPort {
   private final DeploymentApi deploymentApi;
 
   @Override
-  @SneakyThrows
   public DeploymentInformation deploySimpleProcess() {
-    return deploymentApi.deploy(
+    return await(deploymentApi.deploy(
       new DeployBundleCommand(
         List.of(
           NamedResource.fromClasspath(SimpleProcessWorkflowConst.BPMN)
         ),
         null
       )
-    ).get();
+    ));
   }
 
   @Override
-  @SneakyThrows
   public String startSimpleProcess(String value, Integer intValue) {
-    return startProcessApi.startProcess(
+    return await(startProcessApi.startProcess(
         new StartProcessByDefinitionCmd(
           SimpleProcessWorkflowConst.KEY,
           Map.of(
@@ -59,14 +58,13 @@ public class WorkflowAdapter implements WorkflowOutPort {
             "listVariable", List.of("element1", "element2")
           )
         )
-      ).get()
+      ))
       .getInstanceId();
   }
 
   @Override
-  @SneakyThrows
   public void correlateMessage(String correlationValue, String variableValue) {
-    correlationApi.correlateMessage(
+    await(correlationApi.correlateMessage(
       new CorrelateMessageCmd(
         Expressions.MESSAGE_1,
         Map.of(
@@ -74,13 +72,12 @@ public class WorkflowAdapter implements WorkflowOutPort {
         ),
         Correlation.withKey(correlationValue)
       )
-    ).get();
+    ));
   }
 
   @Override
-  @SneakyThrows
   public void deliverSignal(String variableValue) {
-    signalApi.sendSignal(
+    await(signalApi.sendSignal(
       new SendSignalCmd(
         Expressions.SIGNAL_1,
         () -> Map.of(
@@ -88,6 +85,6 @@ public class WorkflowAdapter implements WorkflowOutPort {
         ),
         CommonRestrictions.builder().build()
       )
-    ).get();
+    ));
   }
 }

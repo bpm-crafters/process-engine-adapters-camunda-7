@@ -1,9 +1,9 @@
 package dev.bpmcrafters.example.common.application.port.in.decision;
 
-import java.util.concurrent.Future;
+import java.util.concurrent.CompletableFuture;
 
 public interface EvaluateSingleHitSingleOutputDecisionInPort {
 
-  Future<Integer> evaluate(int id, int amount);
+  CompletableFuture<Integer> evaluate(int id, int amount);
 
 }

@@ -1,7 +1,9 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import dev.bpmcrafters.processengineapi.task.ChangeDatesModifyTaskCmd.SetFollowUpDateTaskCmd
 import dev.bpmcrafters.processengineapi.task.UserTaskModificationApi
+import feign.FeignException
 import io.toolisticon.testing.jgiven.GIVEN
 import io.toolisticon.testing.jgiven.THEN
 import io.toolisticon.testing.jgiven.WHEN
@@ -9,6 +11,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.camunda.community.rest.client.api.TaskApiClient
 import org.camunda.community.rest.client.model.TaskDto
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ActiveProfiles
 import java.time.OffsetDateTime
@@ -99,6 +102,17 @@ class C7RemoteTaskApiITest : AbstractC7RemoteApiITestBase() {
 
     WHEN
       .`complete the external task`()
+  }
+
+  @Test
+  fun `Feign classifies Camunda's missing external task response after process deletion`() {
+    val missing = completeDeletedExternalTask()
+
+    val cause = assertInstanceOf(FeignException.NotFound::class.java, missing.cause)
+    val body = ObjectMapper().readTree(cause.contentUTF8())
+    assertThat(cause.status()).isEqualTo(404)
+    assertThat(body.path("type").asText()).isEqualTo("RestException")
+    assertThat(body.path("message").asText()).isEqualTo("External task with id ${missing.taskId} does not exist")
   }
 
   @Test

@@ -1,5 +1,7 @@
 package dev.bpmcrafters.example.common.adapter.out.process;
 
+import static dev.bpmcrafters.example.common.adapter.shared.AsyncResult.await;
+
 import dev.bpmcrafters.example.common.application.port.out.UserTaskOutPort;
 import dev.bpmcrafters.processengineapi.task.support.UserTaskSupport;
 import dev.bpmcrafters.processengineapi.task.CompleteTaskByErrorCmd;
@@ -7,7 +9,6 @@ import dev.bpmcrafters.processengineapi.task.CompleteTaskCmd;
 import dev.bpmcrafters.processengineapi.task.TaskInformation;
 import dev.bpmcrafters.processengineapi.task.UserTaskCompletionApi;
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
@@ -36,27 +37,25 @@ public class UserTaskAdapter implements UserTaskOutPort {
   }
 
   @Override
-  @SneakyThrows
   public void complete(String taskId, String value) {
-    taskCompletionApi.completeTask(
+    await(taskCompletionApi.completeTask(
       new CompleteTaskCmd(
         taskId,
         () -> Map.of("some-user-value", value)
       )
-    ).get();
+    ));
   }
 
   @Override
-  @SneakyThrows
   public void completeWithError(String taskId, String value) {
-    taskCompletionApi.completeTaskByError(
+    await(taskCompletionApi.completeTaskByError(
       new CompleteTaskByErrorCmd(
         taskId,
         "user_error",
         "some error",
         () -> Map.of("some-user-value", value)
       )
-    ).get();
+    ));
   }
 
 }

@@ -109,6 +109,11 @@ dev:
 
 #### Service tasks
 
+If Camunda confirms that a service task disappeared before a completion, BPMN error, or failure command reached it,
+the command future fails with the C7 adapter's `ExternalTaskNotFoundException`. The adapter logs the rejected command
+once at `DEBUG`, even if the handler ignores the future, and ends the local delivery with reason `DELETE`. If the
+exception propagates out of the handler, the adapter skips a follow-up failure command.
+
 | Value | Effect |
 |-------|--------|
 | `embedded_scheduled` | Uses the built-in scheduler and the local `ExternalTaskService` to fetch-and-lock external tasks. |

@@ -1,12 +1,14 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.completion
 
 import dev.bpmcrafters.processengineapi.Empty
+import dev.bpmcrafters.processengineapi.adapter.c7.common.task.ExternalTaskCommandExecutor
 import dev.bpmcrafters.processengineapi.adapter.c7.common.threading.withThreadContextClassLoader
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.shared.EngineCommandExecutor
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import dev.bpmcrafters.processengineapi.task.*
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.camunda.bpm.engine.ExternalTaskService
+import org.camunda.bpm.engine.exception.NotFoundException
 import java.util.concurrent.CompletableFuture
 
 private val logger = KotlinLogging.logger {}
@@ -22,15 +24,22 @@ class C7ServiceTaskCompletionApiImpl(
   private val commandExecutor: EngineCommandExecutor
 ) : ServiceTaskCompletionApi {
 
+  private val externalTaskCommandExecutor = ExternalTaskCommandExecutor(subscriptionRepository) { failure, _ ->
+    failure is NotFoundException
+  }
+
   override fun completeTask(cmd: CompleteTaskCmd): CompletableFuture<Empty> {
 
     logger.debug { "PROCESS-ENGINE-C7-EMBEDDED-006: completing service task ${cmd.taskId}." }
     return commandExecutor.execute {
-      externalTaskService.complete(
-        cmd.taskId,
-        workerId,
-        cmd.get()
-      )
+      val variables = cmd.get()
+      externalTaskCommandExecutor.execute(cmd.taskId) {
+        externalTaskService.complete(
+          cmd.taskId,
+          workerId,
+          variables
+        )
+      }
       subscriptionRepository.deactivateSubscriptionForTask(cmd.taskId)?.apply {
         withThreadContextClassLoader(termination) {
           termination.accept(TaskInformation(cmd.taskId, emptyMap()).withReason(TaskInformation.COMPLETE))
@@ -44,13 +53,16 @@ class C7ServiceTaskCompletionApiImpl(
   override fun completeTaskByError(cmd: CompleteTaskByErrorCmd): CompletableFuture<Empty> {
     logger.debug { "PROCESS-ENGINE-C7-EMBEDDED-008: throwing error ${cmd.errorCode} in service task ${cmd.taskId}." }
     return commandExecutor.execute {
-      externalTaskService.handleBpmnError(
-        cmd.taskId,
-        workerId,
-        cmd.errorCode,
-        cmd.errorMessage,
-        cmd.get()
-      )
+      val variables = cmd.get()
+      externalTaskCommandExecutor.execute(cmd.taskId) {
+        externalTaskService.handleBpmnError(
+          cmd.taskId,
+          workerId,
+          cmd.errorCode,
+          cmd.errorMessage,
+          variables
+        )
+      }
       subscriptionRepository.deactivateSubscriptionForTask(cmd.taskId)?.apply {
         withThreadContextClassLoader(termination) {
           termination.accept(TaskInformation(cmd.taskId, emptyMap()).withReason(TaskInformation.COMPLETE))
@@ -66,14 +78,16 @@ class C7ServiceTaskCompletionApiImpl(
     return commandExecutor.execute {
       val (retries, retryTimeoutInSeconds) = failureRetrySupplier.apply(cmd.taskId)
       val retryTimeoutInMillis = cmd.retryBackoff?.toMillis() ?: retryTimeoutInSeconds * 1000
-      externalTaskService.handleFailure(
-        cmd.taskId,
-        workerId,
-        cmd.reason,
-        cmd.errorDetails,
-        cmd.retryCount ?: retries,
-        retryTimeoutInMillis
-      )
+      externalTaskCommandExecutor.execute(cmd.taskId) {
+        externalTaskService.handleFailure(
+          cmd.taskId,
+          workerId,
+          cmd.reason,
+          cmd.errorDetails,
+          cmd.retryCount ?: retries,
+          retryTimeoutInMillis
+        )
+      }
       subscriptionRepository.deactivateSubscriptionForTask(cmd.taskId)?.apply {
         withThreadContextClassLoader(termination) {
           termination.accept(TaskInformation(cmd.taskId, emptyMap()).withReason(TaskInformation.COMPLETE))

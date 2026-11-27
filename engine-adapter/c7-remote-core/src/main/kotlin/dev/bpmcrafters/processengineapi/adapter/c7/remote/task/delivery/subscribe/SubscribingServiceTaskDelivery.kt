@@ -2,6 +2,7 @@ package dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.subscri
 
 import dev.bpmcrafters.processengineapi.CommonRestrictions
 import dev.bpmcrafters.processengineapi.adapter.c7.common.threading.withThreadContextClassLoader
+import dev.bpmcrafters.processengineapi.adapter.c7.common.task.ExternalTaskNotFoundException
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.ServiceTaskDelivery
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import dev.bpmcrafters.processengineapi.impl.task.TaskSubscriptionHandle
@@ -53,6 +54,10 @@ class SubscribingServiceTaskDelivery(
                     }
                     logger.debug { "PROCESS-ENGINE-C7-REMOTE-032: successfully delivered service task ${externalTask.id}." }
                   } catch (e: Exception) {
+                    val taskId = externalTask.id
+                    if (ExternalTaskNotFoundException.matches(e, taskId)) {
+                      return@handler
+                    }
                     val jobRetries: Int = externalTask.retries?.minus(1) ?: retries
                     val failureMessage = "PROCESS-ENGINE-C7-REMOTE-033: failing delivering task ${externalTask.id}: ${e.message}"
                     if (jobRetries > 0) logger.warn(e) { failureMessage } else logger.error(e) { failureMessage }

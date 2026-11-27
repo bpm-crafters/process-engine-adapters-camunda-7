@@ -1,18 +1,27 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull
 
 import dev.bpmcrafters.processengineapi.CommonRestrictions
+import dev.bpmcrafters.processengineapi.adapter.c7.common.task.ExternalTaskNotFoundException
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.process.ProcessDefinitionMetaDataResolver
+import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.completion.FeignServiceTaskCompletionApiImpl
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.PullServiceTaskDeliveryMetrics.DropReason.EXPIRED_WHILE_IN_QUEUE
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.PullServiceTaskDeliveryMetrics.DropReason.NO_MATCHING_SUBSCRIPTIONS
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.PullServiceTaskDeliveryMetrics.FetchAndLockSkipReason.NO_SUBSCRIPTIONS
 import dev.bpmcrafters.processengineapi.adapter.c7.remote.task.delivery.pull.PullServiceTaskDeliveryMetrics.FetchAndLockSkipReason.QUEUE_FULL
+import dev.bpmcrafters.processengineapi.impl.task.InMemSubscriptionRepository
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import dev.bpmcrafters.processengineapi.impl.task.TaskSubscriptionHandle
+import dev.bpmcrafters.processengineapi.task.CompleteTaskCmd
 import dev.bpmcrafters.processengineapi.task.TaskInformation
 import dev.bpmcrafters.processengineapi.task.TaskInformation.Companion.CREATE
 import dev.bpmcrafters.processengineapi.task.TaskInformation.Companion.DELETE
 import dev.bpmcrafters.processengineapi.task.TaskInformation.Companion.REASON
 import dev.bpmcrafters.processengineapi.task.TaskType
+import dev.bpmcrafters.processengineapi.test.assertMissingTaskLoggedOnce
+import dev.bpmcrafters.processengineapi.test.captureAdapterLogs
+import feign.FeignException
+import feign.Request
+import feign.Response
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.camunda.bpm.engine.variable.Variables
@@ -21,6 +30,8 @@ import org.camunda.community.rest.client.model.*
 import org.camunda.community.rest.variables.ValueMapper
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertAll
+import org.junit.jupiter.api.assertThrows
 import org.mockito.Mockito.clearInvocations
 import org.mockito.Mockito.lenient
 import org.mockito.kotlin.*
@@ -30,6 +41,7 @@ import java.time.OffsetDateTime
 import java.util.UUID.randomUUID
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.Callable
+import java.util.concurrent.CompletionException
 import java.util.concurrent.ThreadPoolExecutor
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -476,6 +488,79 @@ internal class PullServiceTaskDeliveryTest {
 
     kotlin.test.assertFalse(taskDelivery.matches(task, subscription))
   }
+
+  @Test
+  fun `missing task from Feign completion ends delivery without reporting failure`() {
+    val missing = notFound(
+      Request.HttpMethod.POST,
+      "http://camunda/engine-rest/external-task/1/complete",
+      """{"type":"RestException","message":"External task with id 1 does not exist"}"""
+    )
+    whenever(externalTaskApiClient.completeExternalTaskResource(eq("1"), any())).thenThrow(missing)
+    val repository = InMemSubscriptionRepository()
+    val completionApi = FeignServiceTaskCompletionApiImpl(workerId, externalTaskApiClient, repository, mock(), valueMapper)
+    val terminated = mutableListOf<TaskInformation>()
+    lateinit var completionFailure: Throwable
+    val task = mockLockedExternalTaskDto("1").processDefinitionId("process:1:definition")
+    val subscription = mockTaskSubscriptionHandle().copy(
+      action = { delivered, _ ->
+        val failure = assertThrows<CompletionException> {
+          completionApi.completeTask(CompleteTaskCmd(delivered.taskId) { emptyMap() }).join()
+        }
+        completionFailure = requireNotNull(failure.cause)
+        throw failure
+      },
+      termination = { terminated.add(it) }
+    )
+    repository.createTaskSubscription(subscription)
+    whenever(valueMapper.mapDtos(task.variables!!)).thenReturn(Variables.createVariables())
+    val delivery = PullServiceTaskDelivery(
+      externalTaskApiClient, mock(), workerId, repository, 2, 10, 10, 1, executor, valueMapper, false, metrics
+    )
+
+    val logs = captureAdapterLogs {
+      delivery.createTaskActionHandlerCallable(task, subscription).call()
+    }
+
+    assertAll(
+      { assertMissingTaskLoggedOnce(logs, "1") },
+      { verify(externalTaskApiClient, never()).handleFailure(eq("1"), any()) },
+      { assertThat(completionFailure).isInstanceOfSatisfying(ExternalTaskNotFoundException::class.java) {
+          assertThat(it.taskId).isEqualTo("1")
+        } },
+      { assertThat(completionFailure.cause).isSameAs(missing) },
+      { assertThat(terminated.map { it.taskId to it.meta[REASON] }).containsExactly("1" to DELETE) },
+      { assertThat(repository.getActiveSubscriptionForTask("1")).isNull() },
+      { assertThat(repository.getTaskSubscriptions()).containsExactly(subscription) }
+    )
+  }
+
+  @Test
+  fun `unrelated Feign 404 from handler follows normal failure reporting`() {
+    val businessFailure = notFound(Request.HttpMethod.GET, "http://inventory/orders/42", """{"message":"Order 42 not found"}""")
+    val task = mockLockedExternalTaskDto("1").retries(2)
+    val subscription = mockTaskSubscriptionHandle().copy(action = { _, _ -> throw businessFailure })
+    whenever(valueMapper.mapDtos(task.variables!!)).thenReturn(Variables.createVariables())
+    doReturn(mockTaskInformation("1")).whenever(taskDelivery).toTaskInformation(task)
+
+    taskDelivery.createTaskActionHandlerCallable(task, subscription).call()
+
+    verify(externalTaskApiClient).handleFailure(eq("1"), failureDtoCaptor.capture())
+    assertThat(failureDtoCaptor.singleValue.retries).isEqualTo(1)
+    assertThat(failureDtoCaptor.singleValue.errorMessage).isEqualTo(businessFailure.message)
+  }
+
+  private fun notFound(method: Request.HttpMethod, url: String, body: String): FeignException =
+    FeignException.errorStatus(
+      "test request",
+      Response.builder()
+        .status(404)
+        .reason("Not Found")
+        .headers(mapOf("Content-Type" to listOf("application/json")))
+        .request(Request.create(method, url, emptyMap(), null, Charsets.UTF_8, null))
+        .body(body, Charsets.UTF_8)
+        .build()
+    )
 
   fun mockExternalTask(id: String): ExternalTaskDto = ExternalTaskDto().id(id)
 
