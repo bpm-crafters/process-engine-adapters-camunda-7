@@ -1,11 +1,13 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.remote.task.completion
 
 import dev.bpmcrafters.processengineapi.Empty
-import dev.bpmcrafters.processengineapi.adapter.c7.common.task.executeExternalTaskCommand
+import dev.bpmcrafters.processengineapi.adapter.c7.common.task.ExternalTaskCommandExecutor
 import dev.bpmcrafters.processengineapi.adapter.c7.common.threading.withThreadContextClassLoader
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import dev.bpmcrafters.processengineapi.task.*
 import io.github.oshai.kotlinlogging.KotlinLogging
+import org.camunda.bpm.client.exception.NotFoundException
+import org.camunda.bpm.client.exception.RestException
 import java.util.concurrent.CompletableFuture
 import org.camunda.bpm.client.task.ExternalTaskService as ClientExternalTaskService
 
@@ -22,11 +24,13 @@ class OfficialClientServiceTaskCompletionApiImpl(
   private val failureRetrySupplier: FailureRetrySupplier
 ) : ServiceTaskCompletionApi {
 
+  private val externalTaskCommandExecutor = ExternalTaskCommandExecutor(subscriptionRepository, ::isMissingExternalTask)
+
   override fun completeTask(cmd: CompleteTaskCmd): CompletableFuture<Empty> {
     logger.debug { "PROCESS-ENGINE-C7-REMOTE-006: completing service task ${cmd.taskId}." }
     return CompletableFuture.supplyAsync {
       val variables = cmd.get()
-      executeExternalTaskCommand(cmd.taskId, subscriptionRepository, { isMissingClientExternalTask(it, cmd.taskId) }) {
+      externalTaskCommandExecutor.execute(cmd.taskId) {
         externalTaskService
           .complete(
             cmd.taskId,
@@ -50,7 +54,7 @@ class OfficialClientServiceTaskCompletionApiImpl(
     logger.debug { "PROCESS-ENGINE-C7-REMOTE-008: throwing error ${cmd.errorCode} in service task ${cmd.taskId}." }
     return CompletableFuture.supplyAsync {
       val variables = cmd.get()
-      executeExternalTaskCommand(cmd.taskId, subscriptionRepository, { isMissingClientExternalTask(it, cmd.taskId) }) {
+      externalTaskCommandExecutor.execute(cmd.taskId) {
         externalTaskService
           .handleBpmnError(
             cmd.taskId,
@@ -76,7 +80,7 @@ class OfficialClientServiceTaskCompletionApiImpl(
     return CompletableFuture.supplyAsync {
       val (retries, retryTimeoutInSeconds) = failureRetrySupplier.apply(cmd.taskId)
       val retryTimeoutInMillis = cmd.retryBackoff?.toMillis() ?: (retryTimeoutInSeconds * 1000)
-      executeExternalTaskCommand(cmd.taskId, subscriptionRepository, { isMissingClientExternalTask(it, cmd.taskId) }) {
+      externalTaskCommandExecutor.execute(cmd.taskId) {
         externalTaskService
           .handleFailure(
             cmd.taskId,
@@ -96,5 +100,11 @@ class OfficialClientServiceTaskCompletionApiImpl(
       }
       Empty
     }
+  }
+
+  private fun isMissingExternalTask(failure: Exception, taskId: String): Boolean {
+    if (failure !is NotFoundException) return false
+    val response = failure.cause as? RestException ?: return false
+    return response.type == "RestException" && response.message == "External task with id $taskId does not exist"
   }
 }

@@ -1,7 +1,7 @@
 package dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.completion
 
 import dev.bpmcrafters.processengineapi.Empty
-import dev.bpmcrafters.processengineapi.adapter.c7.common.task.executeExternalTaskCommand
+import dev.bpmcrafters.processengineapi.adapter.c7.common.task.ExternalTaskCommandExecutor
 import dev.bpmcrafters.processengineapi.adapter.c7.common.threading.withThreadContextClassLoader
 import dev.bpmcrafters.processengineapi.adapter.c7.embedded.shared.EngineCommandExecutor
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
@@ -24,12 +24,16 @@ class C7ServiceTaskCompletionApiImpl(
   private val commandExecutor: EngineCommandExecutor
 ) : ServiceTaskCompletionApi {
 
+  private val externalTaskCommandExecutor = ExternalTaskCommandExecutor(subscriptionRepository) { failure, _ ->
+    failure is NotFoundException
+  }
+
   override fun completeTask(cmd: CompleteTaskCmd): CompletableFuture<Empty> {
 
     logger.debug { "PROCESS-ENGINE-C7-EMBEDDED-006: completing service task ${cmd.taskId}." }
     return commandExecutor.execute {
       val variables = cmd.get()
-      executeExternalTaskCommand(cmd.taskId, subscriptionRepository, { it is NotFoundException }) {
+      externalTaskCommandExecutor.execute(cmd.taskId) {
         externalTaskService.complete(
           cmd.taskId,
           workerId,
@@ -50,7 +54,7 @@ class C7ServiceTaskCompletionApiImpl(
     logger.debug { "PROCESS-ENGINE-C7-EMBEDDED-008: throwing error ${cmd.errorCode} in service task ${cmd.taskId}." }
     return commandExecutor.execute {
       val variables = cmd.get()
-      executeExternalTaskCommand(cmd.taskId, subscriptionRepository, { it is NotFoundException }) {
+      externalTaskCommandExecutor.execute(cmd.taskId) {
         externalTaskService.handleBpmnError(
           cmd.taskId,
           workerId,
@@ -74,7 +78,7 @@ class C7ServiceTaskCompletionApiImpl(
     return commandExecutor.execute {
       val (retries, retryTimeoutInSeconds) = failureRetrySupplier.apply(cmd.taskId)
       val retryTimeoutInMillis = cmd.retryBackoff?.toMillis() ?: retryTimeoutInSeconds * 1000
-      executeExternalTaskCommand(cmd.taskId, subscriptionRepository, { it is NotFoundException }) {
+      externalTaskCommandExecutor.execute(cmd.taskId) {
         externalTaskService.handleFailure(
           cmd.taskId,
           workerId,
