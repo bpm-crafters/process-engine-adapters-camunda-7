@@ -30,7 +30,11 @@ class FeignServiceTaskCompletionApiImpl(
   private val valueMapper: ValueMapper
 ) : ServiceTaskCompletionApi {
 
-  private val externalTaskCommandExecutor = ExternalTaskCommandExecutor(subscriptionRepository, ::isMissingExternalTask)
+  private val externalTaskCommandExecutor = ExternalTaskCommandExecutor(
+    subscriptionRepository,
+    failureRetrySupplier::clear,
+    ::isMissingExternalTask
+  )
 
   override fun completeTask(cmd: CompleteTaskCmd): CompletableFuture<Empty> {
     logger.debug { "PROCESS-ENGINE-C7-REMOTE-006: completing service task ${cmd.taskId}." }
@@ -43,6 +47,7 @@ class FeignServiceTaskCompletionApiImpl(
       externalTaskCommandExecutor.execute(cmd.taskId) {
         externalTaskApiClient.completeExternalTaskResource(cmd.taskId, request)
       }
+      failureRetrySupplier.clear(cmd.taskId)
       subscriptionRepository.deactivateSubscriptionForTask(cmd.taskId)?.apply {
         withThreadContextClassLoader(termination) {
           termination.accept(TaskInformation(cmd.taskId, emptyMap()).withReason(TaskInformation.COMPLETE))
@@ -65,6 +70,7 @@ class FeignServiceTaskCompletionApiImpl(
       externalTaskCommandExecutor.execute(cmd.taskId) {
         externalTaskApiClient.handleExternalTaskBpmnError(cmd.taskId, request)
       }
+      failureRetrySupplier.clear(cmd.taskId)
       subscriptionRepository.deactivateSubscriptionForTask(cmd.taskId)?.apply {
         withThreadContextClassLoader(termination) {
           termination.accept(TaskInformation(cmd.taskId, emptyMap()).withReason(TaskInformation.COMPLETE))
@@ -78,20 +84,23 @@ class FeignServiceTaskCompletionApiImpl(
   override fun failTask(cmd: FailTaskCmd): CompletableFuture<Empty> {
     logger.debug { "PROCESS-ENGINE-C7-REMOTE-010: failing service task ${cmd.taskId}." }
     return CompletableFuture.supplyAsync {
-      val (retries, retryTimeoutInSeconds) = failureRetrySupplier.apply(cmd.taskId)
-      val retryTimeoutInMillis = cmd.retryBackoff?.toMillis() ?: (retryTimeoutInSeconds * 1000)
+      val retry = if (cmd.retryCount == null) failureRetrySupplier.apply(cmd.taskId) else null
+      val retries = cmd.retryCount ?: checkNotNull(retry).retryCount
+      val retryTimeoutInMillis = cmd.retryBackoff?.toMillis()
+        ?: (retry?.retryTimeout ?: failureRetrySupplier.retryTimeout(cmd.taskId)) * 1000
       externalTaskCommandExecutor.execute(cmd.taskId) {
         externalTaskApiClient.handleFailure(
           cmd.taskId,
           ExternalTaskFailureDto().apply {
             this.workerId = this@FeignServiceTaskCompletionApiImpl.workerId
-            this.retries = cmd.retryCount ?: retries
+            this.retries = retries
             this.retryTimeout = retryTimeoutInMillis
             this.errorDetails = cmd.errorDetails
             this.errorMessage = cmd.reason
           }
         )
       }
+      if (retries == 0) failureRetrySupplier.clear(cmd.taskId)
       subscriptionRepository.deactivateSubscriptionForTask(cmd.taskId)?.apply {
         withThreadContextClassLoader(termination) {
           termination.accept(TaskInformation(cmd.taskId, emptyMap()).withReason(TaskInformation.COMPLETE))

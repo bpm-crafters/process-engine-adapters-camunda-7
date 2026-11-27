@@ -171,6 +171,11 @@ Turns the remote adapter on or off. Default: `false`.
 | `worker-thread-pool-size` | `10` | Thread pool size for scheduled service-task worker execution. |
 | `worker-thread-pool-queue-capacity` | `50` | Queue capacity for scheduled service-task worker execution. |
 
+The default supplier tracks retries in memory only when the failure command omits the retry count. If the
+command omits the backoff, the configured retry timeout still applies. The supplier evicts the least recently used
+retry state above 10,000 tracked tasks per adapter instance. If an evicted task is retried again, its count starts
+from the configured initial retry count.
+
 #### `user-tasks.*`
 
 | Property | Default | Description |
