@@ -3,6 +3,10 @@ package dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot
 import io.toolisticon.testing.jgiven.GIVEN
 import io.toolisticon.testing.jgiven.THEN
 import io.toolisticon.testing.jgiven.WHEN
+import org.assertj.core.api.Assertions.assertThat
+import org.camunda.bpm.client.exception.NotFoundException
+import org.camunda.bpm.client.exception.RestException
+import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Test
 import org.springframework.test.context.ActiveProfiles
 
@@ -49,6 +53,17 @@ class C7RemoteTaskApiSubscribedITest : AbstractC7RemoteApiITestBase() {
 
     WHEN
       .`complete the external task`()
+  }
+
+  @Test
+  fun `official client classifies Camunda's missing external task response after process deletion`() {
+    val missing = completeDeletedExternalTask()
+
+    val cause = assertInstanceOf(NotFoundException::class.java, missing.cause)
+    val response = assertInstanceOf(RestException::class.java, cause.cause)
+    assertThat(response.httpStatusCode).isEqualTo(404)
+    assertThat(response.type).isEqualTo("RestException")
+    assertThat(response.message).isEqualTo("External task with id ${missing.taskId} does not exist")
   }
 
 }
