@@ -141,6 +141,11 @@ Turns the embedded adapter on or off. Default: `true`.
 | `execute-initial-pull-on-startup` | `true` | Triggers one initial pull while the process application enters the `RUNNING` lifecycle phase, before the recurring scheduler takes over. |
 | `execute-initial-pull-async` | `false` | Executes the initial pull on the service-task worker executor instead of waiting for it while entering `RUNNING`. |
 
+The default supplier tracks retries in memory only when the failure command omits the retry count. If the
+command omits the backoff, the configured retry timeout still applies. The supplier evicts the least recently used
+retry state above 10,000 tracked tasks per adapter instance. If an evicted task is retried again, its count starts
+from the configured initial retry count.
+
 #### `user-tasks.*`
 
 | Property | Default | Description |

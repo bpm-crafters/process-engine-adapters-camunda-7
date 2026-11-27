@@ -12,8 +12,14 @@ private val logger = KotlinLogging.logger {}
  */
 class ExternalTaskCommandExecutor(
   private val subscriptions: SubscriptionRepository,
+  private val onMissingTask: (String) -> Unit,
   private val isMissingTask: (Exception, String) -> Boolean
 ) {
+  constructor(
+    subscriptions: SubscriptionRepository,
+    isMissingTask: (Exception, String) -> Boolean
+  ) : this(subscriptions, {}, isMissingTask)
+
   fun execute(taskId: String, command: () -> Unit) {
     try {
       command()
@@ -22,6 +28,11 @@ class ExternalTaskCommandExecutor(
 
       logger.debug { "PROCESS-ENGINE-C7-COMMON-001: external task $taskId no longer exists." }
       val missing = ExternalTaskNotFoundException(taskId, failure)
+      try {
+        onMissingTask(taskId)
+      } catch (cleanupFailure: Exception) {
+        missing.addSuppressed(cleanupFailure)
+      }
       subscriptions.deactivateSubscriptionForTask(taskId)?.let { subscription ->
         try {
           withThreadContextClassLoader(subscription.termination) {

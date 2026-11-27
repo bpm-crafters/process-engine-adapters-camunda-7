@@ -24,7 +24,10 @@ class C7ServiceTaskCompletionApiImpl(
   private val commandExecutor: EngineCommandExecutor
 ) : ServiceTaskCompletionApi {
 
-  private val externalTaskCommandExecutor = ExternalTaskCommandExecutor(subscriptionRepository) { failure, _ ->
+  private val externalTaskCommandExecutor = ExternalTaskCommandExecutor(
+    subscriptionRepository,
+    failureRetrySupplier::clear
+  ) { failure, _ ->
     failure is NotFoundException
   }
 
@@ -40,6 +43,7 @@ class C7ServiceTaskCompletionApiImpl(
           variables
         )
       }
+      failureRetrySupplier.clear(cmd.taskId)
       subscriptionRepository.deactivateSubscriptionForTask(cmd.taskId)?.apply {
         withThreadContextClassLoader(termination) {
           termination.accept(TaskInformation(cmd.taskId, emptyMap()).withReason(TaskInformation.COMPLETE))
@@ -63,6 +67,7 @@ class C7ServiceTaskCompletionApiImpl(
           variables
         )
       }
+      failureRetrySupplier.clear(cmd.taskId)
       subscriptionRepository.deactivateSubscriptionForTask(cmd.taskId)?.apply {
         withThreadContextClassLoader(termination) {
           termination.accept(TaskInformation(cmd.taskId, emptyMap()).withReason(TaskInformation.COMPLETE))
@@ -76,18 +81,21 @@ class C7ServiceTaskCompletionApiImpl(
   override fun failTask(cmd: FailTaskCmd): CompletableFuture<Empty> {
     logger.debug { "PROCESS-ENGINE-C7-EMBEDDED-010: failing service task ${cmd.taskId}." }
     return commandExecutor.execute {
-      val (retries, retryTimeoutInSeconds) = failureRetrySupplier.apply(cmd.taskId)
-      val retryTimeoutInMillis = cmd.retryBackoff?.toMillis() ?: retryTimeoutInSeconds * 1000
+      val retry = if (cmd.retryCount == null) failureRetrySupplier.apply(cmd.taskId) else null
+      val retries = cmd.retryCount ?: checkNotNull(retry).retryCount
+      val retryTimeoutInMillis = cmd.retryBackoff?.toMillis()
+        ?: (retry?.retryTimeout ?: failureRetrySupplier.retryTimeout(cmd.taskId)) * 1000
       externalTaskCommandExecutor.execute(cmd.taskId) {
         externalTaskService.handleFailure(
           cmd.taskId,
           workerId,
           cmd.reason,
           cmd.errorDetails,
-          cmd.retryCount ?: retries,
+          retries,
           retryTimeoutInMillis
         )
       }
+      if (retries == 0) failureRetrySupplier.clear(cmd.taskId)
       subscriptionRepository.deactivateSubscriptionForTask(cmd.taskId)?.apply {
         withThreadContextClassLoader(termination) {
           termination.accept(TaskInformation(cmd.taskId, emptyMap()).withReason(TaskInformation.COMPLETE))
