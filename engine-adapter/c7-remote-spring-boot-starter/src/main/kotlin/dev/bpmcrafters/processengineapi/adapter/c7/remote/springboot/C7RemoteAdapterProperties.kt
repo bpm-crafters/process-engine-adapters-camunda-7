@@ -4,10 +4,8 @@ import dev.bpmcrafters.processengineapi.adapter.c7.remote.springboot.C7RemoteAda
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.boot.context.properties.DeprecatedConfigurationProperty
 import org.springframework.boot.context.properties.NestedConfigurationProperty
-import org.springframework.validation.annotation.Validated
 import java.time.Duration
 
-@Validated
 @ConfigurationProperties(prefix = DEFAULT_PREFIX)
 class C7RemoteAdapterProperties(
   /**

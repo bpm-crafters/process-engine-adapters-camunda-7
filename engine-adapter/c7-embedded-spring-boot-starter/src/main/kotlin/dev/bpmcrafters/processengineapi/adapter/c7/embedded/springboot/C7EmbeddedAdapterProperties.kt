@@ -4,12 +4,10 @@ import dev.bpmcrafters.processengineapi.adapter.c7.embedded.springboot.C7Embedde
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.boot.context.properties.DeprecatedConfigurationProperty
 import org.springframework.boot.context.properties.NestedConfigurationProperty
-import org.springframework.validation.annotation.Validated
 
 import java.time.Duration
 
 @ConfigurationProperties(prefix = DEFAULT_PREFIX)
-@Validated
 class C7EmbeddedAdapterProperties(
   /**
    * Flag, controlling if the C7 adapter is active.
