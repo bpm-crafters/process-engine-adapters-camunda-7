@@ -7,7 +7,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
 
 @Component
 @RequiredArgsConstructor
@@ -16,7 +15,7 @@ public class DeployUseCase implements DeployInPort {
   private final WorkflowOutPort workflowOutPort;
 
   @Override
-  public Future<DeploymentInformation> deploy() {
+  public CompletableFuture<DeploymentInformation> deploy() {
     return CompletableFuture.completedFuture(workflowOutPort.deploySimpleProcess());
   }
 }

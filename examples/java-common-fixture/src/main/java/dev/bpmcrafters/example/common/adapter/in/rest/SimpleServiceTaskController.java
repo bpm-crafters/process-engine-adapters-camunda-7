@@ -1,9 +1,10 @@
 package dev.bpmcrafters.example.common.adapter.in.rest;
 
+import static dev.bpmcrafters.example.common.adapter.shared.AsyncResult.await;
+
 import dev.bpmcrafters.example.common.application.port.in.*;
 import dev.bpmcrafters.processengineapi.task.TaskInformation;
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.http.ResponseEntity;
@@ -27,54 +28,47 @@ public class SimpleServiceTaskController {
   private final SignalInPort signalPort;
 
   @PostMapping("/deploy")
-  @SneakyThrows
   public ResponseEntity<String> deploy() {
-    val info = deployPort.deploy().get();
+    val info = await(deployPort.deploy());
     log.info("Deployed process {}", info.getDeploymentKey());
     return created(URI.create(info.getDeploymentKey())).build();
   }
 
   @PostMapping("/start-process")
-  @SneakyThrows
   public ResponseEntity<String> startUseCase(Dto dto) {
-    val processInstanceId = processInstancePort.startNew(dto.value, dto.intValue).get();
+    val processInstanceId = await(processInstancePort.startNew(dto.value, dto.intValue));
     log.info("Started process instance {}", processInstanceId);
     return created(URI.create(processInstanceId)).build();
   }
 
   @PostMapping("/correlate/{correlationKey}")
-  @SneakyThrows
   public ResponseEntity<Void> correlateMessage(@PathVariable("correlationKey") String correlationKey, String value) {
     log.info("Correlated message using correlation key {}", correlationKey);
-    correlatePort.correlateMessage(correlationKey, value).get();
+    await(correlatePort.correlateMessage(correlationKey, value));
     return noContent().build();
   }
 
   @PostMapping("/signal")
-  @SneakyThrows
   public ResponseEntity<Void> sendSignal(String value) {
     log.info("Sending signal");
-    signalPort.deliverSignal(value).get();
+    await(signalPort.deliverSignal(value));
     return noContent().build();
   }
 
   @GetMapping("/tasks")
-  @SneakyThrows
   public ResponseEntity<List<TaskInformation>> getTasks() {
-    return ok(taskPort.getUserTasks().get());
+    return ok(await(taskPort.getUserTasks()));
   }
 
   @PostMapping("/tasks/{taskId}/complete")
-  @SneakyThrows
   public ResponseEntity<Void> complete(@PathVariable("taskId") String taskId, String value) {
-    taskPort.complete(taskId, value).get();
+    await(taskPort.complete(taskId, value));
     return noContent().build();
   }
 
   @PostMapping("/tasks/{taskId}/error")
-  @SneakyThrows
   public ResponseEntity<Void> error(@PathVariable("taskId") String taskId, String value) {
-    taskPort.completeWithError(taskId, value).get();
+    await(taskPort.completeWithError(taskId, value));
     return noContent().build();
   }
 

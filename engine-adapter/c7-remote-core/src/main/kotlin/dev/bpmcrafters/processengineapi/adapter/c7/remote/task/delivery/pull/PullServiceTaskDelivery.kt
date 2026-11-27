@@ -138,7 +138,6 @@ class PullServiceTaskDelivery(
       } catch (e: Exception) {
         val taskId = lockedTask.id!!
         if (ExternalTaskNotFoundException.matches(e, taskId)) {
-          logger.debug { "PROCESS-ENGINE-C7-REMOTE-048: external task $taskId no longer exists." }
           return@Callable
         }
         val jobRetries: Int = lockedTask.retries?.minus(1) ?: retries
@@ -168,7 +167,6 @@ class PullServiceTaskDelivery(
   internal fun toTaskInformation(lockedTask: LockedExternalTaskDto) = lockedTask.toTaskInformation(processDefinitionMetaDataResolver)
 
   internal fun cleanUpTerminatedTasks() {
-    // TODO Implement metrics
     // retrieve external tasks locked for configured worker id
     val stillLockedTasksResult = externalTaskApiClient.queryExternalTasks(
       null,

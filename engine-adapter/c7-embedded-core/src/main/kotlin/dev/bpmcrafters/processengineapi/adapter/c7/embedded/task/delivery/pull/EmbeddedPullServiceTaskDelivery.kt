@@ -152,7 +152,6 @@ class EmbeddedPullServiceTaskDelivery(
         } catch (e: Throwable) {
           val taskId = lockedTask.id
           if (ExternalTaskNotFoundException.matches(e, taskId)) {
-            logger.debug { "PROCESS-ENGINE-C7-EMBEDDED-049: external task $taskId no longer exists." }
             return@Callable
           }
           val jobRetries: Int = lockedTask.retries?.minus(1) ?: retries

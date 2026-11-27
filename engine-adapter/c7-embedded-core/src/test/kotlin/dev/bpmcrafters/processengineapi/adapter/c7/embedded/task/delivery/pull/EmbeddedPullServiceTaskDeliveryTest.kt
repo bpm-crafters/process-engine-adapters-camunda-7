@@ -187,7 +187,7 @@ internal class EmbeddedPullServiceTaskDeliveryTest {
   }
 
   @Test
-  fun `missing task during completion ends delivery without reporting failure`() {
+  fun `missing task wrapped by the handler ends delivery without reporting failure`() {
     val missing = NotFoundException("Cannot find external task with id '1'")
     doThrow(missing).whenever(externalTaskService).complete(eq("1"), eq("worker"), any())
     val completionApi = C7ServiceTaskCompletionApiImpl(
@@ -205,7 +205,7 @@ internal class EmbeddedPullServiceTaskDeliveryTest {
           completionApi.completeTask(CompleteTaskCmd(task.taskId) { emptyMap() }).get()
         }
         completionFailure = requireNotNull(failure.cause)
-        throw failure
+        throw RuntimeException(failure)
       },
       termination = { terminated.add(it) }
     )

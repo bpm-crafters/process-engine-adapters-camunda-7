@@ -56,7 +56,6 @@ class SubscribingServiceTaskDelivery(
                   } catch (e: Exception) {
                     val taskId = externalTask.id
                     if (ExternalTaskNotFoundException.matches(e, taskId)) {
-                      logger.debug { "PROCESS-ENGINE-C7-REMOTE-048: external task $taskId no longer exists." }
                       return@handler
                     }
                     val jobRetries: Int = externalTask.retries?.minus(1) ?: retries

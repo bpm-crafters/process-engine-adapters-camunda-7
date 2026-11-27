@@ -3,6 +3,9 @@ package dev.bpmcrafters.processengineapi.adapter.c7.common.task
 import dev.bpmcrafters.processengineapi.adapter.c7.common.threading.withThreadContextClassLoader
 import dev.bpmcrafters.processengineapi.impl.task.SubscriptionRepository
 import dev.bpmcrafters.processengineapi.task.TaskInformation
+import io.github.oshai.kotlinlogging.KotlinLogging
+
+private val logger = KotlinLogging.logger {}
 
 fun executeExternalTaskCommand(
   taskId: String,
@@ -15,6 +18,7 @@ fun executeExternalTaskCommand(
   } catch (failure: Exception) {
     if (!isMissingTask(failure)) throw failure
 
+    logger.debug { "PROCESS-ENGINE-C7-COMMON-001: external task $taskId no longer exists." }
     val missing = ExternalTaskNotFoundException(taskId, failure)
     subscriptions.deactivateSubscriptionForTask(taskId)?.let { subscription ->
       try {

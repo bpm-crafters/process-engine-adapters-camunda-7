@@ -2,11 +2,11 @@ package dev.bpmcrafters.example.common.adapter.in.process;
 
 import dev.bpmcrafters.processengineapi.CommonRestrictions;
 import dev.bpmcrafters.processengineapi.task.*;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Map;
 
+import static dev.bpmcrafters.example.common.adapter.shared.AsyncResult.await;
 import static java.util.Optional.ofNullable;
 
 
@@ -25,55 +25,55 @@ public abstract class AbstractSynchronousTaskHandler {
     this.topic = topic;
   }
 
-  @SneakyThrows
   public void register(TaskSubscriptionApi taskSubscriptionApi) {
     log.info("[EXTERNAL TASK HANDLER] Registering handler for {}", topic);
     this.taskSubscriptionApi = taskSubscriptionApi;
-    this.subscription = this.taskSubscriptionApi.subscribeForTask(
+    this.subscription = await(this.taskSubscriptionApi.subscribeForTask(
       new SubscribeForTaskCmd(
         CommonRestrictions.builder().build(),
         TaskType.EXTERNAL,
         topic,
         null,
         (taskInfo, variables) -> {
+          Map<String, Object> result;
           try {
             log.info("[SYNC HANDLER]: Executing task {}...", taskInfo.getTaskId());
-            externalTaskCompletionApi.completeTask(new CompleteTaskCmd(taskInfo.getTaskId(), () -> execute(taskInfo, variables)));
-            log.info("[SYNC HANDLER]: Completed task {}.", taskInfo.getTaskId());
+            result = execute(taskInfo, variables);
           } catch (TaskHandlerException e) {
             log.info("[SYNC HANDLER]: Error completing task {}, completing with error code {}.", taskInfo.getTaskId(), e.getErrorCode());
-            externalTaskCompletionApi.completeTaskByError(new CompleteTaskByErrorCmd(
+            await(externalTaskCompletionApi.completeTaskByError(new CompleteTaskByErrorCmd(
                 taskInfo.getTaskId(),
                 e.getErrorCode(),
                 e.getMessage(),
                 e::getPayload
-              )
-            );
+            )));
+            return;
           } catch (Exception e) {
             log.info("[SYNC HANDLER]: Failed handling task {}, completing with exception {}.", taskInfo.getTaskId(), e.getMessage());
-            externalTaskCompletionApi.failTask(new FailTaskCmd(
+            await(externalTaskCompletionApi.failTask(new FailTaskCmd(
                 taskInfo.getTaskId(),
                 e.getMessage(),
-              null,
+                null,
                 ofNullable(taskInfo.getMetaValueAsInt(TaskInformation.RETRIES))
                   .map(count -> count - 1).orElse(null),
-              null
-              )
-            );
+                null
+            )));
+            return;
           }
+          await(externalTaskCompletionApi.completeTask(new CompleteTaskCmd(taskInfo.getTaskId(), () -> result)));
+          log.info("[SYNC HANDLER]: Completed task {}.", taskInfo.getTaskId());
         },
         (TaskInformation taskInfo) -> {} // nothing to do
       )
-    ).get();
+    ));
   }
 
-  @SneakyThrows
   public void unregister() {
     if (subscription == null || taskSubscriptionApi == null) {
       return;
     }
     log.info("[EXTERNAL TASK HANDLER] Un-registering handler for {}", topic);
-    this.taskSubscriptionApi.unsubscribe(new UnsubscribeFromTaskCmd(subscription)).get();
+    await(this.taskSubscriptionApi.unsubscribe(new UnsubscribeFromTaskCmd(subscription)));
   }
 
   public abstract Map<String, Object> execute(TaskInformation taskInfo, Map<String, ?> variables) throws TaskHandlerException;

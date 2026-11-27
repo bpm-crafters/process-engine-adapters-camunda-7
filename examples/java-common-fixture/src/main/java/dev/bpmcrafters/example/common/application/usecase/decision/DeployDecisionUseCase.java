@@ -4,7 +4,6 @@ import dev.bpmcrafters.example.common.application.port.in.decision.DeployDecisio
 import dev.bpmcrafters.example.common.application.port.out.DecisionOutPort;
 import dev.bpmcrafters.processengineapi.deploy.DeploymentInformation;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -15,7 +14,7 @@ public class DeployDecisionUseCase implements DeployDecisionInPort {
   private final DecisionOutPort decisionOutPort;
 
   @Override
-  public Future<DeploymentInformation> deployDecision() {
+  public CompletableFuture<DeploymentInformation> deployDecision() {
     return CompletableFuture.completedFuture(
       decisionOutPort.deployMainDecision()
     );

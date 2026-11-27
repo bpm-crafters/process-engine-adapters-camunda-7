@@ -1,6 +1,6 @@
 package dev.bpmcrafters.example.common.application.port.in;
 
-import java.util.concurrent.Future;
+import java.util.concurrent.CompletableFuture;
 
 public interface CorrelateInPort {
 
@@ -10,5 +10,5 @@ public interface CorrelateInPort {
    * @param value string value.
    * @return nothing.
    */
-  Future<Void> correlateMessage(String correlationKey, String value);
+  CompletableFuture<Void> correlateMessage(String correlationKey, String value);
 }
